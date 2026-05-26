@@ -211,16 +211,6 @@
     }
     .modal-title { font-family: var(--font-serif); font-size: 24px; margin-bottom: 16px; }
     .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
-    .btn-toggle {
-      padding: 14px;
-      font-size: 13px;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      cursor: pointer;
-      flex: 1;
-      text-align: center;
-    }
     .control-row { display: flex; gap: 14px; margin-bottom: 28px; }
   </style>
 </head>
@@ -229,8 +219,8 @@
 <div id="loginScreen" class="login-container">
   <div class="login-card">
     <div class="login-title">Admin <em>Oratorio</em></div>
-    <input type="password" id="adminPassword" placeholder="Password amministratore" onkeypress="if(event.key==='Enter') doLogin()">
-    <button class="btn btn-primary" onclick="doLogin()">Entra →</button>
+    <input type="password" id="adminPassword" placeholder="Password amministratore" onkeypress="if(event.key==='Enter') window.doLogin()">
+    <button class="btn btn-primary" id="loginBtn">Entra →</button>
     <div id="loginError" style="color:var(--red); font-size:12px; margin-top:12px; text-align:center;"></div>
   </div>
 </div>
@@ -238,23 +228,23 @@
 <div id="app" style="display:none;">
   <div class="topbar">
     <div class="topbar-title">gestione <em>oratorio</em></div>
-    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Esci</button>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Esci</button>
   </div>
   <div class="main">
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Totale Animatori</div><div class="stat-value" id="statTotal">—</div></div>
-      <div class="stat-card"><div class="stat-label">Totale Timbrature</div><div class="stat-value" id="StatTimbrature">—</div></div>
+      <div class="stat-card"><div class="stat-label">Totale Timbrature</div><div class="stat-value" id="statTimbrature">—</div></div>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="showPanel('utenti')">👥 Utenti</button>
-      <button class="tab" onclick="showPanel('timbrature')">📋 Timbrature</button>
-      <button class="tab" onclick="showPanel('blocchi')">🔒 Blocchi</button>
+      <button class="tab active" id="tabUtenti">👥 Utenti</button>
+      <button class="tab" id="tabTimbrature">📋 Timbrature</button>
+      <button class="tab" id="tabBlocchi">🔒 Blocchi</button>
     </div>
 
     <div id="panelUtenti" class="panel active">
       <div class="filter-bar">
-        <input type="text" id="filterUsers" placeholder="Cerca utente..." oninput="renderUtenti()">
-        <button class="btn btn-primary" onclick="openAddUserModal()" style="width:auto;">➕ Nuovo</button>
+        <input type="text" id="filterUsers" placeholder="Cerca utente...">
+        <button class="btn btn-primary" id="nuovoUtenteBtn" style="width:auto;">➕ Nuovo</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -266,9 +256,9 @@
 
     <div id="panelTimbrature" class="panel">
       <div class="filter-bar">
-        <input type="text" id="filterLog" placeholder="Cerca nome..." oninput="renderTimbrature()">
-        <input type="date" id="filterDate" oninput="renderTimbrature()">
-        <select id="filterTipo" oninput="renderTimbrature()"><option value="">Tutti</option><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
+        <input type="text" id="filterLog" placeholder="Cerca nome...">
+        <input type="date" id="filterDate">
+        <select id="filterTipo"><option value="">Tutti</option><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
       </div>
       <div class="table-wrap">
         <table>
@@ -283,12 +273,12 @@
         <div class="stat-card">
           <div class="stat-label">Ingressi</div>
           <div class="stat-value" id="statoIngresso">—</div>
-          <button class="btn btn-primary" id="btnToggleIn" style="margin-top:12px; width:100%;">Cambia</button>
+          <button class="btn btn-primary" id="toggleInBtn" style="margin-top:12px; width:100%;">Cambia</button>
         </div>
         <div class="stat-card">
           <div class="stat-label">Uscite</div>
           <div class="stat-value" id="statoUscita">—</div>
-          <button class="btn btn-primary" id="btnToggleOut" style="margin-top:12px; width:100%;">Cambia</button>
+          <button class="btn btn-primary" id="toggleOutBtn" style="margin-top:12px; width:100%;">Cambia</button>
         </div>
       </div>
     </div>
@@ -303,8 +293,8 @@
     <input type="number" id="newAnno" placeholder="Anno nascita">
     <input type="email" id="newEmail" placeholder="Email (opzionale)">
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modalAddUser')">Annulla</button>
-      <button class="btn btn-primary" onclick="aggiungiUtente()">Aggiungi</button>
+      <button class="btn btn-ghost" id="closeAddModal">Annulla</button>
+      <button class="btn btn-primary" id="confirmAddBtn">Aggiungi</button>
     </div>
   </div>
 </div>
@@ -314,7 +304,7 @@
     <div class="modal-title">⚠️ Conferma Eliminazione</div>
     <p id="deleteMessage"></p>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modalDelete')">Annulla</button>
+      <button class="btn btn-ghost" id="closeDeleteModal">Annulla</button>
       <button class="btn btn-danger" id="confirmDeleteBtn">Elimina</button>
     </div>
   </div>
@@ -325,252 +315,270 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const ADMIN_PASSWORD = 'admin123';
+  (function() {
+    const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+    const ADMIN_PASSWORD = 'admin123';
 
-  let supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let utentiList = [];
-  let timbratureList = [];
-  let deleteCallback = null;
+    let supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let utentiList = [];
+    let timbratureList = [];
+    let deleteCallback = null;
 
-  function toast(msg, type) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = `toast ${type} show`;
-    setTimeout(() => el.classList.remove('show'), 3000);
-  }
-
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-  async function doLogin() {
-    const pw = document.getElementById('adminPassword').value;
-    if (pw !== ADMIN_PASSWORD) {
-      document.getElementById('loginError').innerText = 'Password errata!';
-      return;
+    function toast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `toast ${type} show`;
+      setTimeout(() => el.classList.remove('show'), 3000);
     }
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    sessionStorage.setItem('admin_auth', '1');
-    await caricaTuttiIDati();
-    await caricaStatoBlocchi();
-  }
 
-  function doLogout() {
-    sessionStorage.removeItem('admin_auth');
-    location.reload();
-  }
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-  async function caricaTuttiIDati() {
-    await caricaUtenti();
-    await caricaTimbrature();
-    aggiornaStatistiche();
-  }
-
-  async function caricaUtenti() {
-    const { data, error } = await supabase.from('utenti').select('*').order('id');
-    if (error) { toast('Errore utenti: ' + error.message, 'error'); return; }
-    utentiList = data || [];
-    renderUtenti();
-  }
-
-  async function caricaTimbrature() {
-    const { data, error } = await supabase.from('timbrature').select('*').order('created_at', { ascending: false });
-    if (error) { toast('Errore timbrature: ' + error.message, 'error'); return; }
-    timbratureList = data || [];
-    renderTimbrature();
-  }
-
-  async function caricaStatoBlocchi() {
-    const { data, error } = await supabase.from('impostazioni').select('*');
-    if (error) {
-      toast('Errore caricamento blocchi: ' + error.message, 'error');
-      return;
-    }
-    let ingresso = true, uscita = true;
-    data.forEach(row => {
-      if (row.chiave === 'ingresso_aperto') ingresso = row.valore;
-      if (row.chiave === 'uscita_aperta') uscita = row.valore;
-    });
-    document.getElementById('statoIngresso').innerHTML = ingresso ? '✅ APERTI' : '🔒 BLOCCATI';
-    document.getElementById('statoUscita').innerHTML = uscita ? '✅ APERTE' : '🔒 BLOCCATE';
-    document.getElementById('statoIngresso').style.color = ingresso ? 'var(--green)' : 'var(--red)';
-    document.getElementById('statoUscita').style.color = uscita ? 'var(--green)' : 'var(--red)';
-    
-    // Attacca eventi bottoni blocchi
-    document.getElementById('btnToggleIn').onclick = () => toggleBlocco('ingresso_aperto', !ingresso);
-    document.getElementById('btnToggleOut').onclick = () => toggleBlocco('uscita_aperta', !uscita);
-  }
-
-  async function toggleBlocco(chiave, nuovoValore) {
-    const { error } = await supabase.from('impostazioni').update({ valore: nuovoValore }).eq('chiave', chiave);
-    if (error) {
-      toast('Errore: ' + error.message, 'error');
-    } else {
-      toast('Stato aggiornato!', 'success');
+    window.doLogin = async function() {
+      const pw = document.getElementById('adminPassword').value;
+      if (pw !== ADMIN_PASSWORD) {
+        document.getElementById('loginError').innerText = 'Password errata!';
+        return;
+      }
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      sessionStorage.setItem('admin_auth', '1');
+      await caricaTuttiIDati();
       await caricaStatoBlocchi();
     }
-  }
 
-  function renderUtenti() {
-    const filter = document.getElementById('filterUsers')?.value.toLowerCase() || '';
-    const filtered = utentiList.filter(u => u.nome.toLowerCase().includes(filter));
-    const tbody = document.getElementById('utentiTbody');
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun utente</td></tr>';
-      return;
+    window.doLogout = function() {
+      sessionStorage.removeItem('admin_auth');
+      location.reload();
     }
-    tbody.innerHTML = filtered.map(u => `
-      <tr>
-        <td>${u.id}</td>
-        <td><strong>${escapeHtml(u.nome)}</strong></td>
-        <td>${u.anno || '—'}</td>
-        <td>${u.email || '—'}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="apriEliminaUtente(${u.id}, '${escapeHtml(u.nome)}')">🗑️ Elimina</button>
-        </td>
-      </tr>
-    `).join('');
-  }
 
-  function renderTimbrature() {
-    const search = document.getElementById('filterLog')?.value.toLowerCase() || '';
-    const date = document.getElementById('filterDate')?.value || '';
-    const tipo = document.getElementById('filterTipo')?.value || '';
-    
-    let filtered = timbratureList.filter(t => {
-      if (search && !t.nome.toLowerCase().includes(search)) return false;
-      if (tipo && t.tipo !== tipo) return false;
-      if (date) {
-        const parts = t.data.split('/');
-        const rowDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        if (rowDate !== date) return false;
-      }
-      return true;
-    });
-    
-    const tbody = document.getElementById('timbratureTbody');
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nessuna timbratura</td></tr>';
-      return;
-    }
-    tbody.innerHTML = filtered.map(t => `
-      <tr>
-        <td>${t.id}</td>
-        <td>${escapeHtml(t.nome)}</td>
-        <td>${t.data}</td>
-        <td>${t.ora}</td>
-        <td><span class="badge ${t.tipo === 'Ingresso' ? 'badge-in' : 'badge-out'}">${t.tipo}</span></td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="apriEliminaTimbratura(${t.id})">🗑️ Elimina</button>
-        </td>
-      </tr>
-    `).join('');
-  }
-
-  function aggiornaStatistiche() {
-    document.getElementById('statTotal').textContent = utentiList.length;
-    document.getElementById('StatTimbrature').textContent = timbratureList.length;
-  }
-
-  function openAddUserModal() {
-    document.getElementById('newNome').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('newAnno').value = '';
-    document.getElementById('newEmail').value = '';
-    openModal('modalAddUser');
-  }
-
-  async function aggiungiUtente() {
-    const nome = document.getElementById('newNome').value.trim();
-    const password = document.getElementById('newPassword').value;
-    const anno = document.getElementById('newAnno').value;
-    const email = document.getElementById('newEmail').value.trim();
-    
-    if (!nome || !password) {
-      toast('Nome e password obbligatori', 'error');
-      return;
-    }
-    if (password.length < 4) {
-      toast('Password almeno 4 caratteri', 'error');
-      return;
-    }
-    
-    const { error } = await supabase.from('utenti').insert([{
-      nome, password, anno: anno ? parseInt(anno) : null, email: email || null, created_at: new Date()
-    }]);
-    
-    if (error) {
-      if (error.code === '23505') toast('Nome già esistente!', 'error');
-      else toast('Errore: ' + error.message, 'error');
-      return;
-    }
-    
-    toast('✅ Utente aggiunto!', 'success');
-    closeModal('modalAddUser');
-    await caricaUtenti();
-    aggiornaStatistiche();
-  }
-
-  function apriEliminaUtente(id, nome) {
-    document.getElementById('deleteMessage').innerHTML = `Eliminare <strong>${nome}</strong> e tutte le sue timbrature?`;
-    deleteCallback = async () => {
-      // Elimina timbrature dell'utente
-      await supabase.from('timbrature').delete().eq('nome', nome);
-      // Elimina utente
-      const { error } = await supabase.from('utenti').delete().eq('id', id);
-      if (error) { toast('Errore: ' + error.message, 'error'); return; }
-      toast(`✅ ${nome} eliminato!`, 'success');
-      closeModal('modalDelete');
-      await caricaTuttiIDati();
-    };
-    openModal('modalDelete');
-  }
-
-  function apriEliminaTimbratura(id) {
-    document.getElementById('deleteMessage').innerHTML = `Eliminare questa timbratura?`;
-    deleteCallback = async () => {
-      const { error } = await supabase.from('timbrature').delete().eq('id', id);
-      if (error) { toast('Errore: ' + error.message, 'error'); return; }
-      toast('✅ Timbratura eliminata!', 'success');
-      closeModal('modalDelete');
+    async function caricaTuttiIDati() {
+      await caricaUtenti();
       await caricaTimbrature();
       aggiornaStatistiche();
-    };
-    openModal('modalDelete');
-  }
-
-  document.getElementById('confirmDeleteBtn').onclick = () => { if (deleteCallback) deleteCallback(); };
-
-  function showPanel(panel) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    if (panel === 'utenti') {
-      document.getElementById('panelUtenti').classList.add('active');
-      document.querySelectorAll('.tab')[0].classList.add('active');
-    } else if (panel === 'timbrature') {
-      document.getElementById('panelTimbrature').classList.add('active');
-      document.querySelectorAll('.tab')[1].classList.add('active');
-    } else if (panel === 'blocchi') {
-      document.getElementById('panelBlocchi').classList.add('active');
-      document.querySelectorAll('.tab')[2].classList.add('active');
     }
-  }
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-  }
+    async function caricaUtenti() {
+      const { data, error } = await supabase.from('utenti').select('*').order('id');
+      if (error) { toast('Errore utenti: ' + error.message, 'error'); return; }
+      utentiList = data || [];
+      renderUtenti();
+    }
 
-  window.onload = () => {
+    async function caricaTimbrature() {
+      const { data, error } = await supabase.from('timbrature').select('*').order('created_at', { ascending: false });
+      if (error) { toast('Errore timbrature: ' + error.message, 'error'); return; }
+      timbratureList = data || [];
+      renderTimbrature();
+    }
+
+    async function caricaStatoBlocchi() {
+      const { data, error } = await supabase.from('impostazioni').select('*');
+      if (error) {
+        toast('Errore caricamento blocchi: ' + error.message, 'error');
+        return;
+      }
+      let ingresso = true, uscita = true;
+      data.forEach(row => {
+        if (row.chiave === 'ingresso_aperto') ingresso = row.valore;
+        if (row.chiave === 'uscita_aperta') uscita = row.valore;
+      });
+      document.getElementById('statoIngresso').innerHTML = ingresso ? '✅ APERTI' : '🔒 BLOCCATI';
+      document.getElementById('statoUscita').innerHTML = uscita ? '✅ APERTE' : '🔒 BLOCCATE';
+      document.getElementById('statoIngresso').style.color = ingresso ? 'var(--green)' : 'var(--red)';
+      document.getElementById('statoUscita').style.color = uscita ? 'var(--green)' : 'var(--red)';
+    }
+
+    window.toggleBlocco = async function(chiave) {
+      const { data } = await supabase.from('impostazioni').select('valore').eq('chiave', chiave).single();
+      const nuovoValore = !data?.valore;
+      const { error } = await supabase.from('impostazioni').update({ valore: nuovoValore }).eq('chiave', chiave);
+      if (error) {
+        toast('Errore: ' + error.message, 'error');
+      } else {
+        toast('Stato aggiornato!', 'success');
+        await caricaStatoBlocchi();
+      }
+    }
+
+    function renderUtenti() {
+      const filter = document.getElementById('filterUsers')?.value.toLowerCase() || '';
+      const filtered = utentiList.filter(u => u.nome.toLowerCase().includes(filter));
+      const tbody = document.getElementById('utentiTbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessun utente</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td><strong>${escapeHtml(u.nome)}</strong></td>
+          <td>${u.anno || '—'}</td>
+          <td>${u.email || '—'}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="window.apriEliminaUtente(${u.id}, '${escapeHtml(u.nome)}')">🗑️ Elimina</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderTimbrature() {
+      const search = document.getElementById('filterLog')?.value.toLowerCase() || '';
+      const date = document.getElementById('filterDate')?.value || '';
+      const tipo = document.getElementById('filterTipo')?.value || '';
+      
+      let filtered = timbratureList.filter(t => {
+        if (search && !t.nome.toLowerCase().includes(search)) return false;
+        if (tipo && t.tipo !== tipo) return false;
+        if (date) {
+          const parts = t.data.split('/');
+          const rowDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          if (rowDate !== date) return false;
+        }
+        return true;
+      });
+      
+      const tbody = document.getElementById('timbratureTbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nessuna timbratura</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(t => `
+        <tr>
+          <td>${t.id}</td>
+          <td>${escapeHtml(t.nome)}</td>
+          <td>${t.data}</td>
+          <td>${t.ora}</td>
+          <td><span class="badge ${t.tipo === 'Ingresso' ? 'badge-in' : 'badge-out'}">${t.tipo}</span></td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="window.apriEliminaTimbratura(${t.id})">🗑️ Elimina</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function aggiornaStatistiche() {
+      document.getElementById('statTotal').textContent = utentiList.length;
+      document.getElementById('statTimbrature').textContent = timbratureList.length;
+    }
+
+    window.openAddUserModal = function() {
+      document.getElementById('newNome').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('newAnno').value = '';
+      document.getElementById('newEmail').value = '';
+      openModal('modalAddUser');
+    }
+
+    window.aggiungiUtente = async function() {
+      const nome = document.getElementById('newNome').value.trim();
+      const password = document.getElementById('newPassword').value;
+      const anno = document.getElementById('newAnno').value;
+      const email = document.getElementById('newEmail').value.trim();
+      
+      if (!nome || !password) {
+        toast('Nome e password obbligatori', 'error');
+        return;
+      }
+      if (password.length < 4) {
+        toast('Password almeno 4 caratteri', 'error');
+        return;
+      }
+      
+      const { error } = await supabase.from('utenti').insert([{
+        nome, password, anno: anno ? parseInt(anno) : null, email: email || null, created_at: new Date()
+      }]);
+      
+      if (error) {
+        if (error.code === '23505') toast('Nome già esistente!', 'error');
+        else toast('Errore: ' + error.message, 'error');
+        return;
+      }
+      
+      toast('✅ Utente aggiunto!', 'success');
+      closeModal('modalAddUser');
+      await caricaUtenti();
+      aggiornaStatistiche();
+    }
+
+    window.apriEliminaUtente = function(id, nome) {
+      document.getElementById('deleteMessage').innerHTML = `Eliminare <strong>${nome}</strong> e tutte le sue timbrature?`;
+      deleteCallback = async () => {
+        await supabase.from('timbrature').delete().eq('nome', nome);
+        const { error } = await supabase.from('utenti').delete().eq('id', id);
+        if (error) { toast('Errore: ' + error.message, 'error'); return; }
+        toast(`✅ ${nome} eliminato!`, 'success');
+        closeModal('modalDelete');
+        await caricaTuttiIDati();
+      };
+      openModal('modalDelete');
+    }
+
+    window.apriEliminaTimbratura = function(id) {
+      document.getElementById('deleteMessage').innerHTML = `Eliminare questa timbratura?`;
+      deleteCallback = async () => {
+        const { error } = await supabase.from('timbrature').delete().eq('id', id);
+        if (error) { toast('Errore: ' + error.message, 'error'); return; }
+        toast('✅ Timbratura eliminata!', 'success');
+        closeModal('modalDelete');
+        await caricaTimbrature();
+        aggiornaStatistiche();
+      };
+      openModal('modalDelete');
+    }
+
+    function showPanel(panel) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      if (panel === 'utenti') {
+        document.getElementById('panelUtenti').classList.add('active');
+        document.getElementById('tabUtenti').classList.add('active');
+      } else if (panel === 'timbrature') {
+        document.getElementById('panelTimbrature').classList.add('active');
+        document.getElementById('tabTimbrature').classList.add('active');
+      } else if (panel === 'blocchi') {
+        document.getElementById('panelBlocchi').classList.add('active');
+        document.getElementById('tabBlocchi').classList.add('active');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+
+    // ATTACCA EVENTI
+    document.getElementById('loginBtn').onclick = () => window.doLogin();
+    document.getElementById('logoutBtn').onclick = () => window.doLogout();
+    document.getElementById('nuovoUtenteBtn').onclick = () => window.openAddUserModal();
+    document.getElementById('confirmAddBtn').onclick = () => window.aggiungiUtente();
+    document.getElementById('closeAddModal').onclick = () => closeModal('modalAddUser');
+    document.getElementById('closeDeleteModal').onclick = () => closeModal('modalDelete');
+    document.getElementById('confirmDeleteBtn').onclick = () => { if (deleteCallback) deleteCallback(); };
+    document.getElementById('toggleInBtn').onclick = () => window.toggleBlocco('ingresso_aperto');
+    document.getElementById('toggleOutBtn').onclick = () => window.toggleBlocco('uscita_aperta');
+    document.getElementById('tabUtenti').onclick = () => showPanel('utenti');
+    document.getElementById('tabTimbrature').onclick = () => showPanel('timbrature');
+    document.getElementById('tabBlocchi').onclick = () => showPanel('blocchi');
+    
+    // Filtri
+    document.getElementById('filterUsers').oninput = () => renderUtenti();
+    document.getElementById('filterLog').oninput = () => renderTimbrature();
+    document.getElementById('filterDate').oninput = () => renderTimbrature();
+    document.getElementById('filterTipo').onchange = () => renderTimbrature();
+
+    // Enter key per login
+    document.getElementById('adminPassword').onkeypress = (e) => { if (e.key === 'Enter') window.doLogin(); };
+
+    // Controllo sessione
     if (sessionStorage.getItem('admin_auth') === '1') {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       caricaTuttiIDati();
       caricaStatoBlocchi();
     }
-  };
+  })();
 </script>
 </body>
 </html>
