@@ -440,8 +440,8 @@
     </p>
     <label>Tipo</label>
     <select id="manual-tipo">
-      <option value="Ingresso">⬆ Ingresso</option>
-      <option value="Uscita">⬇ Uscita</option>
+      <option value="Ingresso">⬆ Perfeziona Ingresso</option>
+      <option value="Uscita">⬇ Perfeziona Uscita</option>
     </select>
     <label>Data</label>
     <input type="date" id="manual-data" />
@@ -570,21 +570,16 @@
   async function scaricaStatoBlocchi() {
     try {
       const { data, error } = await supabaseClient.from('impostazioni').select('*');
-      
       if (error) throw error;
-
       if (data && data.length > 0) {
         data.forEach(row => {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
         });
-      } else {
-        console.warn("Tabella 'impostazioni' vuota o inesistente. Uso i valori di default.");
       }
       aggiornaGraficaPulsanti();
     } catch(err) {
       console.error("Errore nel caricamento dei blocchi (Locks):", err);
-      // Fallback: se fallisce il DB, sblocca comunque l'interfaccia con i valori locali
       aggiornaGraficaPulsanti();
     }
   }
@@ -633,26 +628,50 @@
     renderLog();
   }
 
+  /* ═ FUNZIONE AGGIORNATA PER COMPRENDERE CHI NON HA MAI TIMBRATO ═ */
   async function loadAnimators() {
-    const { data, error } = await supabaseClient
+    // 1. Scarica la lista generale di tutti gli utenti registrati
+    const { data: listaUtenti, error: errUtenti } = await supabaseClient
+      .from('utenti')
+      .select('nome, anno');
+
+    if (errUtenti) { 
+      toast('Errore caricamento anagrafica utenti: ' + errUtenti.message, 'error'); 
+      return; 
+    }
+
+    // 2. Scarica lo storico delle timbrature per calcolare lo stato live
+    const { data: listaTimbrature, error: errTimbrature } = await supabaseClient
       .from(TABLE)
       .select('nome, anno, data, ora, tipo, created_at')
       .order('created_at', { ascending: false });
 
-    if (error) { toast('Errore caricamento animatori: ' + error.message, 'error'); return; }
-
-    const map = {};
-    for (const row of (data || [])) {
-      const key = (row.nome || '').trim() + '___' + (row.anno || '');
-      if (!map[key]) map[key] = row;
+    if (errTimbrature) { 
+      toast('Errore caricamento timbrature: ' + errTimbrature.message, 'error'); 
+      return; 
     }
 
-    allAnimators = Object.values(map).map(r => ({
-      nome: r.nome,
-      anno: r.anno || '',
-      lastStamp: r,
-      isInside: r.tipo === 'Ingresso',
-    }));
+    // Costruisce una mappa per estrarre al volo l'ultima timbratura di ciascuno
+    const mappaUltimeTimbrature = {};
+    for (const row of (listaTimbrature || [])) {
+      const key = (row.nome || '').trim().toLowerCase() + '___' + (row.anno || '');
+      if (!mappaUltimeTimbrature[key]) {
+        mappaUltimeTimbrature[key] = row;
+      }
+    }
+
+    // Unisce l'anagrafica totale con le timbrature effettive
+    allAnimators = (listaUtenti || []).map(u => {
+      const key = (u.nome || '').trim().toLowerCase() + '___' + (u.anno || '');
+      const ultimaTimbratura = mappaUltimeTimbrature[key];
+
+      return {
+        nome: u.nome,
+        anno: u.anno || '',
+        lastStamp: ultimaTimbratura || null,
+        isInside: ultimaTimbratura ? ultimaTimbratura.tipo === 'Ingresso' : false,
+      };
+    });
 
     renderAnimators();
     updateStats();
@@ -848,22 +867,35 @@
 
     toast('Aggiornamento in corso...', 'info');
 
-    let query = supabaseClient.from(TABLE)
+    // Aggiorna le timbrature
+    let queryTimbrature = supabaseClient.from(TABLE)
       .update({ nome: newNome, anno: isNaN(newAnnoParsed) ? null : newAnnoParsed })
       .eq('nome', oldNome);
 
     if (!oldAnno || isNaN(oldAnnoParsed)) {
-      query = query.is('anno', null);
+      queryTimbrature = queryTimbrature.is('anno', null);
     } else {
-      query = query.eq('anno', oldAnnoParsed);
+      queryTimbrature = queryTimbrature.eq('anno', oldAnnoParsed);
     }
+    await queryTimbrature;
 
-    const { error } = await query;
+    // Aggiorna l'anagrafica master utenti
+    let queryUtenti = supabaseClient.from('utenti')
+      .update({ nome: newNome, anno: isNaN(newAnnoParsed) ? null : newAnnoParsed })
+      .eq('nome', oldNome);
+
+    if (!oldAnno || isNaN(oldAnnoParsed)) {
+      queryUtenti = queryUtenti.is('anno', null);
+    } else {
+      queryUtenti = queryUtenti.eq('anno', oldAnnoParsed);
+    }
+    
+    const { error } = await queryUtenti;
 
     if (error) {
-      toast('Errore: ' + error.message, 'error');
+      toast('Errore anagrafica: ' + error.message, 'error');
     } else {
-      toast('Anagrafica dell\'animatore aggiornata!', 'success');
+      toast('Anagrafica aggiornata ovunque!', 'success');
       closeModal('modal-edit-profile');
       await loadAll();
     }
