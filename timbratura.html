@@ -392,7 +392,7 @@
 
   const TABLE = 'timbrature';
 
-  let supabase = null;
+  let supabaseClient = null;
   let currentUser = null;
   let clockInterval = null;
 
@@ -467,10 +467,10 @@
       return;
     }
 
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     /* Gestisci redirect da magic link */
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (session) {
       showDashboard(session.user);
@@ -479,7 +479,7 @@
     }
 
     /* Ascolta cambi di sessione (es. apertura magic link) */
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
       if (session) {
         showDashboard(session.user);
       }
@@ -498,7 +498,7 @@
     btn.disabled = true;
     btn.textContent = 'Invio in corso…';
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabaseClient.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: window.location.href }
     });
@@ -528,7 +528,7 @@
     const data = now.toLocaleDateString('it-IT');
     const ora  = now.toLocaleTimeString('it-IT');
 
-    const { error } = await supabase.from(TABLE).insert({
+    const { error } = await supabaseClient.from(TABLE).insert({
       user_id: currentUser.id,
       nome,
       data,
@@ -554,7 +554,7 @@
 
   /* ── Logout ── */
   async function logout() {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     currentUser = null;
     clearInterval(clockInterval);
     showSection('login');
