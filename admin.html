@@ -530,12 +530,10 @@
       return;
     }
     
-    // Transizione immediata dell'interfaccia grafica
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     sessionStorage.setItem('admin_auth', '1');
     
-    // Inizializza i dati in modo asincrono protetto
     try {
       initAdmin();
     } catch(e) {
@@ -572,15 +570,22 @@
   async function scaricaStatoBlocchi() {
     try {
       const { data, error } = await supabaseClient.from('impostazioni').select('*');
-      if (!error && data) {
+      
+      if (error) throw error;
+
+      if (data && data.length > 0) {
         data.forEach(row => {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
         });
-        aggiornaGraficaPulsanti();
+      } else {
+        console.warn("Tabella 'impostazioni' vuota o inesistente. Uso i valori di default.");
       }
+      aggiornaGraficaPulsanti();
     } catch(err) {
-      console.error(err);
+      console.error("Errore nel caricamento dei blocchi (Locks):", err);
+      // Fallback: se fallisce il DB, sblocca comunque l'interfaccia con i valori locali
+      aggiornaGraficaPulsanti();
     }
   }
 
