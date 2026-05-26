@@ -281,9 +281,11 @@
     const TABLE_UTENTI      = 'utenti';
     const TABLE_IMPOSTAZIONI= 'impostazioni';
     
-    const ORATORIO_LAT = 45.706699;
-    const ORATORIO_LON = 8.800432;
-    const MAX_DISTANZA = 150;
+    // Valori di default (sovrascrítti da Supabase in scaricaStatoBlocchi)
+    var ORATORIO_LAT = 45.706869501092136;
+    var ORATORIO_LON = 8.800464096722195;
+    var MAX_DISTANZA = 150;
+    var GEO_ABILITATA = true;
     
     const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
     
@@ -433,6 +435,10 @@
         res.data.forEach(function(row) {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta')   uscitaAperta   = row.valore;
+          if (row.chiave === 'geo_abilitata')   GEO_ABILITATA  = row.valore;
+          if (row.chiave === 'oratorio_lat' && row.valore) ORATORIO_LAT = parseFloat(row.valore);
+          if (row.chiave === 'oratorio_lon' && row.valore) ORATORIO_LON = parseFloat(row.valore);
+          if (row.chiave === 'max_distanza' && row.valore)  MAX_DISTANZA = parseInt(row.valore);
         });
       }
     }
@@ -529,13 +535,45 @@
         toast('🔒 Uscite bloccate dal coordinatore!', 'error'); return;
       }
 
-      if (!navigator.geolocation) {
-        toast('❌ Il tuo browser non supporta la geolocalizzazione', 'error'); return;
-      }
-
       stampInProgress = true;
       setButtonsDisabled(true);
       document.getElementById('geo-permission-banner').style.display = 'none';
+
+      // ─── PASSO 2: in parallelo aggiorniamo lo stato blocchi dal server
+      var blocchiPromise = scaricaStatoBlocchi();
+
+      // Se GPS disabilitato dall'admin: timbratura diretta senza verifica posizione
+      if (!GEO_ABILITATA || !navigator.geolocation) {
+        toast('⏳ Registrazione in corso...', 'info');
+        blocchiPromise.then(function() {
+          if (tipo === 'Ingresso' && !ingressoAperto) {
+            toast('🔒 Ingresso bloccato dal coordinatore!', 'error');
+            stampInProgress = false; aggiornaInterfacciaBottoni(); return;
+          }
+          if (tipo === 'Uscita' && !uscitaAperta) {
+            toast('🔒 Uscite bloccate dal coordinatore!', 'error');
+            stampInProgress = false; aggiornaInterfacciaBottoni(); return;
+          }
+          var now  = new Date();
+          var data = String(now.getDate()).padStart(2,'0') + '/' +
+                     String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear();
+          var ora  = now.toTimeString().slice(0,5);
+          supabaseClient.from(TABLE_TIMBRATURE).insert({
+            user_id: currentUser.id, nome: currentUser.nome,
+            anno: currentUser.anno ? parseInt(currentUser.anno) : null,
+            data: data, ora: ora, tipo: tipo
+          }).then(function(res) {
+            stampInProgress = false; aggiornaInterfacciaBottoni();
+            if (res.error) toast('❌ Errore: ' + res.error.message, 'error');
+            else {
+              toast('✅ ' + tipo + ' registrato alle ' + ora, 'success');
+              if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) caricaRegistroAdmin();
+            }
+          });
+        });
+        return;
+      }
+
       toast('📍 Verifica posizione in corso...', 'info');
 
       // ─── PASSO 1: chiediamo la posizione IMMEDIATAMENTE (richiesto da iOS)
@@ -547,9 +585,6 @@
           maximumAge: 0
         });
       });
-
-      // ─── PASSO 2: in parallelo aggiorniamo lo stato blocchi dal server
-      var blocchiPromise = scaricaStatoBlocchi();
 
       // ─── PASSO 3: aspettiamo entrambi
       Promise.all([geoPromise, blocchiPromise]).then(function(results) {
