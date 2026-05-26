@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Timbratura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f5f2eb;
+      --bg2:       #ede9df;
+      --surface:   #ffffff;
+      --border:    #d8d2c4;
+      --border2:   #c5bead;
+      --ink:       #1a1714;
+      --ink2:      #5a5148;
+      --ink3:      #8a7f72;
+      --accent:    #2d4a3e;
+      --accent-lt: #e8f0ec;
+      --red:       #8b2e2e;
+      --red-lt:    #f5e8e8;
+      --amber:     #7a5c1e;
+      --amber-lt:  #fdf3dc;
+      --green:     #2d5a3d;
+      --green-lt:  #e5f2ea;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono:  'Geist Mono', 'Courier New', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── PAPER TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(180,160,100,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(100,130,110,.06) 0%, transparent 60%);
+    }
+
+    /* ══════════════ LOGIN ══════════════ */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      padding: 24px;
+    }
+
+    .login-card {
+      width: 100%; max-width: 380px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 44px 40px;
+      box-shadow: 0 2px 24px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.03);
+      animation: riseIn .4s cubic-bezier(.23,1,.32,1) both;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(20px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .login-eyebrow {
+      font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--ink3); margin-bottom: 8px;
+    }
+
+    .login-title {
+      font-family: var(--font-serif); font-size: 32px;
+      line-height: 1.1; color: var(--ink);
+      margin-bottom: 32px;
+    }
+
+    .login-title em { font-style: italic; color: var(--accent); }
+
+    label {
+      display: block; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--ink3); margin-bottom: 6px;
+    }
+
+    input[type="password"], input[type="text"], input[type="time"], input[type="date"], select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 11px 13px;
+      font-family: var(--font-mono); font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      margin-bottom: 16px;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,74,62,.12);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: .3px;
+    }
+
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+      width: 100%;  justify-content: center; padding: 12px;
+    }
+    .btn-primary:hover:not(:disabled) { background: #1f3329; }
+
+    .btn-sm {
+      padding: 6px 12px; font-size: 11px;
+    }
+
+    .btn-green {
+      background: var(--green-lt); color: var(--green);
+      border-color: #b2d4bc;
+    }
+    .btn-green:hover:not(:disabled) { background: #d0eadb; }
+
+    .btn-red {
+      background: var(--red-lt); color: var(--red);
+      border-color: #dbb2b2;
+    }
+    .btn-red:hover:not(:disabled) { background: #ead0d0; }
+
+    .btn-amber {
+      background: var(--amber-lt); color: var(--amber);
+      border-color: #e0cfa0;
+    }
+    .btn-amber:hover:not(:disabled) { background: #f5e8c0; }
+
+    .btn-ghost {
+      background: transparent; color: var(--ink3);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--bg2); color: var(--ink); }
+
+    .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+    /* ══════════════ MAIN APP ══════════════ */
+    #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px; position: sticky; top: 0; z-index: 50;
+    }
+
+    .topbar-brand {
+      display: flex; align-items: baseline; gap: 10px;
+    }
+
+    .topbar-title {
+      font-family: var(--font-serif); font-size: 20px;
+    }
+
+    .topbar-title em { font-style: italic; color: var(--accent); }
+
+    .topbar-badge {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      background: var(--accent-lt); color: var(--accent);
+      padding: 3px 8px; border-radius: 20px;
+      border: 1px solid #b2ccbc;
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+    .live-dot {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--green);
+    }
+    .live-dot::before {
+      content: '';
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.7); }
+    }
+
+    .topbar-clock { font-size: 12px; color: var(--ink3); }
+
+    /* ── MAIN LAYOUT ── */
+    .main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── STAT CARDS ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px 22px;
+    }
+
+    .stat-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--ink3); margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: var(--font-serif); font-size: 40px; line-height: 1;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red   { color: var(--red); }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: var(--font-serif); font-size: 22px; font-style: italic;
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-bar input, .filter-bar select {
+      margin-bottom: 0; width: auto; flex: 1; min-width: 140px;
+    }
+
+    /* ── STATUS TABLE ── */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .animator-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px 18px;
+      position: relative;
+      transition: box-shadow .15s;
+    }
+
+    .animator-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+
+    .animator-card.inside  { border-left: 3px solid var(--green); }
+    .animator-card.outside { border-left: 3px solid var(--border2); }
+
+    .anim-name {
+      font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px;
+    }
+
+    .anim-email { font-size: 11px; color: var(--ink3); margin-bottom: 10px; }
+
+    .anim-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 500; letter-spacing: .5px;
+      padding: 3px 9px; border-radius: 20px; margin-bottom: 12px;
+    }
+    .anim-status.in  { background: var(--green-lt); color: var(--green); }
+    .anim-status.out { background: var(--bg2); color: var(--ink3); }
+    .anim-status::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+    }
+    .anim-status.in::before  { background: var(--green); }
+    .anim-status.out::before { background: var(--ink3); }
+
+    .anim-last {
+      font-size: 11px; color: var(--ink3); margin-bottom: 12px;
+    }
+
+    .anim-actions { display: flex; gap: 6px; }
+
+    /* ── LOG TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--bg2);
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--ink3); font-weight: 500;
+      padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 56px;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--bg2);
+      transition: background .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg); }
+
+    tbody td {
+      padding: 10px 14px; font-size: 12px; vertical-align: middle;
+    }
+
+    .tipo-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 500; letter-spacing: .5px;
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
+    .tipo-badge.uscita   { background: var(--red-lt);   color: var(--red);   }
+
+    .edit-row-form {
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    }
+
+    .edit-row-form input, .edit-row-form select {
+      margin-bottom: 0; padding: 5px 8px; font-size: 12px;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(26,23,20,.45);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 36px 32px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.15);
+      transform: translateY(16px) scale(.98);
+      transition: transform .2s cubic-bezier(.23,1,.32,1);
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+    .modal-title {
+      font-family: var(--font-serif); font-size: 24px; font-style: italic;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--ink); color: var(--bg);
+      border-radius: 4px; padding: 12px 18px;
+      font-size: 12px;
+      transform: translateY(20px); opacity: 0;
+      transition: all .3s cubic-bezier(.23,1,.32,1);
+      z-index: 300; max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 48px; color: var(--ink3);
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+    /* ── PAGINATION ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--ink3);
+    }
+    .pagination-btns { display: flex; gap: 6px; }
+
+    @media (max-width: 700px) {
+      .topbar { padding: 0 16px; }
+      .main { padding: 20px 16px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .filter-bar { flex-direction: column; }
+      .filter-bar input, .filter-bar select { width: 100%; }
+      thead th:nth-child(4), tbody td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-eyebrow">Pannello di controllo</div>
+    <div class="login-title">Accesso <em>Admin</em></div>
+    <label for="admin-pass">Password</label>
+    <input type="password" id="admin-pass" placeholder="••••••••"
+           onkeydown="if(event.key==='Enter') doLogin()" />
+    <button class="btn btn-primary" onclick="doLogin()">Entra →</button>
+    <div class="login-err" id="login-err">Password errata. Riprova.</div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-title">tim<em>bratura</em></div>
+      <div class="topbar-badge">Admin</div>
+    </div>
+    <div class="topbar-right">
+      <span class="live-dot">Live</span>
+      <span class="topbar-clock" id="top-clock">—</span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Esci</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Totale animatori</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Dentro ora</div>
+        <div class="stat-value green" id="stat-in">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fuori ora</div>
+        <div class="stat-value red" id="stat-out">—</div>
+      </div>
+    </div>
+
+    <!-- STATUS ANIMATORI -->
+    <div class="section-header">
+      <div class="section-title">Stato animatori</div>
+      <button class="btn btn-sm btn-ghost" onclick="loadAll()">↻ Aggiorna</button>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="filter-name" placeholder="Cerca animatore…" oninput="renderAnimators()" style="max-width:220px;">
+      <select id="filter-status" onchange="renderAnimators()">
+        <option value="">Tutti</option>
+        <option value="inside">Dentro</option>
+        <option value="outside">Fuori</option>
+      </select>
+    </div>
+
+    <div class="status-grid" id="animators-grid">
+      <div class="empty"><div class="empty-icon">⏳</div>Caricamento…</div>
+    </div>
+
+    <!-- LOG TIMBRATURE -->
+    <div class="section-header" style="margin-top:8px;">
+      <div class="section-title">Log timbrature</div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="log-search" placeholder="Cerca nome…" oninput="renderLog()" style="max-width:200px;">
+      <input type="date" id="log-date" oninput="renderLog()">
+      <select id="log-tipo" onchange="renderLog()">
+        <option value="">Tutti i tipi</option>
+        <option value="Ingresso">Ingresso</option>
+        <option value="Uscita">Uscita</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Data</th>
+            <th>Ora</th>
+            <th>Tipo</th>
+            <th style="width:180px;">Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody">
+          <tr><td colspan="5" class="empty"><div class="empty-icon">⏳</div>Caricamento…</td></tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <span id="pag-info">—</span>
+        <div class="pagination-btns">
+          <button class="btn btn-ghost btn-sm" id="pag-prev" onclick="changePage(-1)">← Prec</button>
+          <button class="btn btn-ghost btn-sm" id="pag-next" onclick="changePage(1)">Succ →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ MODAL: Timbratura manuale ══ -->
+<div class="modal-overlay" id="modal-manual">
+  <div class="modal">
+    <div class="modal-title">Timbratura manuale</div>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:20px;">
+      Registra un ingresso o un'uscita per <strong id="manual-name-label">—</strong>.
+    </p>
+    <label>Tipo</label>
+    <select id="manual-tipo">
+      <option value="Ingresso">⬆ Ingresso</option>
+      <option value="Uscita">⬇ Uscita</option>
+    </select>
+    <label>Data</label>
+    <input type="date" id="manual-data" />
+    <label>Ora</label>
+    <input type="time" id="manual-ora" step="60" />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-manual')">Annulla</button>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="saveManual()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Modifica timbratura ══ -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title">Modifica timbratura</div>
+    <input type="hidden" id="edit-id" />
+    <label>Nome</label>
+    <input type="text" id="edit-nome" />
+    <label>Data</label>
+    <input type="date" id="edit-data" />
+    <label>Ora</label>
+    <input type="time" id="edit-ora" step="60" />
+    <label>Tipo</label>
+    <select id="edit-tipo">
+      <option value="Ingresso">⬆ Ingresso</option>
+      <option value="Uscita">⬇ Uscita</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit')">Annulla</button>
+      <button class="btn btn-amber" onclick="saveEdit()">Salva modifiche</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ SUPABASE SDK ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  /* ════════════════════════════════════════════════
+   *  ⚙️  CONFIGURAZIONE — stessa config di timbratura.html
+   * ════════════════════════════════════════════════ */
+  const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const ADMIN_PASSWORD    = 'admin1234';   // ← cambia con la tua password
+  /* ════════════════════════════════════════════════ */
+
+  const TABLE = 'timbrature';
+  const PAGE_SIZE = 20;
+
+  let supabase = null;
+  let allAnimators = [];   // { user_id, nome, email, lastStamp, isInside }
+  let allLog = [];         // tutte le timbrature
+  let filteredLog = [];
+  let currentPage = 0;
+  let manualUserId = null;
+  let manualUserNome = null;
+  let refreshInterval = null;
+
+  /* ══════════ LOGIN ══════════ */
+  function doLogin() {
+    const pw = document.getElementById('admin-pass').value;
+    if (pw !== ADMIN_PASSWORD) {
+      document.getElementById('login-err').style.display = 'block';
+      document.getElementById('admin-pass').value = '';
+      return;
+    }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    sessionStorage.setItem('admin_auth', '1');
+    initAdmin();
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem('admin_auth');
+    location.reload();
+  }
+
+  /* ══════════ INIT ══════════ */
+  async function initAdmin() {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    startClock();
+    await loadAll();
+    // Aggiornamento automatico ogni 30s
+    refreshInterval = setInterval(loadAll, 30000);
+  }
+
+  function startClock() {
+    function tick() {
+      document.getElementById('top-clock').textContent =
+        new Date().toLocaleTimeString('it-IT');
+    }
+    tick(); setInterval(tick, 1000);
+  }
+
+  /* ══════════ CARICA DATI ══════════ */
+  async function loadAll() {
+    await Promise.all([loadLog(), loadAnimators()]);
+  }
+
+  async function loadLog() {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) { toast('Errore caricamento log: ' + error.message, 'error'); return; }
+    allLog = data || [];
+    applyLogFilters();
+  }
+
+  async function loadAnimators() {
+    // Prendi l'ultima timbratura per ogni user
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('user_id, nome, data, ora, tipo, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) { toast('Errore caricamento animatori: ' + error.message, 'error'); return; }
+
+    // Raggruppa per user_id, tieni solo l'ultima
+    const map = {};
+    for (const row of (data || [])) {
+      if (!map[row.user_id]) map[row.user_id] = row;
+    }
+
+    allAnimators = Object.values(map).map(r => ({
+      user_id: r.user_id,
+      nome: r.nome,
+      lastStamp: r,
+      isInside: r.tipo === 'Ingresso',
+    }));
+
+    renderAnimators();
+    updateStats();
+  }
+
+  /* ══════════ RENDER ANIMATORI ══════════ */
+  function renderAnimators() {
+    const search = (document.getElementById('filter-name').value || '').toLowerCase();
+    const statusF = document.getElementById('filter-status').value;
+
+    let list = allAnimators.filter(a => {
+      if (search && !a.nome.toLowerCase().includes(search)) return false;
+      if (statusF === 'inside'  && !a.isInside) return false;
+      if (statusF === 'outside' &&  a.isInside) return false;
+      return true;
+    });
+
+    // Ordina: prima chi è dentro
+    list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
+
+    const grid = document.getElementById('animators-grid');
+
+    if (list.length === 0) {
+      grid.innerHTML = `<div class="empty"><div class="empty-icon">👤</div>Nessun animatore trovato.</div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map(a => {
+      const ls = a.lastStamp;
+      const statusClass = a.isInside ? 'in' : 'out';
+      const cardClass   = a.isInside ? 'inside' : 'outside';
+      const statusText  = a.isInside ? 'Dentro' : 'Fuori';
+      const lastTxt = ls ? `${ls.tipo} — ${ls.data} ${ls.ora}` : 'Nessuna timbratura';
+
+      return `
+        <div class="animator-card ${cardClass}">
+          <div class="anim-name">${esc(a.nome)}</div>
+          <div class="anim-status ${statusClass}">${statusText}</div>
+          <div class="anim-last">${esc(lastTxt)}</div>
+          <div class="anim-actions">
+            <button class="btn btn-green btn-sm" onclick="openManual('${esc(a.user_id)}','${esc(a.nome)}','Ingresso')">⬆ Ingresso</button>
+            <button class="btn btn-red btn-sm"   onclick="openManual('${esc(a.user_id)}','${esc(a.nome)}','Uscita')">⬇ Uscita</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function updateStats() {
+    const total = allAnimators.length;
+    const inside = allAnimators.filter(a => a.isInside).length;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-in').textContent    = inside;
+    document.getElementById('stat-out').textContent   = total - inside;
+  }
+
+  /* ══════════ RENDER LOG ══════════ */
+  function applyLogFilters() {
+    const search = (document.getElementById('log-search').value || '').toLowerCase();
+    const date   = document.getElementById('log-date').value;     // yyyy-mm-dd
+    const tipo   = document.getElementById('log-tipo').value;
+
+    filteredLog = allLog.filter(r => {
+      if (search && !r.nome.toLowerCase().includes(search)) return false;
+      if (tipo && r.tipo !== tipo) return false;
+      if (date) {
+        // r.data è in formato dd/mm/yyyy — convertiamo per confronto
+        const parts = r.data.split('/');
+        const rowDate = parts.length === 3
+          ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
+          : r.data;
+        if (rowDate !== date) return false;
+      }
+      return true;
+    });
+
+    currentPage = 0;
+    renderLog();
+  }
+
+  function renderLog() {
+    applyLogFilters(); // re-filter with current inputs
+  }
+
+  function _renderLogPage() {
+    const start = currentPage * PAGE_SIZE;
+    const page  = filteredLog.slice(start, start + PAGE_SIZE);
+    const tbody = document.getElementById('log-tbody');
+
+    if (page.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>Nessuna timbratura trovata.</td></tr>`;
+    } else {
+      tbody.innerHTML = page.map(r => {
+        const tipo = r.tipo === 'Ingresso' ? 'ingresso' : 'uscita';
+        return `
+          <tr>
+            <td>${esc(r.nome)}</td>
+            <td>${esc(r.data)}</td>
+            <td>${esc(r.ora)}</td>
+            <td><span class="tipo-badge ${tipo}">${esc(r.tipo)}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-amber btn-sm" onclick="openEdit(${JSON.stringify(r).replace(/"/g,'&quot;')})">✎ Modifica</button>
+                <button class="btn btn-red btn-sm"   onclick="deleteStamp('${r.id}')">✕</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    const total = filteredLog.length;
+    const pages = Math.ceil(total / PAGE_SIZE) || 1;
+    document.getElementById('pag-info').textContent =
+      `${start + 1}–${Math.min(start + PAGE_SIZE, total)} di ${total}`;
+    document.getElementById('pag-prev').disabled = currentPage === 0;
+    document.getElementById('pag-next').disabled = currentPage >= pages - 1;
+  }
+
+  // Override applyLogFilters to also render
+  const _origApply = applyLogFilters;
+  // re-wire: every call to renderLog calls _renderLogPage after filtering
+  window.renderLog = function() {
+    const search = (document.getElementById('log-search').value || '').toLowerCase();
+    const date   = document.getElementById('log-date').value;
+    const tipo   = document.getElementById('log-tipo').value;
+
+    filteredLog = allLog.filter(r => {
+      if (search && !r.nome.toLowerCase().includes(search)) return false;
+      if (tipo && r.tipo !== tipo) return false;
+      if (date) {
+        const parts = r.data.split('/');
+        const rowDate = parts.length === 3
+          ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
+          : r.data;
+        if (rowDate !== date) return false;
+      }
+      return true;
+    });
+    _renderLogPage();
+  };
+
+  function changePage(dir) {
+    const pages = Math.ceil(filteredLog.length / PAGE_SIZE) || 1;
+    currentPage = Math.max(0, Math.min(pages - 1, currentPage + dir));
+    _renderLogPage();
+  }
+
+  /* ══════════ MODAL: TIMBRATURA MANUALE ══════════ */
+  function openManual(userId, nome, tipoDefault) {
+    manualUserId   = userId;
+    manualUserNome = nome;
+    document.getElementById('manual-name-label').textContent = nome;
+    document.getElementById('manual-tipo').value = tipoDefault;
+    // Pre-fill con data e ora corrente
+    const now = new Date();
+    document.getElementById('manual-data').value = now.toISOString().slice(0,10);
+    document.getElementById('manual-ora').value  =
+      now.toTimeString().slice(0,5);
+    openModal('modal-manual');
+  }
+
+  async function saveManual() {
+    const tipo = document.getElementById('manual-tipo').value;
+    const dataRaw = document.getElementById('manual-data').value; // yyyy-mm-dd
+    const ora  = document.getElementById('manual-ora').value;     // HH:MM
+
+    if (!dataRaw || !ora) { toast('Compila tutti i campi', 'error'); return; }
+
+    // Converti data in dd/mm/yyyy (stesso formato dell'app)
+    const parts = dataRaw.split('-');
+    const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+    const { error } = await supabase.from(TABLE).insert({
+      user_id: manualUserId,
+      nome:    manualUserNome,
+      data, ora, tipo,
+    });
+
+    if (error) { toast('Errore: ' + error.message, 'error'); return; }
+    toast(`${tipo} registrata per ${manualUserNome}`, 'success');
+    closeModal('modal-manual');
+    await loadAll();
+  }
+
+  /* ══════════ MODAL: MODIFICA ══════════ */
+  function openEdit(row) {
+    document.getElementById('edit-id').value   = row.id;
+    document.getElementById('edit-nome').value = row.nome;
+    document.getElementById('edit-tipo').value = row.tipo;
+
+    // Converti data dd/mm/yyyy → yyyy-mm-dd per input date
+    const parts = row.data.split('/');
+    document.getElementById('edit-data').value =
+      parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : row.data;
+
+    // Converti ora HH:MM:SS → HH:MM
+    document.getElementById('edit-ora').value = row.ora.slice(0,5);
+
+    openModal('modal-edit');
+  }
+
+  async function saveEdit() {
+    const id   = document.getElementById('edit-id').value;
+    const nome = document.getElementById('edit-nome').value.trim();
+    const tipo = document.getElementById('edit-tipo').value;
+    const dataRaw = document.getElementById('edit-data').value;
+    const ora  = document.getElementById('edit-ora').value;
+
+    if (!nome || !dataRaw || !ora) { toast('Compila tutti i campi', 'error'); return; }
+
+    const parts = dataRaw.split('-');
+    const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+    const { error } = await supabase.from(TABLE)
+      .update({ nome, data, ora, tipo })
+      .eq('id', id);
+
+    if (error) { toast('Errore: ' + error.message, 'error'); return; }
+    toast('Timbratura modificata', 'success');
+    closeModal('modal-edit');
+    await loadAll();
+  }
+
+  /* ══════════ DELETE ══════════ */
+  async function deleteStamp(id) {
+    if (!confirm('Eliminare questa timbratura?')) return;
+    const { error } = await supabase.from(TABLE).delete().eq('id', id);
+    if (error) { toast('Errore: ' + error.message, 'error'); return; }
+    toast('Timbratura eliminata', 'success');
+    await loadAll();
+  }
+
+  /* ══════════ MODAL HELPERS ══════════ */
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  // Chiudi cliccando fuori
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target === el) el.classList.remove('open');
+    });
+  });
+
+  /* ══════════ TOAST ══════════ */
+  function toast(msg, type = 'info', duration = 3500) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  /* ══════════ UTILS ══════════ */
+  function esc(str) {
+    return String(str ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ══════════ AUTO-LOGIN se sessione valida ══════════ */
+  window.addEventListener('load', () => {
+    if (sessionStorage.getItem('admin_auth') === '1') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      initAdmin();
+    }
+  });
+</script>
+
+</body>
+</html>
