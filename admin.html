@@ -466,7 +466,7 @@
   const TABLE = 'timbrature';
   const PAGE_SIZE = 20;
 
-  let supabase = null;
+  let supabaseClient = null; // Corretto qui (era rimasto solo supabase)
   let allAnimators = [];   
   let allLog = [];         
   let filteredLog = [];
@@ -494,7 +494,7 @@
   }
 
   async function initAdmin() {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     startClock();
     await loadAll();
     if (refreshInterval) clearInterval(refreshInterval);
@@ -513,7 +513,7 @@
   }
 
   async function loadLog() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(TABLE)
       .select('*')
       .order('created_at', { ascending: false });
@@ -524,7 +524,7 @@
   }
 
   async function loadAnimators() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(TABLE)
       .select('nome, anno, data, ora, tipo, created_at')
       .order('created_at', { ascending: false });
@@ -680,7 +680,7 @@
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    const { error } = await supabase.from(TABLE).insert({
+    const { error } = await supabaseClient.from(TABLE).insert({
       user_id: '00000000-0000-0000-0000-000000000000',
       nome:    manualUserNome,
       anno:    parseInt(manualUserAnno),
@@ -710,14 +710,13 @@
     const newAnno = document.getElementById('profile-new-anno').value.trim();
 
     if (!newNome || !newAnno || newAnno.length !== 4) {
-      toast('Inserisci un nome e un anno di nascita valido di 4 cifre', 'error');
+      toast('Inserisci un nome e un anno di nascita valido di 4 digits', 'error');
       return;
     }
 
     toast('Aggiornamento in corso...', 'info');
 
-    // Aggiorna tutte le righe che corrispondono al vecchio profilo
-    const { error } = await supabase.from(TABLE)
+    const { error } = await supabaseClient.from(TABLE)
       .update({ nome: newNome, anno: parseInt(newAnno) })
       .eq('nome', oldNome)
       .eq('anno', parseInt(oldAnno));
@@ -725,7 +724,7 @@
     if (error) {
       toast('Errore: ' + error.message, 'error');
     } else {
-      toast('Anagrafica dell\'animatore aggiornata ovunque con successo!', 'success');
+      toast('Anagrafica dell\'animatore aggiornata con successo!', 'success');
       closeModal('modal-edit-profile');
       await loadAll();
     }
@@ -757,7 +756,7 @@
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    const { error } = await supabase.from(TABLE)
+    const { error } = await supabaseClient.from(TABLE)
       .update({ nome, anno: parseInt(anno), data, ora, tipo })
       .eq('id', id);
 
@@ -769,7 +768,7 @@
 
   async function deleteStamp(id) {
     if (!confirm('Eliminare questa timbratura?')) return;
-    const { error } = await supabase.from(TABLE).delete().eq('id', id);
+    const { error } = await supabaseClient.from(TABLE).delete().eq('id', id);
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
     toast('Timbratura eliminata', 'success');
     await loadAll();
@@ -779,7 +778,6 @@
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   
   document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.preventDefault;
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
   });
 
