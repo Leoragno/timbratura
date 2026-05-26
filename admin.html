@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Timbratura</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,7 +40,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── PAPER TEXTURE ── */
     body::before {
       content: '';
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -127,32 +126,18 @@
     }
     .btn-primary:hover:not(:disabled) { background: #1f3329; }
 
-    .btn-sm {
-      padding: 6px 12px; font-size: 11px;
-    }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
 
-    .btn-green {
-      background: var(--green-lt); color: var(--green);
-      border-color: #b2d4bc;
-    }
+    .btn-green { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
     .btn-green:hover:not(:disabled) { background: #d0eadb; }
 
-    .btn-red {
-      background: var(--red-lt); color: var(--red);
-      border-color: #dbb2b2;
-    }
+    .btn-red { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
     .btn-red:hover:not(:disabled) { background: #ead0d0; }
 
-    .btn-amber {
-      background: var(--amber-lt); color: var(--amber);
-      border-color: #e0cfa0;
-    }
+    .btn-amber { background: var(--amber-lt); color: var(--amber); border-color: #e0cfa0; }
     .btn-amber:hover:not(:disabled) { background: #f5e8c0; }
 
-    .btn-ghost {
-      background: transparent; color: var(--ink3);
-      border-color: var(--border);
-    }
+    .btn-ghost { background: transparent; color: var(--ink3); border-color: var(--border); }
     .btn-ghost:hover:not(:disabled) { background: var(--bg2); color: var(--ink); }
 
     .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
@@ -160,7 +145,6 @@
     /* ══════════════ MAIN APP ══════════════ */
     #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
 
-    /* ── TOPBAR ── */
     .topbar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -169,14 +153,8 @@
       height: 56px; position: sticky; top: 0; z-index: 50;
     }
 
-    .topbar-brand {
-      display: flex; align-items: baseline; gap: 10px;
-    }
-
-    .topbar-title {
-      font-family: var(--font-serif); font-size: 20px;
-    }
-
+    .topbar-brand { display: flex; align-items: baseline; gap: 10px; }
+    .topbar-title { font-family: var(--font-serif); font-size: 20px; }
     .topbar-title em { font-style: italic; color: var(--accent); }
 
     .topbar-badge {
@@ -188,15 +166,10 @@
 
     .topbar-right { display: flex; align-items: center; gap: 16px; }
 
-    .live-dot {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11px; color: var(--green);
-    }
+    .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); }
     .live-dot::before {
-      content: '';
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--green);
-      animation: pulse 1.8s ease-in-out infinite;
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); animation: pulse 1.8s ease-in-out infinite;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
@@ -205,206 +178,101 @@
 
     .topbar-clock { font-size: 12px; color: var(--ink3); }
 
-    /* ── MAIN LAYOUT ── */
     .main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
 
-    /* ── STAT CARDS ── */
     .stats-row {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
       margin-bottom: 28px;
     }
 
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 20px 22px;
-    }
-
-    .stat-label {
-      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--ink3); margin-bottom: 6px;
-    }
-
-    .stat-value {
-      font-family: var(--font-serif); font-size: 40px; line-height: 1;
-    }
-
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; }
+    .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+    .stat-value { font-family: var(--font-serif); font-size: 40px; line-height: 1; }
     .stat-value.green { color: var(--green); }
     .stat-value.red   { color: var(--red); }
 
-    /* ── SECTION HEADER ── */
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px;
-    }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; }
 
-    .section-title {
-      font-family: var(--font-serif); font-size: 22px; font-style: italic;
-    }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
 
-    /* ── FILTER BAR ── */
-    .filter-bar {
-      display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .filter-bar input, .filter-bar select {
-      margin-bottom: 0; width: auto; flex: 1; min-width: 140px;
-    }
-
-    /* ── STATUS TABLE ── */
     .status-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 12px;
-      margin-bottom: 32px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px; margin-bottom: 32px;
     }
 
-    .animator-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 16px 18px;
-      position: relative;
-      transition: box-shadow .15s;
-    }
-
+    .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; position: relative; transition: box-shadow .15s; }
     .animator-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
-
     .animator-card.inside  { border-left: 3px solid var(--green); }
     .animator-card.outside { border-left: 3px solid var(--border2); }
 
-    .anim-name {
-      font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px;
-    }
-
+    .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
     .anim-email { font-size: 11px; color: var(--ink3); margin-bottom: 10px; }
 
     .anim-status {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 500; letter-spacing: .5px;
+      display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; letter-spacing: .5px;
       padding: 3px 9px; border-radius: 20px; margin-bottom: 12px;
     }
     .anim-status.in  { background: var(--green-lt); color: var(--green); }
     .anim-status.out { background: var(--bg2); color: var(--ink3); }
-    .anim-status::before {
-      content: ''; width: 6px; height: 6px; border-radius: 50%;
-    }
+    .anim-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
     .anim-status.in::before  { background: var(--green); }
     .anim-status.out::before { background: var(--ink3); }
 
-    .anim-last {
-      font-size: 11px; color: var(--ink3); margin-bottom: 12px;
-    }
-
+    .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
     .anim-actions { display: flex; gap: 6px; }
 
-    /* ── LOG TABLE ── */
-    .table-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%; border-collapse: collapse;
-    }
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
 
     thead th {
-      background: var(--bg2);
-      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--ink3); font-weight: 500;
-      padding: 10px 14px; text-align: left;
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 56px;
+      background: var(--bg2); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--ink3); font-weight: 500; padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border); position: sticky; top: 56px;
     }
 
-    tbody tr {
-      border-bottom: 1px solid var(--bg2);
-      transition: background .1s;
-    }
+    tbody tr { border-bottom: 1px solid var(--bg2); transition: background .1s; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: var(--bg); }
+    tbody td { padding: 10px 14px; font-size: 12px; vertical-align: middle; }
 
-    tbody td {
-      padding: 10px 14px; font-size: 12px; vertical-align: middle;
-    }
-
-    .tipo-badge {
-      display: inline-block;
-      font-size: 10px; font-weight: 500; letter-spacing: .5px;
-      padding: 2px 8px; border-radius: 20px;
-    }
+    .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: .5px; padding: 2px 8px; border-radius: 20px; }
     .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
     .tipo-badge.uscita   { background: var(--red-lt);   color: var(--red);   }
 
-    .edit-row-form {
-      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-    }
-
-    .edit-row-form input, .edit-row-form select {
-      margin-bottom: 0; padding: 5px 8px; font-size: 12px;
-    }
-
     /* ── MODAL ── */
     .modal-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(26,23,20,.45);
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px;
-      opacity: 0; pointer-events: none;
-      transition: opacity .2s;
+      position: fixed; inset: 0; z-index: 200; background: rgba(26,23,20,.45);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
 
     .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 36px 32px;
-      width: 100%; max-width: 400px;
-      box-shadow: 0 8px 40px rgba(0,0,0,.15);
-      transform: translateY(16px) scale(.98);
-      transition: transform .2s cubic-bezier(.23,1,.32,1);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: 0 8px 40px rgba(0,0,0,.15);
+      transform: translateY(16px) scale(.98); transition: transform .2s cubic-bezier(.23,1,.32,1);
     }
     .modal-overlay.open .modal { transform: translateY(0) scale(1); }
-
-    .modal-title {
-      font-family: var(--font-serif); font-size: 24px; font-style: italic;
-      margin-bottom: 20px;
-    }
-
+    .modal-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 20px; }
     .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
     /* ── TOAST ── */
     .toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: var(--ink); color: var(--bg);
-      border-radius: 4px; padding: 12px 18px;
-      font-size: 12px;
-      transform: translateY(20px); opacity: 0;
-      transition: all .3s cubic-bezier(.23,1,.32,1);
+      position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg);
+      border-radius: 4px; padding: 12px 18px; font-size: 12px;
+      transform: translateY(20px); opacity: 0; transition: all .3s cubic-bezier(.23,1,.32,1);
       z-index: 300; max-width: 320px;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { background: var(--green); }
     .toast.error   { background: var(--red); }
 
-    /* ── EMPTY STATE ── */
-    .empty {
-      text-align: center; padding: 48px; color: var(--ink3);
-    }
+    .empty { text-align: center; padding: 48px; color: var(--ink3); }
     .empty-icon { font-size: 32px; margin-bottom: 12px; }
 
-    /* ── PAGINATION ── */
-    .pagination {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      font-size: 11px; color: var(--ink3);
-    }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--ink3); }
     .pagination-btns { display: flex; gap: 6px; }
 
     @media (max-width: 700px) {
@@ -419,23 +287,18 @@
 </head>
 <body>
 
-<!-- ══ LOGIN ══ -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-eyebrow">Pannello di controllo</div>
     <div class="login-title">Accesso <em>Admin</em></div>
     <label for="admin-pass">Password</label>
-    <input type="password" id="admin-pass" placeholder="••••••••"
-           onkeydown="if(event.key==='Enter') doLogin()" />
+    <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()" />
     <button class="btn btn-primary" onclick="doLogin()">Entra →</button>
     <div class="login-err" id="login-err">Password errata. Riprova.</div>
   </div>
 </div>
 
-<!-- ══ APP ══ -->
 <div id="app">
-
-  <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-brand">
       <div class="topbar-title">tim<em>bratura</em></div>
@@ -449,8 +312,6 @@
   </div>
 
   <div class="main">
-
-    <!-- STATS -->
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">Totale animatori</div>
@@ -466,7 +327,6 @@
       </div>
     </div>
 
-    <!-- STATUS ANIMATORI -->
     <div class="section-header">
       <div class="section-title">Stato animatori</div>
       <button class="btn btn-sm btn-ghost" onclick="loadAll()">↻ Aggiorna</button>
@@ -485,7 +345,6 @@
       <div class="empty"><div class="empty-icon">⏳</div>Caricamento…</div>
     </div>
 
-    <!-- LOG TIMBRATURE -->
     <div class="section-header" style="margin-top:8px;">
       <div class="section-title">Log timbrature</div>
     </div>
@@ -523,11 +382,9 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ══ MODAL: Timbratura manuale ══ -->
 <div class="modal-overlay" id="modal-manual">
   <div class="modal">
     <div class="modal-title">Timbratura manuale</div>
@@ -550,7 +407,6 @@
   </div>
 </div>
 
-<!-- ══ MODAL: Modifica timbratura ══ -->
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
     <div class="modal-title">Modifica timbratura</div>
@@ -573,34 +429,27 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- ══ SUPABASE SDK ══ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  /* ════════════════════════════════════════════════
-   *  ⚙️  CONFIGURAZIONE — stessa config di timbratura.html
-   * ════════════════════════════════════════════════ */
   const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const ADMIN_PASSWORD    = 'admin1234';   // ← cambia con la tua password
-  /* ════════════════════════════════════════════════ */
+  const ADMIN_PASSWORD    = 'admin1234';
 
   const TABLE = 'timbrature';
   const PAGE_SIZE = 20;
 
-  let supabase = null;
-  let allAnimators = [];   // { user_id, nome, email, lastStamp, isInside }
-  let allLog = [];         // tutte le timbrature
+  let supabaseClient = null;
+  let allAnimators = [];   
+  let allLog = [];         
   let filteredLog = [];
   let currentPage = 0;
   let manualUserId = null;
   let manualUserNome = null;
   let refreshInterval = null;
 
-  /* ══════════ LOGIN ══════════ */
   function doLogin() {
     const pw = document.getElementById('admin-pass').value;
     if (pw !== ADMIN_PASSWORD) {
@@ -619,49 +468,44 @@
     location.reload();
   }
 
-  /* ══════════ INIT ══════════ */
   async function initAdmin() {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     startClock();
     await loadAll();
-    // Aggiornamento automatico ogni 30s
+    if (refreshInterval) clearInterval(refreshInterval);
     refreshInterval = setInterval(loadAll, 30000);
   }
 
   function startClock() {
-    function tick() {
-      document.getElementById('top-clock').textContent =
-        new Date().toLocaleTimeString('it-IT');
-    }
-    tick(); setInterval(tick, 1000);
+    setInterval(() => {
+      document.getElementById('top-clock').textContent = new Date().toLocaleTimeString('it-IT');
+    }, 1000);
   }
 
-  /* ══════════ CARICA DATI ══════════ */
   async function loadAll() {
-    await Promise.all([loadLog(), loadAnimators()]);
+    await loadLog();
+    await loadAnimators();
   }
 
   async function loadLog() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(TABLE)
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) { toast('Errore caricamento log: ' + error.message, 'error'); return; }
     allLog = data || [];
-    applyLogFilters();
+    renderLog();
   }
 
   async function loadAnimators() {
-    // Prendi l'ultima timbratura per ogni user
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(TABLE)
       .select('user_id, nome, data, ora, tipo, created_at')
       .order('created_at', { ascending: false });
 
     if (error) { toast('Errore caricamento animatori: ' + error.message, 'error'); return; }
 
-    // Raggruppa per user_id, tieni solo l'ultima
     const map = {};
     for (const row of (data || [])) {
       if (!map[row.user_id]) map[row.user_id] = row;
@@ -678,7 +522,6 @@
     updateStats();
   }
 
-  /* ══════════ RENDER ANIMATORI ══════════ */
   function renderAnimators() {
     const search = (document.getElementById('filter-name').value || '').toLowerCase();
     const statusF = document.getElementById('filter-status').value;
@@ -690,9 +533,7 @@
       return true;
     });
 
-    // Ordina: prima chi è dentro
     list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
-
     const grid = document.getElementById('animators-grid');
 
     if (list.length === 0) {
@@ -728,17 +569,15 @@
     document.getElementById('stat-out').textContent   = total - inside;
   }
 
-  /* ══════════ RENDER LOG ══════════ */
-  function applyLogFilters() {
+  function renderLog() {
     const search = (document.getElementById('log-search').value || '').toLowerCase();
-    const date   = document.getElementById('log-date').value;     // yyyy-mm-dd
+    const date   = document.getElementById('log-date').value;     
     const tipo   = document.getElementById('log-tipo').value;
 
     filteredLog = allLog.filter(r => {
       if (search && !r.nome.toLowerCase().includes(search)) return false;
       if (tipo && r.tipo !== tipo) return false;
       if (date) {
-        // r.data è in formato dd/mm/yyyy — convertiamo per confronto
         const parts = r.data.split('/');
         const rowDate = parts.length === 3
           ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
@@ -748,12 +587,7 @@
       return true;
     });
 
-    currentPage = 0;
-    renderLog();
-  }
-
-  function renderLog() {
-    applyLogFilters(); // re-filter with current inputs
+    _renderLogPage();
   }
 
   function _renderLogPage() {
@@ -765,13 +599,13 @@
       tbody.innerHTML = `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>Nessuna timbratura trovata.</td></tr>`;
     } else {
       tbody.innerHTML = page.map(r => {
-        const tipo = r.tipo === 'Ingresso' ? 'ingresso' : 'uscita';
+        const tipoClass = r.tipo === 'Ingresso' ? 'ingresso' : 'uscita';
         return `
           <tr>
             <td>${esc(r.nome)}</td>
             <td>${esc(r.data)}</td>
             <td>${esc(r.ora)}</td>
-            <td><span class="tipo-badge ${tipo}">${esc(r.tipo)}</span></td>
+            <td><span class="tipo-badge ${tipoClass}">${esc(r.tipo)}</span></td>
             <td>
               <div style="display:flex;gap:6px;">
                 <button class="btn btn-amber btn-sm" onclick="openEdit(${JSON.stringify(r).replace(/"/g,'&quot;')})">✎ Modifica</button>
@@ -784,34 +618,10 @@
 
     const total = filteredLog.length;
     const pages = Math.ceil(total / PAGE_SIZE) || 1;
-    document.getElementById('pag-info').textContent =
-      `${start + 1}–${Math.min(start + PAGE_SIZE, total)} di ${total}`;
+    document.getElementById('pag-info').textContent = total > 0 ? `${start + 1}–${Math.min(start + PAGE_SIZE, total)} di ${total}` : '0-0 di 0';
     document.getElementById('pag-prev').disabled = currentPage === 0;
     document.getElementById('pag-next').disabled = currentPage >= pages - 1;
   }
-
-  // Override applyLogFilters to also render
-  const _origApply = applyLogFilters;
-  // re-wire: every call to renderLog calls _renderLogPage after filtering
-  window.renderLog = function() {
-    const search = (document.getElementById('log-search').value || '').toLowerCase();
-    const date   = document.getElementById('log-date').value;
-    const tipo   = document.getElementById('log-tipo').value;
-
-    filteredLog = allLog.filter(r => {
-      if (search && !r.nome.toLowerCase().includes(search)) return false;
-      if (tipo && r.tipo !== tipo) return false;
-      if (date) {
-        const parts = r.data.split('/');
-        const rowDate = parts.length === 3
-          ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
-          : r.data;
-        if (rowDate !== date) return false;
-      }
-      return true;
-    });
-    _renderLogPage();
-  };
 
   function changePage(dir) {
     const pages = Math.ceil(filteredLog.length / PAGE_SIZE) || 1;
@@ -819,32 +629,28 @@
     _renderLogPage();
   }
 
-  /* ══════════ MODAL: TIMBRATURA MANUALE ══════════ */
   function openManual(userId, nome, tipoDefault) {
     manualUserId   = userId;
     manualUserNome = nome;
     document.getElementById('manual-name-label').textContent = nome;
     document.getElementById('manual-tipo').value = tipoDefault;
-    // Pre-fill con data e ora corrente
     const now = new Date();
     document.getElementById('manual-data').value = now.toISOString().slice(0,10);
-    document.getElementById('manual-ora').value  =
-      now.toTimeString().slice(0,5);
+    document.getElementById('manual-ora').value  = now.toTimeString().slice(0,5);
     openModal('modal-manual');
   }
 
   async function saveManual() {
     const tipo = document.getElementById('manual-tipo').value;
-    const dataRaw = document.getElementById('manual-data').value; // yyyy-mm-dd
-    const ora  = document.getElementById('manual-ora').value;     // HH:MM
+    const dataRaw = document.getElementById('manual-data').value; 
+    const ora  = document.getElementById('manual-ora').value;     
 
     if (!dataRaw || !ora) { toast('Compila tutti i campi', 'error'); return; }
 
-    // Converti data in dd/mm/yyyy (stesso formato dell'app)
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    const { error } = await supabase.from(TABLE).insert({
+    const { error } = await supabaseClient.from(TABLE).insert({
       user_id: manualUserId,
       nome:    manualUserNome,
       data, ora, tipo,
@@ -856,18 +662,13 @@
     await loadAll();
   }
 
-  /* ══════════ MODAL: MODIFICA ══════════ */
   function openEdit(row) {
     document.getElementById('edit-id').value   = row.id;
     document.getElementById('edit-nome').value = row.nome;
     document.getElementById('edit-tipo').value = row.tipo;
 
-    // Converti data dd/mm/yyyy → yyyy-mm-dd per input date
     const parts = row.data.split('/');
-    document.getElementById('edit-data').value =
-      parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : row.data;
-
-    // Converti ora HH:MM:SS → HH:MM
+    document.getElementById('edit-data').value = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : row.data;
     document.getElementById('edit-ora').value = row.ora.slice(0,5);
 
     openModal('modal-edit');
@@ -885,7 +686,7 @@
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    const { error } = await supabase.from(TABLE)
+    const { error } = await supabaseClient.from(TABLE)
       .update({ nome, data, ora, tipo })
       .eq('id', id);
 
@@ -895,30 +696,21 @@
     await loadAll();
   }
 
-  /* ══════════ DELETE ══════════ */
   async function deleteStamp(id) {
     if (!confirm('Eliminare questa timbratura?')) return;
-    const { error } = await supabase.from(TABLE).delete().eq('id', id);
+    const { error } = await supabaseClient.from(TABLE).delete().eq('id', id);
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
     toast('Timbratura eliminata', 'success');
     await loadAll();
   }
 
-  /* ══════════ MODAL HELPERS ══════════ */
-  function openModal(id) {
-    document.getElementById(id).classList.add('open');
-  }
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
-  }
-  // Chiudi cliccando fuori
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  
   document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', e => {
-      if (e.target === el) el.classList.remove('open');
-    });
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
   });
 
-  /* ══════════ TOAST ══════════ */
   function toast(msg, type = 'info', duration = 3500) {
     const el = document.getElementById('toast');
     el.textContent = msg;
@@ -927,14 +719,12 @@
     setTimeout(() => el.classList.remove('show'), duration);
   }
 
-  /* ══════════ UTILS ══════════ */
   function esc(str) {
     return String(str ?? '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  /* ══════════ AUTO-LOGIN se sessione valida ══════════ */
   window.addEventListener('load', () => {
     if (sessionStorage.getItem('admin_auth') === '1') {
       document.getElementById('login-screen').style.display = 'none';
@@ -943,6 +733,5 @@
     }
   });
 </script>
-
 </body>
 </html>
