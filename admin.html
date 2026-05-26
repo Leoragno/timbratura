@@ -226,7 +226,6 @@
     .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
     .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 
-    /* RIFATTA PER EVITARE COMPENETRAZIONE */
     .table-wrap { 
       background: var(--surface); 
       border: 1px solid var(--border); 
@@ -239,7 +238,7 @@
     table { 
       width: 100%; 
       border-collapse: collapse; 
-      min-width: 750px; /* Impedisce il collasso delle colonne */
+      min-width: 750px;
     }
 
     thead th {
@@ -351,9 +350,14 @@
     <div class="filter-bar">
       <input type="text" id="filter-name" placeholder="Cerca nome o anno…" oninput="renderAnimators()" style="max-width:220px;">
       <select id="filter-status" onchange="renderAnimators()">
-        <option value="">Tutti</option>
+        <option value="">Tutti gli stati</option>
         <option value="inside">Dentro</option>
         <option value="outside">Fuori</option>
+      </select>
+      <select id="filter-sort" onchange="renderAnimators()">
+        <option value="status">Ordina per: Stato (Dentro/Fuori)</option>
+        <option value="alpha">Ordina per: Alfabetico (A-Z)</option>
+        <option value="anno">Ordina per: Anno di Nascita</option>
       </select>
     </div>
 
@@ -372,6 +376,12 @@
         <option value="">Tutti i tipi</option>
         <option value="Ingresso">Ingresso</option>
         <option value="Uscita">Uscita</option>
+      </select>
+      <select id="log-sort" onchange="renderLog()">
+        <option value="ora-desc">Ordina per: Ora (Più recenti)</option>
+        <option value="ora-asc">Ordina per: Ora (Più vecchi)</option>
+        <option value="alpha">Ordina per: Alfabetico (A-Z)</option>
+        <option value="anno">Ordina per: Anno di Nascita</option>
       </select>
     </div>
 
@@ -565,6 +575,7 @@
   function renderAnimators() {
     const search = (document.getElementById('filter-name').value || '').toLowerCase();
     const statusF = document.getElementById('filter-status').value;
+    const sortVal = document.getElementById('filter-sort').value;
 
     let list = allAnimators.filter(a => {
       const matchSearch = a.nome.toLowerCase().includes(search) || a.anno.toString().includes(search);
@@ -574,7 +585,15 @@
       return true;
     });
 
-    list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
+    // Gestione Ordinamento Stato Animatori
+    if (sortVal === 'status') {
+      list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
+    } else if (sortVal === 'alpha') {
+      list.sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+    } else if (sortVal === 'anno') {
+      list.sort((a, b) => (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0));
+    }
+
     const grid = document.getElementById('animators-grid');
 
     if (list.length === 0) {
@@ -615,6 +634,7 @@
     const search = (document.getElementById('log-search').value || '').toLowerCase();
     const date   = document.getElementById('log-date').value;     
     const tipo   = document.getElementById('log-tipo').value;
+    const sortVal = document.getElementById('log-sort').value;
 
     filteredLog = allLog.filter(r => {
       const matchSearch = r.nome.toLowerCase().includes(search) || (r.anno && r.anno.toString().includes(search));
@@ -629,6 +649,17 @@
       }
       return true;
     });
+
+    // Gestione Ordinamento Tabella Log
+    if (sortVal === 'ora-desc') {
+      filteredLog.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (sortVal === 'ora-asc') {
+      filteredLog.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sortVal === 'alpha') {
+      filteredLog.sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+    } else if (sortVal === 'anno') {
+      filteredLog.sort((a, b) => (a.anno || 0) - (b.anno || 0));
+    }
 
     _renderLogPage();
   }
@@ -676,7 +707,7 @@
   function openManual(nome, anno, tipoDefault) {
     manualUserNome = nome;
     manualUserAnno = anno;
-    document.getElementById('manual-name-label').textContent = nome + ' (' + anno + ')';
+    document.getElementById('manual-name-label').textContent = nome + ' (' + (anno || '—') + ')';
     document.getElementById('manual-tipo').value = tipoDefault;
     const now = new Date();
     document.getElementById('manual-data').value = now.toISOString().slice(0,10);
@@ -693,11 +724,12 @@
 
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    const annoParsed = manualUserAnno ? parseInt(manualUserAnno) : null;
 
     const { error } = await supabaseClient.from(TABLE).insert({
       user_id: '00000000-0000-0000-0000-000000000000',
       nome:    manualUserNome,
-      anno:    parseInt(manualUserAnno),
+      anno:    isNaN(annoParsed) ? null : annoParsed,
       data, ora, tipo,
     });
 
@@ -721,22 +753,33 @@
     const newNome = document.getElementById('profile-new-nome').value.trim();
     const newAnno = document.getElementById('profile-new-anno').value.trim();
 
-    if (!newNome || !newAnno || newAnno.length !== 4) {
-      toast('Inserisci un nome e un anno di nascita valido di 4 cifre', 'error');
-      return;
+    if (!newNome) { toast('Inserisci un nome valido', 'error'); return; }
+
+    const newAnnoParsed = newAnno ? parseInt(newAnno) : null;
+    const oldAnnoParsed = oldAnno ? parseInt(oldAnno) : null;
+
+    if (newAnno && (isNaN(newAnnoParsed) || newAnno.length !== 4)) {
+      toast('L\'anno deve essere di 4 cifre', 'error'); return;
     }
 
     toast('Aggiornamento in corso...', 'info');
 
-    const { error } = await supabaseClient.from(TABLE)
-      .update({ nome: newNome, anno: parseInt(newAnno) })
-      .eq('nome', oldNome)
-      .eq('anno', parseInt(oldAnno));
+    let query = supabaseClient.from(TABLE)
+      .update({ nome: newNome, anno: isNaN(newAnnoParsed) ? null : newAnnoParsed })
+      .eq('nome', oldNome);
+
+    if (!oldAnno || isNaN(oldAnnoParsed)) {
+      query = query.is('anno', null);
+    } else {
+      query = query.eq('anno', oldAnnoParsed);
+    }
+
+    const { error } = await query;
 
     if (error) {
       toast('Errore: ' + error.message, 'error');
     } else {
-      toast('Anagrafica dell\'animatore aggiornata con successo!', 'success');
+      toast('Anagrafica dell\'animatore aggiornata!', 'success');
       closeModal('modal-edit-profile');
       await loadAll();
     }
@@ -767,9 +810,10 @@
 
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    const annoParsed = anno ? parseInt(anno) : null;
 
     const { error } = await supabaseClient.from(TABLE)
-      .update({ nome, anno: parseInt(anno), data, ora, tipo })
+      .update({ nome, anno: isNaN(annoParsed) ? null : annoParsed, data, ora, tipo })
       .eq('id', id);
 
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
