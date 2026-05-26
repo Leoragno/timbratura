@@ -186,6 +186,13 @@
     .btn-toggle {
       width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600;
       border: 1px solid var(--border); border-radius: 4px; cursor: pointer; text-align: center;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .btn-toggle.open {
+      background: var(--green-lt); color: var(--green); border-color: #b2d4bc;
+    }
+    .btn-toggle.locked {
+      background: var(--red-lt); color: var(--red); border-color: #dbb2b2;
     }
 
     .filter-bar {
@@ -467,8 +474,12 @@
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
         });
       }
-      document.getElementById('toggle-in-btn').textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
-      document.getElementById('toggle-out-btn').textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
+      var btnIn = document.getElementById('toggle-in-btn');
+      var btnOut = document.getElementById('toggle-out-btn');
+      btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
+      btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
+      btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
+      btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
     }
 
     async function loadUsers() {
