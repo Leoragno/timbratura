@@ -519,7 +519,6 @@
   let manualUserAnno = null;
   let refreshInterval = null;
 
-  // Variabili globali per lo stato dei blocchi pulsanti ragazzi
   let ingressoAperto = true;
   let uscitaAperta = true;
 
@@ -530,10 +529,19 @@
       document.getElementById('admin-pass').value = '';
       return;
     }
+    
+    // Transizione immediata dell'interfaccia grafica
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     sessionStorage.setItem('admin_auth', '1');
-    initAdmin();
+    
+    // Inizializza i dati in modo asincrono protetto
+    try {
+      initAdmin();
+    } catch(e) {
+      console.error(e);
+      toast("Errore durante l'inizializzazione del database", "error");
+    }
   }
 
   function doLogout() {
@@ -556,24 +564,26 @@
   }
 
   async function loadAll() {
-    await scaricaStatoBlocchi(); // Sincronizza lo stato dei telecomandi on/off
+    await scaricaStatoBlocchi();
     await loadLog();
     await loadAnimators();
   }
 
-  // 1. Scarica lo stato dei blocchi dal Database impostazioni
   async function scaricaStatoBlocchi() {
-    const { data, error } = await supabaseClient.from('impostazioni').select('*');
-    if (!error && data) {
-      data.forEach(row => {
-        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
-      });
-      aggiornaGraficaPulsanti();
+    try {
+      const { data, error } = await supabaseClient.from('impostazioni').select('*');
+      if (!error && data) {
+        data.forEach(row => {
+          if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+          if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+        });
+        aggiornaGraficaPulsanti();
+      }
+    } catch(err) {
+      console.error(err);
     }
   }
 
-  // 2. Cambia l'estetica dei pulsanti telecomando in base allo stato
   function aggiornaGraficaPulsanti() {
     const btnIn = document.getElementById('toggle-in-btn');
     const btnOut = document.getElementById('toggle-out-btn');
@@ -590,7 +600,6 @@
     btnOut.style.borderColor = uscitaAperta ? '#b2d4bc' : '#dbb2b2';
   }
 
-  // 3. Esegue l'inversione dello stato (on/off) cliccando sul telecomando
   async function toggleStato(chiave) {
     const statoCorrente = (chiave === 'ingresso_aperto') ? ingressoAperto : uscitaAperta;
     const nuovoStato = !statoCorrente;
@@ -753,7 +762,7 @@
             <td><span class="tipo-badge ${tipoClass}">${esc(r.tipo)}</span></td>
             <td>
               <div style="display:flex;gap:6px;">
-                <button class="btn btn-amber btn-sm" onclick="openEdit(${JSON.stringify(r).replace(/"/g,'&quot;')})">✎ Modifica</button>
+                <button class="btn btn-amber btn-sm" onclick="openEdit('${r.id}')">✎ Modifica</button>
                 <button class="btn btn-red btn-sm"   onclick="deleteStamp('${r.id}')">✕</button>
               </div>
             </td>
@@ -855,7 +864,10 @@
     }
   }
 
-  function openEdit(row) {
+  function openEdit(id) {
+    const row = allLog.find(r => r.id === id);
+    if (!row) return;
+
     document.getElementById('edit-id').value   = row.id;
     document.getElementById('edit-nome').value = row.nome;
     document.getElementById('edit-anno').value = row.anno || '';
@@ -892,7 +904,46 @@
     await loadAll();
   }
 
-  // 4. Completamento ed eliminazione record dal database
   async function deleteStamp(id) {
     if (!confirm('Eliminare questa timbratura?')) return;
-    const { error } = await supabaseClient.from(TABLE).
+    const { error } = await supabaseClient.from(TABLE).delete().eq('id', id);
+    if (error) { toast('Errore: ' + error.message, 'error'); return; }
+    toast('Timbratura eliminata con successo!', 'success');
+    await loadAll();
+  }
+
+  window.openModal = function(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function toast(msg, type = 'info') {
+    const e = document.getElementById('toast');
+    if(!e) return;
+    e.textContent = msg;
+    e.className = 'toast ' + type + ' show';
+    setTimeout(() => e.classList.remove('show'), 3000);
+  }
+
+  function esc(str) {
+    if (!str) return '';
+    return str.toString()
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  window.addEventListener('load', () => {
+    if (sessionStorage.getItem('admin_auth') === '1') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      initAdmin();
+    }
+  });
+</script>
+</body>
+</html>
