@@ -1,593 +1,127 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Timbratura Animatori</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8">
+  <title>Login Animatori - Oratorio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:        #f5f2eb;
-      --surface:   #ffffff;
-      --border:    #d8d2c4;
-      --ink:       #1a1714;
-      --ink2:      #5a5148;
-      --ink3:      #8a7f72;
-      --accent:    #2d4a3e;
-      --accent-lt: #e8f0ec;
-      --red:       #8b2e2e;
-      --red-lt:    #f5e8e8;
-      --green:     #2d5a3d;
-      --green-lt:  #e5f2ea;
-      --font-serif: 'Instrument Serif', Georgia, serif;
-      --font-mono:  'Geist Mono', 'Courier New', monospace;
-    }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--font-mono);
-      font-size: 13px;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%);
-    }
-
-    /* ══════════════ SCHERMATE DI ACCESSO (LOGIN / REGISTRAZIONE) ══════════════ */
-    #auth-screen {
-      position: fixed; inset: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px; overflow-y: auto;
-    }
-
-    .auth-card {
-      width: 100%; max-width: 400px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 40px;
-      box-shadow: 0 4px 24px rgba(0,0,0,.06);
-    }
-
-    .auth-title {
-      font-family: var(--font-serif); font-size: 32px;
-      line-height: 1.1; color: var(--ink); margin-bottom: 24px;
-      text-align: center;
-    }
-    .auth-title em { font-style: italic; color: var(--accent); }
-
-    label {
-      display: block; font-size: 10px; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--ink3); margin-bottom: 6px;
-    }
-
-    input {
-      width: 100%; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono);
-      font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px;
-    }
-    input:focus { border-color: var(--accent); }
-    input[type=number] { -moz-appearance: textfield; }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px;
-      font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer;
-      transition: all .15s; margin-bottom: 12px;
-    }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: #1f3329; }
-    
-    .btn-green { background: var(--green); color: white; font-size: 16px; padding: 20px; }
-    .btn-green:hover { background: #1f3f2a; }
-    .btn-red { background: var(--red); color: white; font-size: 16px; padding: 20px; }
-    .btn-red:hover { background: #662121; }
-
-    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; }
-    .auth-toggle span { text-decoration: underline; color: var(--accent); }
-
-    /* ══════════════ INTERFACCIA TIMBRATURA APERTA ══════════════ */
-    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
-
-    .topbar {
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px;
-    }
-    .topbar-title { font-family: var(--font-serif); font-size: 20px; }
-    .topbar-title em { font-style: italic; color: var(--accent); }
-    
-    .main-panel { max-width: 550px; margin: 40px auto; padding: 0 24px; text-align: center; }
-    
-    .welcome-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-      padding: 32px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.04); margin-bottom: 24px;
-      text-align: center;
-    }
-    .welcome-name { font-family: var(--font-serif); font-size: 28px; margin-bottom: 4px; }
-    .welcome-meta { font-size: 12px; color: var(--ink3); margin-bottom: 24px; }
-
-    .stamp-box { display: flex; flex-direction: column; gap: 14px; }
-
-    /* Notifica QR rilevato */
-    .qr-alert {
-      background: var(--accent-lt); color: var(--accent); border: 1px solid #b2ccbc;
-      padding: 12px; border-radius: 4px; font-size: 12px; margin-bottom: 16px; font-weight: 500;
-      animation: pulseAlert 1.5s infinite alternate; display: none;
-    }
-    @keyframes pulseAlert {
-      from { opacity: 0.7; } to { opacity: 1; }
-    }
-
-    /* PANNELLO ADMIN (VISIBILE SOLO AI CAPICENTRO) */
-    .admin-card { text-align: left; background: #faf9f5; border: 2px dashed var(--accent); }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .admin-title { font-family: var(--font-serif); font-size: 22px; color: var(--accent); font-weight: bold; }
-    
-    .admin-toggle-wrapper { display: flex; gap: 10px; margin-bottom: 20px; }
-    .btn-toggle { flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; text-align: center; }
-
-    .admin-table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
-    .admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
-    .admin-table th, .admin-table td { padding: 8px; border-bottom: 1px solid var(--border); }
-    .admin-table th { background: var(--accent-lt); color: var(--accent); text-transform: uppercase; font-size: 9px; letter-spacing: 1px; }
-    
-    .badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; }
-    .badge-in { background: var(--green-lt); color: var(--green); }
-    .badge-out { background: var(--red-lt); color: var(--red); }
-
-    /* Notifiche Toast di successo/errore */
-    .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 24px;
-      font-size: 12px; opacity: 0; transition: all .3s cubic-bezier(.23,1,.32,1); z-index: 300;
-      white-space: nowrap; pointer-events: none;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-    .toast.success { background: var(--green); }
-    .toast.error   { background: var(--red); }
+    body { font-family: Arial; max-width: 400px; margin: 50px auto; padding: 20px; }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; }
+    button { background: #2d4a3e; color: white; border: none; cursor: pointer; }
+    .error { color: red; font-size: 12px; }
   </style>
 </head>
 <body>
-
-<div id="auth-screen">
-  
-  <div class="auth-card" id="login-card">
-    <div class="auth-title">Accedi all'<em>Oratorio</em></div>
-    <div class="qr-alert" id="qr-alert-login">Hai letto un QR Code! Accedi per registrare la presenza.</div>
-    
-    <label>Email</label>
-    <input type="email" id="login-email" placeholder="nome@esempio.com" />
-    
-    <label>Password</label>
-    <input type="password" id="login-password" placeholder="••••••••" />
-    
-    <button class="btn btn-primary" onclick="handleLogin()">Entra →</button>
-    <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo animatore? <span>Registrati qui</span></div>
+  <h2>🏠 Oratorio - Accesso Animatori</h2>
+  <div id="login-box">
+    <input type="text" id="nome" placeholder="Nome e Cognome" autocomplete="off">
+    <input type="password" id="pass" placeholder="Password (PIN)">
+    <button onclick="accedi()">🔐 ENTRA</button>
+    <button onclick="mostraRegistrazione()">📝 REGISTRATI</button>
+    <div id="messaggio" class="error"></div>
   </div>
 
-  <div class="auth-card" id="register-card" style="display:none;">
-    <div class="auth-title">Nuovo <em>Animatore</em></div>
-    <div class="qr-alert" id="qr-alert-reg">Hai letto un QR Code! Registrati per registrare la presenza.</div>
-    
-    <label>Nome e Cognome</label>
-    <input type="text" id="reg-nome" placeholder="Mario Rossi" />
-    
-    <label>Anno di Nascita</label>
-    <input type="number" id="reg-anno" placeholder="2008" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
-
-    <label>Email</label>
-    <input type="email" id="reg-email" placeholder="nome@esempio.com" />
-    
-    <label>Password (almeno 6 caratteri)</label>
-    <input type="password" id="reg-password" placeholder="••••••••" />
-    
-    <button class="btn btn-primary" onclick="handleRegister()">Registrati e Accedi</button>
-    <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi ora</span></div>
-  </div>
-</div>
-
-<div id="app-screen">
-  <div class="topbar">
-    <div class="topbar-title">tim<em>bratura</em></div>
-    <button style="background:transparent; border:1px solid var(--border); padding:5px 10px; border-radius:3px; font-family:var(--font-mono); font-size:11px; cursor:pointer;" onclick="handleLogout()">Esci</button>
+  <div id="registra-box" style="display:none">
+    <input type="text" id="reg-nome" placeholder="Nome e Cognome">
+    <input type="number" id="reg-anno" placeholder="Anno di nascita (es. 2008)">
+    <input type="email" id="reg-email" placeholder="Email (opzionale)">
+    <input type="password" id="reg-pass" placeholder="Password">
+    <button onclick="registra()">✅ CONFERMA REGISTRAZIONE</button>
+    <button onclick="mostraLogin()">← TORNA AL LOGIN</button>
+    <div id="reg-messaggio" class="error"></div>
   </div>
 
-  <div class="main-panel">
-    <div class="welcome-card">
-      <div class="welcome-name" id="user-display-name">—</div>
-      <div class="welcome-meta" id="user-display-meta">—</div>
+  <script>
+    // SUPABASE CONFIG - INSERISCI I TUOI DATI
+    const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // TABELLA utenti: deve avere colonne (id, nome, anno, email, password, created_at)
+    
+    async function registra() {
+      const nome = document.getElementById('reg-nome').value.trim();
+      const anno = parseInt(document.getElementById('reg-anno').value);
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-pass').value;
       
-      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">Elaborazione presenza da QR Code in corso...</div>
-
-      <div class="stamp-box">
-        <button class="btn btn-green" id="btn-in" onclick="doStamp('Ingresso')">⬆ REGISTRA INGRESSO</button>
-        <button class="btn btn-red" id="btn-out" onclick="doStamp('Uscita')">⬇ REGISTRA USCITA</button>
-      </div>
-    </div>
-
-    <div class="welcome-card admin-card" id="admin-panel" style="display: none;">
-      <div class="admin-header">
-        <div class="admin-title">Pannello Admin 🛠️</div>
-        <button onclick="caricaRegistroAdmin()" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px; font-family:var(--font-mono);">Aggiorna Registro 🔄</button>
-      </div>
-      
-      <p style="font-size:11px; color:var(--ink2); margin-bottom:8px; font-weight:600;">Blocco pulsanti di timbratura:</p>
-      <div class="admin-toggle-wrapper">
-        <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStatoSistema('ingresso_aperto')">Ingressi: ...</button>
-        <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStatoSistema('uscita_aperta')">Uscite: ...</button>
-      </div>
-
-      <p style="font-size:11px; color:var(--ink2); margin-bottom:10px; border-top:1px solid var(--border); padding-top:10px;">Elenco ultime timbrature effettuate:</p>
-      <div class="admin-table-wrapper">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Animatore</th>
-              <th>Anno</th>
-              <th>Data</th>
-              <th>Ora</th>
-              <th>Azione</th>
-            </tr>
-          </thead>
-          <tbody id="admin-table-body">
-            <tr>
-              <td colspan="5" style="text-align:center; color:var(--ink3);">Caricamento dati...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-  // PARAMETRI REALI DI SUPABASE
-  const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const TABLE = 'timbrature';
-
-  // 👑 LISTA EMAIL ADMIN: Inserisci qui dentro la tua email
-  const ADMIN_EMAILS = [
-    'admin@oratorio.com', 
-    'il_tuo_indirizzo_admin@gmail.com' // <--- SCAMBIALA CON LA TUA EMAIL DA CAPOCENTRO
-  ];
-
-  // 📍 BLOCCO GPS: Incolla qui le coordinate del centro del tuo oratorio
-  const ORATORIO_LAT   = 45.706869501092136;  
-  const ORATORIO_LON   = 8.800464096722195;   
-  const MAX_DISTANZA   = 80;       
-
-  let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let currentUser = null;
-
-  // Variabili globali per memorizzare se i bottoni sono aperti o bloccati
-  let ingressoAperto = true;
-  let uscitaAperta = true;
-
-  // VERIFICA LO STATO DELLA PAGINA AL CARICAMENTO
-  window.addEventListener('load', async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-
-    // Scarica lo stato attuale dei blocchi dal db per tutti prima di visualizzare i tasti
-    await scaricaStatoBlocchi();
-
-    if (session) {
-      showApp(session.user);
-      
-      if (action === 'Ingresso' || action === 'Uscita') {
-        document.getElementById('qr-alert-processing').style.display = 'block';
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        setTimeout(async () => {
-          await doStamp(action);
-          document.getElementById('qr-alert-processing').style.display = 'none';
-        }, 1000);
-      }
-    } else {
-      if (action === 'Ingresso' || action === 'Uscita') {
-        sessionStorage.setItem('pending_qr_action', action);
-        document.getElementById('qr-alert-login').style.display = 'block';
-        document.getElementById('qr-alert-reg').style.display = 'block';
-      }
-    }
-  });
-
-  function toggleAuth(showRegister) {
-    document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
-    document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
-  }
-
-  // REGISTRAZIONE UTENTE
-  async function handleRegister() {
-    const nome = document.getElementById('reg-nome').value.trim();
-    const anno = document.getElementById('reg-anno').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const password = document.getElementById('reg-password').value;
-
-    if (!nome || !anno || !email || !password) { toast('Tutti i campi sono obbligatori', 'error'); return; }
-    if (password.length < 6) { toast('La password deve essere di almeno 6 caratteri', 'error'); return; }
-
-    const { data, error } = await supabaseClient.auth.signUp({
-      email, password,
-      options: { data: { display_name: nome, anno: parseInt(anno) } }
-    });
-
-    if (error) { toast(error.message, 'error'); return; }
-    
-    toast('Profilo creato correttamente!', 'success');
-    showApp(data.user);
-    checkPendingQR();
-  }
-
-  // LOGIN UTENTE
-  async function handleLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-
-    if (!email || !password) { toast("Inserisci l'email e la password", "error"); return; }
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { toast('Credenziali non valide', 'error'); return; }
-    
-    showApp(data.user);
-    checkPendingQR();
-  }
-
-  async function checkPendingQR() {
-    const pendingAction = sessionStorage.getItem('pending_qr_action');
-    if (pendingAction) {
-      sessionStorage.removeItem('pending_qr_action');
-      document.getElementById('qr-alert-processing').style.display = 'block';
-      await doStamp(pendingAction);
-      document.getElementById('qr-alert-processing').style.display = 'none';
-    }
-  }
-
-  // MOSTRA L'INTERFACCIA DOPO IL LOGIN
-  function showApp(user) {
-    currentUser = user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    
-    const nome = user.user_metadata.display_name || 'Animatore';
-    const anno = user.user_metadata.anno || '—';
-
-    document.getElementById('user-display-name').textContent = nome;
-    document.getElementById('user-display-meta').textContent = `Classe/Anno: ${anno}`;
-
-    // Applica le restrizioni dei pulsanti visive
-    aggiornaInterfacciaBottoni();
-
-    // CONTROLLO SE L'UTENTE È UN ADMIN
-    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-      document.getElementById('admin-panel').style.display = 'block';
-      caricaRegistroAdmin();
-    } else {
-      document.getElementById('admin-panel').style.display = 'none';
-    }
-  }
-
-  // SCARICA LO STATO DEL TELECOMANDO DAL DB
-  async function scaricaStatoBlocchi() {
-    const { data, error } = await supabaseClient.from('impostazioni').select('*');
-    if (!error && data) {
-      data.forEach(row => {
-        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
-      });
-    }
-  }
-
-  // DISABILITA O ABILITA I PULSANTI DEI RAGAZZI IN BASE ALLO STATO SUL DB
-  function aggiornaInterfacciaBottoni() {
-    const btnIn = document.getElementById('btn-in');
-    const btnOut = document.getElementById('btn-out');
-
-    if (ingressoAperto) {
-      btnIn.disabled = false;
-      btnIn.textContent = '⬆ REGISTRA INGRESSO';
-    } else {
-      btnIn.disabled = true;
-      btnIn.textContent = '🔒 INGRESSO BLOCCATO';
-    }
-
-    if (uscitaAperta) {
-      btnOut.disabled = false;
-      btnOut.textContent = '⬇ REGISTRA USCITA';
-    } else {
-      btnOut.disabled = true;
-      btnOut.textContent = '🔒 USCITA BLOCCATA';
-    }
-
-    // Aggiorna la grafica dei pulsanti telecomando nel pannello dell'admin
-    const toggleInBtn = document.getElementById('toggle-in-btn');
-    const toggleOutBtn = document.getElementById('toggle-out-btn');
-    
-    if (toggleInBtn && toggleOutBtn) {
-      toggleInBtn.textContent = ingressoAperto ? 'Ingressi: APERTI' : 'Ingressi: BLOCCATI';
-      toggleInBtn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
-      toggleInBtn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
-
-      toggleOutBtn.textContent = uscitaAperta ? 'Uscite: APERTE' : 'Uscite: BLOCCATE';
-      toggleOutBtn.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
-      toggleOutBtn.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
-    }
-  }
-
-  // CAMBIA LO STATO DEL SISTEMA (SOLO ADMIN)
-  async function toggleStatoSistema(chiave) {
-    const statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
-    const nuovoStato = !statoCorrente;
-
-    const { error } = await supabaseClient
-      .from('impostazioni')
-      .update({ valore: nuovoStato })
-      .eq('chiave', chiave);
-
-    if (error) {
-      toast('Errore nel cambiare blocco: ' + error.message, 'error');
-    } else {
-      toast('Stato aggiornato sul database!', 'success');
-      await scaricaStatoBlocchi();
-      aggiornaInterfacciaBottoni();
-    }
-  }
-
-  // SCARICA IL REGISTRO PRESENZE DAL DATABASE (SOLO PER GLI ADMIN)
-  async function caricaRegistroAdmin() {
-    const tbody = document.getElementById('admin-table-body');
-    
-    const { data, error } = await supabaseClient
-      .from(TABLE)
-      .select('*')
-      .order('id', { ascending: false })
-      .limit(60);
-
-    if (error) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">Errore: ${error.message}</td></tr>`;
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">Nessuna timbratura registrata oggi.</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = '';
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      const badgeClass = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
-      
-      tr.innerHTML = `
-        <td style="font-weight:600;">${row.nome}</td>
-        <td style="color:var(--ink2);">${row.anno || '—'}</td>
-        <td>${row.data}</td>
-        <td style="font-weight:500;">${row.ora}</td>
-        <td><span class="badge ${badgeClass}">${row.tipo}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  async function handleLogout() {
-    await supabaseClient.auth.signOut();
-    location.reload();
-  }
-
-  // CALCOLO DISTANZA GPS (Haversine)
-  function calcolaDistanza(lat1, lon1, lat2, lon2) {
-    const R = 6371000; 
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  // SALVATAGGIO TIMBRATURA CON VERIFICA GEOLOCALIZZAZIONE
-  async function doStamp(tipo) {
-    if (!currentUser) return;
-
-    // Controllo preventivo di sicurezza al millisecondo prima di premere
-    await scaricaStatoBlocchi();
-    aggiornaInterfacciaBottoni();
-
-    if (tipo === 'Ingresso' && !ingressoAperto) {
-      toast("Impossibile procedere: l'ingresso è stato chiuso dal coordinatore.", "error");
-      return;
-    }
-    if (tipo === 'Uscita' && !uscitaAperta) {
-      toast("Impossibile procedere: le uscite sono state chiuse dal coordinatore.", "error");
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      toast("Geolocalizzazione disattivata o non supportata dal telefono.", "error");
-      return;
-    }
-
-    toast("Verifica della posizione in corso...", "info");
-
-    document.getElementById('btn-in').disabled = true;
-    document.getElementById('btn-out').disabled = true;
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const userLat = position.coords.latitude;
-      const userLon = position.coords.longitude;
-
-      const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
-
-      if (distanza > MAX_DISTANZA) {
-        toast(`Rifiutato! Sei fuori oratorio di ${Math.round(distanza)} metri. Avvicinati!`, "error");
-        aggiornaInterfacciaBottoni();
+      if (!nome || !anno || !password) {
+        alert("Compila tutti i campi obbligatori (nome, anno, password)");
         return;
       }
-
-      const nome = currentUser.user_metadata.display_name;
-      const anno = currentUser.user_metadata.anno;
-      const now = new Date();
-      const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-      const ora = now.toTimeString().slice(0,5);
-
-      const { error } = await supabaseClient.from(TABLE).insert({
-        user_id: currentUser.id,
-        nome: nome,
-        anno: anno ? parseInt(anno) : null,
-        data: data,
-        ora: ora,
-        tipo: tipo
-      });
-
-      aggiornaInterfacciaBottoni();
-
+      
+      // REGISTRAZIONE DIRETTA NEL DATABASE (SENZA AUTH EMAIL)
+      const { data, error } = await supabase
+        .from('utenti')
+        .insert([{
+          nome: nome,
+          anno: anno,
+          email: email || null,
+          password: password, // ATTENZIONE: in produzione usa hash!
+          created_at: new Date()
+        }])
+        .select();
+      
       if (error) {
-        toast('Errore di rete: ' + error.message, 'error');
-      } else {
-        toast(`Presenza registrata: ${tipo} delle ore ${ora}`, 'success');
-        
-        if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
-          caricaRegistroAdmin();
+        if (error.code === '23505') {
+          document.getElementById('reg-messaggio').innerText = '❌ Questo nome utente esiste già!';
+        } else {
+          document.getElementById('reg-messaggio').innerText = '❌ Errore: ' + error.message;
         }
+      } else {
+        alert('✅ Registrazione riuscita! Ora puoi accedere.');
+        mostraLogin();
+        // Pulisci campi
+        document.getElementById('reg-nome').value = '';
+        document.getElementById('reg-anno').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-pass').value = '';
       }
-
-    }, (error) => {
-      toast("Per timbrare devi attivare la localizzazione GPS e dare il consenso!", "error");
-      aggiornaInterfacciaBottoni();
-    }, {
-      enableHighAccuracy: true,
-      timeout: 7000
-    });
-  }
-
-  function toast(msg, type = 'info') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'toast ' + type;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 4000);
-  }
-</script>
+    }
+    
+    async function accedi() {
+      const nome = document.getElementById('nome').value.trim();
+      const password = document.getElementById('pass').value;
+      
+      if (!nome || !password) {
+        document.getElementById('messaggio').innerText = 'Inserisci nome e password';
+        return;
+      }
+      
+      // VERIFICA NEL DATABASE
+      const { data, error } = await supabase
+        .from('utenti')
+        .select('*')
+        .eq('nome', nome)
+        .eq('password', password)
+        .maybeSingle();
+      
+      if (data) {
+        localStorage.setItem('animatore', JSON.stringify({
+          id: data.id,
+          nome: data.nome,
+          anno: data.anno
+        }));
+        alert(`👋 Benvenuto ${data.nome}!`);
+        // Reindirizza alla pagina di timbratura
+        window.location.href = 'timbratura.html'; // Cambia col nome del tuo file
+      } else {
+        document.getElementById('messaggio').innerText = '❌ Credenziali errate. Riprova o registrati.';
+      }
+    }
+    
+    function mostraRegistrazione() {
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('registra-box').style.display = 'block';
+    }
+    
+    function mostraLogin() {
+      document.getElementById('registra-box').style.display = 'none';
+      document.getElementById('login-box').style.display = 'block';
+      document.getElementById('messaggio').innerText = '';
+      document.getElementById('reg-messaggio').innerText = '';
+    }
+  </script>
 </body>
 </html>
