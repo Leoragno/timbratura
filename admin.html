@@ -4,85 +4,268 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Console Admin - Oratorio</title>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
     :root {
-      --bg: #f5f2eb; --surface: #ffffff; --border: #d8d2c4;
-      --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
-      --accent: #2d4a3e; --accent-lt: #e8f0ec;
-      --red: #8b2e2e; --red-lt: #f5e8e8;
-      --green: #2d5a3d; --green-lt: #e5f2ea;
+      --bg:        #f5f2eb;
+      --surface:   #ffffff;
+      --border:    #d8d2c4;
+      --ink:       #1a1714;
+      --ink2:      #5a5148;
+      --ink3:      #8a7f72;
+      --accent:    #2d4a3e;
+      --accent-lt: #e8f0ec;
+      --red:       #8b2e2e;
+      --red-lt:    #f5e8e8;
+      --green:     #2d5a3d;
+      --green-lt:  #e5f2ea;
       --font-serif: 'Instrument Serif', Georgia, serif;
-      --font-mono: 'Geist Mono', monospace;
+      --font-mono:  'Geist Mono', 'Courier New', monospace;
     }
-    body { background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; padding: 24px; }
-    .admin-card { max-width: 600px; margin: 20px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,.04); }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-    .admin-title { font-family: var(--font-serif); font-size: 28px; color: var(--accent); }
-    .toggle-wrapper { display: flex; gap: 12px; margin-bottom: 24px; }
-    .btn-toggle { flex: 1; padding: 15px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
-    .admin-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .admin-table th, .admin-table td { padding: 10px; border-bottom: 1px solid var(--border); }
-    .admin-table th { background: var(--accent-lt); color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
-    .badge { padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; }
-    .badge-in { background: var(--green-lt); color: var(--green); }
-    .badge-out { background: var(--red-lt); color: var(--red); }
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 24px; opacity: 0; transition: opacity .3s; pointer-events: none; }
-    .toast.show { opacity: 1; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+      padding: 24px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.05) 0%, transparent 60%);
+    }
+
+    .admin-container {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 20px auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.04);
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .admin-title {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .admin-title em {
+      font-style: italic;
+    }
+
+    .btn-refresh {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .btn-refresh:hover {
+      background: #1f3329;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--ink2);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    /* TELECOMANDO LOCK/UNLOCK */
+    .toggle-wrapper {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .btn-toggle {
+      flex: 1;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(.23,1,.32,1);
+      text-align: center;
+    }
+    .btn-toggle:active {
+      transform: scale(0.98);
+    }
+
+    /* TABELLA REGISTRO PRESENZE */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #faf9f5;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .admin-table th, .admin-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-table th {
+      background: var(--accent-lt);
+      color: var(--accent);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .admin-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .admin-table tbody tr:hover {
+      background: rgba(0,0,0,0.01);
+    }
+
+    /* BADGES STATO */
+    .badge {
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+    .badge-in {
+      background: var(--green-lt);
+      color: var(--green);
+    }
+    .badge-out {
+      background: var(--red-lt);
+      color: var(--red);
+    }
+
+    /* NOTIFICHE TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--ink);
+      color: var(--bg);
+      border-radius: 4px;
+      padding: 12px 24px;
+      font-size: 12px;
+      opacity: 0;
+      transition: all .3s cubic-bezier(.23,1,.32,1);
+      z-index: 300;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
   </style>
 </head>
 <body>
 
-  <div class="admin-card">
+  <div class="admin-container">
+    
     <div class="admin-header">
-      <div class="admin-title">Pannello Admin 🛠️</div>
-      <button onclick="caricaRegistroAdmin()" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:3px; cursor:pointer; font-family:var(--font-mono);">Aggiorna 🔄</button>
+      <div class="admin-title">Console <em>Admin</em> 🛠️</div>
+      <button class="btn-refresh" onclick="aggiornaTutto()">Aggiorna Dati 🔄</button>
     </div>
     
-    <p style="margin-bottom: 10px; font-weight: 600; color: var(--ink2);">Stato pulsanti ragazzi:</p>
+    <div class="section-title">Controllo Accessi in Tempo Reale</div>
     <div class="toggle-wrapper">
       <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStato('ingresso_aperto')">Ingressi: Caricamento...</button>
       <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStato('uscita_aperta')">Uscite: Caricamento...</button>
     </div>
 
-    <p style="margin-bottom: 10px; font-weight: 600; color: var(--ink2); border-top: 1px solid var(--border); padding-top: 20px;">Ultime Timbrature Ricevute:</p>
+    <div class="section-title">Registro Ultime Timbrature Ricevute</div>
     <div class="table-wrapper">
       <table class="admin-table">
         <thead>
           <tr>
             <th>Animatore</th>
-            <th>Anno</th>
+            <th>Anno Nascita</th>
             <th>Data</th>
             <th>Ora</th>
             <th>Azione</th>
           </tr>
         </thead>
         <tbody id="admin-table-body">
-          <tr><td colspan="5" style="text-align:center; color:var(--ink3);">Caricamento registro...</td></tr>
+          <tr>
+            <td colspan="5" style="text-align:center; color:var(--ink3); padding: 20px;">Caricamento del registro presenze...</td>
+          </tr>
         </tbody>
       </table>
     </div>
+
   </div>
 
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <script>
+    // Configurazione chiavi database di produzione
     const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+    
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let ingressoAperto = true;
-    let uscitaAperta = true;
+    let ucsitaAperta = true;
 
+    // Esegui la prima lettura all'apertura della pagina
     window.addEventListener('load', async () => {
-      await scaricaStatoBlocchi();
-      await caricaRegistroAdmin();
+      await aggiornaTutto();
     });
 
+    // Funzione cumulativa di refresh globale
+    async function aggiornaTutto() {
+      await scaricaStatoBlocchi();
+      await caricaRegistroAdmin();
+    }
+
+    // 1. Scarica lo stato del telecomando dal Database
     async function scaricaStatoBlocchi() {
       const { data, error } = await supabaseClient.from('impostazioni').select('*');
       if (!error && data) {
@@ -90,54 +273,88 @@
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
         });
-        aggiornaGraficaBottoni();
+        aggiornaGraficaPulsanti();
+      } else if (error) {
+        showToast('Errore lettura impostazioni: ' + error.message, 'error');
       }
     }
 
-    function aggiornaGraficaBottoni() {
+    // 2. Modifica la visualizzazione dei tasti in base ai booleani attuali
+    function aggiornaGraficaPulsanti() {
       const btnIn = document.getElementById('toggle-in-btn');
       const btnOut = document.getElementById('toggle-out-btn');
 
-      btnIn.textContent = ingressoAperto ? 'Ingressi: ATTIVI (Clicca per bloccare)' : 'Ingressi: BLOCCATI (Clicca per attivare)';
+      btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: APERTI' : '🔒 INGRESSI: BLOCCATI';
       btnIn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
       btnIn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
+      btnIn.style.borderColor = ingressoAperto ? '#b2ccbc' : '#ebccd1';
 
-      btnOut.textContent = uscitaAperta ? 'Uscite: ATTIVE (Clicca per bloccare)' : 'Uscite: BLOCCATE (Clicca per attivare)';
+      btnOut.textContent = uscitaAperta ? '🔓 USCITE: APERTE' : '🔒 USCITE: BLOCCATE';
       btnOut.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
       btnOut.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
+      btnOut.style.borderColor = uscitaAperta ? '#b2ccbc' : '#ebccd1';
     }
 
+    // 3. Inverte lo stato del blocco (on/off) cliccando sui pulsanti della console
     async function toggleStato(chiave) {
-      const statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
-      const { error } = await supabaseClient.from('impostazioni').update({ valore: !statoCorrente }).eq('chiave', chiave);
+      const statoCorrente = (chiave === 'ingresso_aperto') ? ingressoAperto : uscitaAperta;
+      const nuovoStato = !statoCorrente;
+
+      const { error } = await supabaseClient
+        .from('impostazioni')
+        .update({ valore: nuovoStato })
+        .eq('chiave', chiave);
       
       if (error) {
-        showToast('Errore: ' + error.message);
+        showToast('Errore nel salvataggio su database: ' + error.message, 'error');
       } else {
-        showToast('Database aggiornato!');
+        showToast('Configurazione sincronizzata!', 'success');
         await scaricaStatoBlocchi();
       }
     }
 
+    // 4. Scarica la cronologia presenze ordinandola per l'ultimo arrivato
     async function caricaRegistroAdmin() {
       const tbody = document.getElementById('admin-table-body');
-      const { data, error } = await supabaseClient.from('timbrature').select('*').order('id', { ascending: false }).limit(40);
+      
+      const { data, error } = await supabaseClient
+        .from('timbrature')
+        .select('*')
+        .order('id', { ascending: false })
+        .limit(50);
 
-      if (error) { tbody.innerHTML = `<tr><td colspan="5">Errore nel caricamento dei dati</td></tr>`; return; }
-      if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nessuna timbratura oggi.</td></tr>`; return; }
+      if (error) { 
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center; padding:20px;">Errore caricamento dati: ${error.message}</td></tr>`; 
+        return; 
+      }
+      
+      if (!data || data.length === 0) { 
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:20px;">Nessuna timbratura registrata oggi nel sistema.</td></tr>`; 
+        return; 
+      }
 
       tbody.innerHTML = '';
       data.forEach(row => {
         const tr = document.createElement('tr');
-        const badgeClass = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
-        tr.innerHTML = `<td><b>${row.nome}</b></td><td>${row.anno || '—'}</td><td>${row.data}</td><td>${row.ora}</td><td><span class="badge ${badgeClass}">${row.tipo}</span></td>`;
+        const badgeClass = (row.tipo === 'Ingresso') ? 'badge-in' : 'badge-out';
+        
+        tr.innerHTML = `
+          <td><b style="color:var(--ink);">${row.nome}</b></td>
+          <td style="color:var(--ink2);">${row.anno || '—'}</td>
+          <td style="color:var(--ink3);">${row.data}</td>
+          <td style="font-weight:600;">${row.ora}</td>
+          <td><span class="badge ${badgeClass}">${row.tipo}</span></td>
+        `;
         tbody.appendChild(tr);
       });
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
+    // Gestore grafico notifiche a scomparsa rapida
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + type + ' show';
+      setTimeout(() => t.classList.remove('show'), 3500);
     }
   </script>
 </body>
