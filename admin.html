@@ -391,23 +391,26 @@
 
 <script>
   (function() {
-    // CONFIGURAZIONE
     const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
     const ADMIN_PASSWORD = 'admin123';
 
-    let supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let currentUser = null;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let allAnimators = [];
     let allLog = [];
     let ingressoAperto = true;
     let uscitaAperta = true;
     let manualTarget = null;
 
+    function showApp() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }
+
     function toast(msg, type) {
       const el = document.getElementById('toast');
       el.textContent = msg;
-      el.className = `toast ${type} show`;
+      el.className = 'toast ' + (type || '') + ' show';
       setTimeout(() => el.classList.remove('show'), 3000);
     }
 
@@ -416,28 +419,36 @@
       document.getElementById('modal-edit-profile').classList.remove('open');
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+      });
+    }
+
     // LOGIN
-    document.getElementById('loginBtn').onclick = async () => {
+    async function doLogin() {
       const pw = document.getElementById('admin-pass').value;
       if (pw !== ADMIN_PASSWORD) {
         document.getElementById('login-err').style.display = 'block';
         return;
       }
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
+      document.getElementById('login-err').style.display = 'none';
       sessionStorage.setItem('admin_auth', '1');
+      showApp();
       await loadAllData();
       startClock();
-    };
+    }
 
-    document.getElementById('admin-pass').onkeypress = (e) => {
-      if (e.key === 'Enter') document.getElementById('loginBtn').click();
-    };
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('admin-pass').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
 
-    document.getElementById('logoutBtn').onclick = () => {
+    document.getElementById('logoutBtn').addEventListener('click', function() {
       sessionStorage.removeItem('admin_auth');
       location.reload();
-    };
+    });
 
     async function loadAllData() {
       await loadSettings();
@@ -451,15 +462,13 @@
     async function loadSettings() {
       const { data } = await supabase.from('impostazioni').select('*');
       if (data) {
-        data.forEach(row => {
+        data.forEach(function(row) {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
         });
       }
-      const btnIn = document.getElementById('toggle-in-btn');
-      const btnOut = document.getElementById('toggle-out-btn');
-      btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
-      btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
+      document.getElementById('toggle-in-btn').textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
+      document.getElementById('toggle-out-btn').textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
     }
 
     async function loadUsers() {
@@ -477,112 +486,117 @@
       const statusFilter = document.getElementById('filter-status').value;
       const sortBy = document.getElementById('filter-sort').value;
 
-      // Calcola ultima timbratura per ogni animatore
-      const lastStampMap = {};
-      for (const log of allLog) {
-        const key = log.nome;
-        if (!lastStampMap[key]) lastStampMap[key] = log;
+      var lastStampMap = {};
+      for (var i = 0; i < allLog.length; i++) {
+        var log = allLog[i];
+        if (!lastStampMap[log.nome]) lastStampMap[log.nome] = log;
       }
 
-      let list = allAnimators.map(a => ({
-        nome: a.nome,
-        anno: a.anno,
-        lastStamp: lastStampMap[a.nome] || null,
-        isInside: lastStampMap[a.nome]?.tipo === 'Ingresso' || false
-      }));
+      var list = allAnimators.map(function(a) {
+        return {
+          nome: a.nome,
+          anno: a.anno,
+          lastStamp: lastStampMap[a.nome] || null,
+          isInside: (lastStampMap[a.nome] && lastStampMap[a.nome].tipo === 'Ingresso') || false
+        };
+      });
 
-      if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || String(a.anno).includes(search));
-      if (statusFilter === 'inside') list = list.filter(a => a.isInside);
-      if (statusFilter === 'outside') list = list.filter(a => !a.isInside);
+      if (search) list = list.filter(function(a) { return a.nome.toLowerCase().includes(search) || String(a.anno).includes(search); });
+      if (statusFilter === 'inside') list = list.filter(function(a) { return a.isInside; });
+      if (statusFilter === 'outside') list = list.filter(function(a) { return !a.isInside; });
 
-      if (sortBy === 'status') list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
-      else if (sortBy === 'alpha') list.sort((a, b) => a.nome.localeCompare(b.nome));
-      else if (sortBy === 'anno') list.sort((a, b) => (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0));
+      if (sortBy === 'status') list.sort(function(a, b) { return (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0); });
+      else if (sortBy === 'alpha') list.sort(function(a, b) { return a.nome.localeCompare(b.nome); });
+      else if (sortBy === 'anno') list.sort(function(a, b) { return (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0); });
 
-      const grid = document.getElementById('animators-grid');
+      var grid = document.getElementById('animators-grid');
       if (list.length === 0) {
         grid.innerHTML = '<div class="empty">👤 Nessun animatore trovato</div>';
         return;
       }
 
-      grid.innerHTML = list.map(a => `
-        <div class="animator-card ${a.isInside ? 'inside' : 'outside'}">
-          <div class="anim-name">${escapeHtml(a.nome)} <span>(${a.anno || '—'})</span></div>
-          <div class="anim-status ${a.isInside ? 'in' : 'out'}">${a.isInside ? 'Dentro' : 'Fuori'}</div>
-          <div class="anim-last">${a.lastStamp ? `${a.lastStamp.tipo} — ${a.lastStamp.data} ${a.lastStamp.ora}` : 'Nessuna timbratura'}</div>
-          <div class="anim-actions">
-            <button class="btn btn-green btn-sm" onclick="window.manualTimbratura('${escapeHtml(a.nome)}', '${a.anno || ''}', 'Ingresso')">⬆ In</button>
-            <button class="btn btn-red btn-sm" onclick="window.manualTimbratura('${escapeHtml(a.nome)}', '${a.anno || ''}', 'Uscita')">⬇ Out</button>
-            <button class="btn btn-amber btn-sm" onclick="window.editAnagrafica('${escapeHtml(a.nome)}', '${a.anno || ''}')">✎ Modifica</button>
-          </div>
-        </div>
-      `).join('');
+      grid.innerHTML = list.map(function(a) {
+        var nomeEsc = escapeHtml(a.nome);
+        var annoEsc = escapeHtml(a.anno || '');
+        var lastTxt = a.lastStamp ? (a.lastStamp.tipo + ' — ' + a.lastStamp.data + ' ' + a.lastStamp.ora) : 'Nessuna timbratura';
+        return '<div class="animator-card ' + (a.isInside ? 'inside' : 'outside') + '">' +
+          '<div class="anim-name">' + nomeEsc + ' <span>(' + (a.anno || '—') + ')</span></div>' +
+          '<div class="anim-status ' + (a.isInside ? 'in' : 'out') + '">' + (a.isInside ? 'Dentro' : 'Fuori') + '</div>' +
+          '<div class="anim-last">' + escapeHtml(lastTxt) + '</div>' +
+          '<div class="anim-actions">' +
+            '<button class="btn btn-green btn-sm" onclick="window._manualTimbratura(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\',\'Ingresso\')">⬆ In</button>' +
+            '<button class="btn btn-red btn-sm" onclick="window._manualTimbratura(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\',\'Uscita\')">⬇ Out</button>' +
+            '<button class="btn btn-amber btn-sm" onclick="window._editAnagrafica(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\')">✎ Modifica</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
     }
 
     function renderLog() {
-      const search = document.getElementById('log-search').value.toLowerCase();
-      const date = document.getElementById('log-date').value;
-      const tipo = document.getElementById('log-tipo').value;
+      var search = document.getElementById('log-search').value.toLowerCase();
+      var date = document.getElementById('log-date').value;
+      var tipo = document.getElementById('log-tipo').value;
 
-      let filtered = allLog.filter(l => {
+      var filtered = allLog.filter(function(l) {
         if (search && !l.nome.toLowerCase().includes(search)) return false;
         if (tipo && l.tipo !== tipo) return false;
         if (date) {
-          const parts = l.data.split('/');
-          const logDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          var parts = l.data.split('/');
+          var logDate = parts[2] + '-' + parts[1] + '-' + parts[0];
           if (logDate !== date) return false;
         }
         return true;
       });
 
-      const tbody = document.getElementById('log-tbody');
+      var tbody = document.getElementById('log-tbody');
       if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="empty">📋 Nessuna timbratura</td></tr>';
         return;
       }
 
-      tbody.innerHTML = filtered.map(l => `
-        <tr>
-          <td><strong>${escapeHtml(l.nome)}</strong></td>
-          <td>${l.anno || '—'}</td>
-          <td>${l.data}</td>
-          <td>${l.ora}</td>
-          <td><span class="tipo-badge ${l.tipo === 'Ingresso' ? 'ingresso' : 'uscita'}">${l.tipo}</span></td>
-          <td><button class="btn btn-red btn-sm" onclick="window.eliminaTimbratura(${l.id})">🗑️ Elimina</button></td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = filtered.map(function(l) {
+        return '<tr>' +
+          '<td><strong>' + escapeHtml(l.nome) + '</strong></td>' +
+          '<td>' + (l.anno || '—') + '</td>' +
+          '<td>' + escapeHtml(l.data) + '</td>' +
+          '<td>' + escapeHtml(l.ora) + '</td>' +
+          '<td><span class="tipo-badge ' + (l.tipo === 'Ingresso' ? 'ingresso' : 'uscita') + '">' + escapeHtml(l.tipo) + '</span></td>' +
+          '<td><button class="btn btn-red btn-sm" onclick="window._eliminaTimbratura(' + l.id + ')">🗑️ Elimina</button></td>' +
+        '</tr>';
+      }).join('');
     }
 
     function updateStats() {
-      const lastStampMap = {};
-      for (const log of allLog) {
-        const key = log.nome;
-        if (!lastStampMap[key]) lastStampMap[key] = log;
+      var lastStampMap = {};
+      for (var i = 0; i < allLog.length; i++) {
+        var log = allLog[i];
+        if (!lastStampMap[log.nome]) lastStampMap[log.nome] = log;
       }
-      const inside = allAnimators.filter(a => lastStampMap[a.nome]?.tipo === 'Ingresso').length;
+      var inside = allAnimators.filter(function(a) { return lastStampMap[a.nome] && lastStampMap[a.nome].tipo === 'Ingresso'; }).length;
       document.getElementById('stat-total').textContent = allAnimators.length;
       document.getElementById('stat-in').textContent = inside;
       document.getElementById('stat-out').textContent = allAnimators.length - inside;
     }
 
     function startClock() {
-      setInterval(() => {
+      document.getElementById('top-clock').textContent = new Date().toLocaleTimeString('it-IT');
+      setInterval(function() {
         document.getElementById('top-clock').textContent = new Date().toLocaleTimeString('it-IT');
       }, 1000);
     }
 
-    // FUNZIONI GLOBALI
-    window.manualTimbratura = (nome, anno, tipo) => {
-      manualTarget = { nome, anno };
-      document.getElementById('manual-name-label').textContent = `${nome} (${anno || '—'})`;
+    // Funzioni globali richiamate dagli onclick inline
+    window._manualTimbratura = function(nome, anno, tipo) {
+      manualTarget = { nome: nome, anno: anno };
+      document.getElementById('manual-name-label').textContent = nome + ' (' + (anno || '—') + ')';
       document.getElementById('manual-tipo').value = tipo;
-      const now = new Date();
+      var now = new Date();
       document.getElementById('manual-data').value = now.toISOString().slice(0, 10);
       document.getElementById('manual-ora').value = now.toTimeString().slice(0, 5);
       document.getElementById('modal-manual').classList.add('open');
     };
 
-    window.editAnagrafica = (nome, anno) => {
+    window._editAnagrafica = function(nome, anno) {
       document.getElementById('profile-old-nome').value = nome;
       document.getElementById('profile-old-anno').value = anno;
       document.getElementById('profile-new-nome').value = nome;
@@ -590,10 +604,10 @@
       document.getElementById('modal-edit-profile').classList.add('open');
     };
 
-    window.eliminaTimbratura = async (id) => {
+    window._eliminaTimbratura = async function(id) {
       if (!confirm('Eliminare questa timbratura?')) return;
-      const { error } = await supabase.from('timbrature').delete().eq('id', id);
-      if (error) toast('Errore: ' + error.message, 'error');
+      var res = await supabase.from('timbrature').delete().eq('id', id);
+      if (res.error) toast('Errore: ' + res.error.message, 'error');
       else {
         toast('Timbratura eliminata!', 'success');
         await loadTimbrature();
@@ -603,20 +617,20 @@
       }
     };
 
-    // Bottoni modali
-    document.getElementById('saveManualBtn').onclick = async () => {
-      const tipo = document.getElementById('manual-tipo').value;
-      const dataRaw = document.getElementById('manual-data').value;
-      const ora = document.getElementById('manual-ora').value;
+    // Salva timbratura manuale
+    document.getElementById('saveManualBtn').addEventListener('click', async function() {
+      var tipo = document.getElementById('manual-tipo').value;
+      var dataRaw = document.getElementById('manual-data').value;
+      var ora = document.getElementById('manual-ora').value;
       if (!dataRaw || !ora) { toast('Compila tutti i campi', 'error'); return; }
-      const parts = dataRaw.split('-');
-      const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      const { error } = await supabase.from('timbrature').insert({
+      var parts = dataRaw.split('-');
+      var data = parts[2] + '/' + parts[1] + '/' + parts[0];
+      var res = await supabase.from('timbrature').insert({
         nome: manualTarget.nome,
         anno: manualTarget.anno ? parseInt(manualTarget.anno) : null,
-        data, ora, tipo
+        data: data, ora: ora, tipo: tipo
       });
-      if (error) toast('Errore: ' + error.message, 'error');
+      if (res.error) toast('Errore: ' + res.error.message, 'error');
       else {
         toast('Timbratura registrata!', 'success');
         closeAllModals();
@@ -625,59 +639,67 @@
         renderAnimators();
         updateStats();
       }
-    };
+    });
 
-    document.getElementById('saveProfileBtn').onclick = async () => {
-      const oldNome = document.getElementById('profile-old-nome').value;
-      const newNome = document.getElementById('profile-new-nome').value.trim();
-      const newAnno = document.getElementById('profile-new-anno').value;
+    // Salva anagrafica
+    document.getElementById('saveProfileBtn').addEventListener('click', async function() {
+      var oldNome = document.getElementById('profile-old-nome').value;
+      var newNome = document.getElementById('profile-new-nome').value.trim();
+      var newAnno = document.getElementById('profile-new-anno').value;
       if (!newNome) { toast('Inserisci un nome', 'error'); return; }
       await supabase.from('timbrature').update({ nome: newNome, anno: newAnno || null }).eq('nome', oldNome);
       await supabase.from('utenti').update({ nome: newNome, anno: newAnno || null }).eq('nome', oldNome);
       toast('Anagrafica aggiornata!', 'success');
       closeAllModals();
       await loadAllData();
-    };
+    });
 
-    document.getElementById('toggle-in-btn').onclick = async () => {
-      const { data } = await supabase.from('impostazioni').select('valore').eq('chiave', 'ingresso_aperto').single();
-      await supabase.from('impostazioni').update({ valore: !data?.valore }).eq('chiave', 'ingresso_aperto');
+    // Toggle ingressi
+    document.getElementById('toggle-in-btn').addEventListener('click', async function() {
+      var res = await supabase.from('impostazioni').select('valore').eq('chiave', 'ingresso_aperto').single();
+      await supabase.from('impostazioni').update({ valore: !res.data.valore }).eq('chiave', 'ingresso_aperto');
       await loadSettings();
       toast('Stato ingressi aggiornato!', 'success');
-    };
+    });
 
-    document.getElementById('toggle-out-btn').onclick = async () => {
-      const { data } = await supabase.from('impostazioni').select('valore').eq('chiave', 'uscita_aperta').single();
-      await supabase.from('impostazioni').update({ valore: !data?.valore }).eq('chiave', 'uscita_aperta');
+    // Toggle uscite
+    document.getElementById('toggle-out-btn').addEventListener('click', async function() {
+      var res = await supabase.from('impostazioni').select('valore').eq('chiave', 'uscita_aperta').single();
+      await supabase.from('impostazioni').update({ valore: !res.data.valore }).eq('chiave', 'uscita_aperta');
       await loadSettings();
       toast('Stato uscite aggiornato!', 'success');
-    };
+    });
 
-    document.getElementById('refreshBtn').onclick = async () => {
+    // Aggiorna
+    document.getElementById('refreshBtn').addEventListener('click', async function() {
       await loadTimbrature();
       renderAnimators();
       renderLog();
       updateStats();
       toast('Dati aggiornati!', 'success');
-    };
+    });
 
-    // Filtri
-    document.getElementById('filter-name').oninput = () => renderAnimators();
-    document.getElementById('filter-status').onchange = () => renderAnimators();
-    document.getElementById('filter-sort').onchange = () => renderAnimators();
-    document.getElementById('log-search').oninput = () => renderLog();
-    document.getElementById('log-date').oninput = () => renderLog();
-    document.getElementById('log-tipo').onchange = () => renderLog();
+    // Filtri animatori
+    document.getElementById('filter-name').addEventListener('input', renderAnimators);
+    document.getElementById('filter-status').addEventListener('change', renderAnimators);
+    document.getElementById('filter-sort').addEventListener('change', renderAnimators);
+
+    // Filtri log
+    document.getElementById('log-search').addEventListener('input', renderLog);
+    document.getElementById('log-date').addEventListener('input', renderLog);
+    document.getElementById('log-tipo').addEventListener('change', renderLog);
 
     // Chiudi modali
-    document.getElementById('closeManualBtn').onclick = closeAllModals;
-    document.getElementById('closeProfileBtn').onclick = closeAllModals;
+    document.getElementById('closeManualBtn').addEventListener('click', closeAllModals);
+    document.getElementById('closeProfileBtn').addEventListener('click', closeAllModals);
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    // Controlla sessione esistente all'avvio
+    if (sessionStorage.getItem('admin_auth') === '1') {
+      showApp();
+      loadAllData().then(startClock);
     }
 
-    // Check sessione
-    if (sessionStorage.getItem('admin_auth') === '1') {
-      document.getElementById('login-screen').style.display = 'none
+  })();
+</script>
+</body>
+</html>
