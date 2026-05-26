@@ -1,81 +1,50 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Timbratura Animatori</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist+Mono&display=swap" rel="stylesheet">
-  <style>
-    :root { --bg: #f5f2eb; --surface: #ffffff; --border: #d8d2c4; --ink: #1a1714; --accent: #2d4a3e; --green: #2d5a3d; --red: #8b2e2e; }
-    body { background: var(--bg); font-family: 'Geist Mono', monospace; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .card { background: var(--surface); padding: 40px; border-radius: 4px; border: 1px solid var(--border); width: 100%; max-width: 360px; box-shadow: 0 4px 12px rgba(0,0,0,.05); }
-    h2 { font-family: 'Instrument Serif', serif; font-size: 28px; margin-bottom: 24px; text-align: center; }
-    input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg); }
-    .btn { width: 100%; padding: 14px; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-    .btn-main { background: var(--accent); color: white; }
-    #app-screen { display: none; width: 100%; max-width: 400px; padding: 20px; }
-    .btn-green { background: var(--green); color: white; margin-top: 10px; }
-    .btn-red { background: var(--red); color: white; margin-top: 10px; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Login Animatori</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <div id="auth-screen">
+    <h2>Accesso Animatore</h2>
+    <input type="text" id="nome" placeholder="Nome e Cognome">
+    <input type="password" id="pass" placeholder="Password (PIN)">
+    <button onclick="accedi()">ENTRA</button>
+    <button onclick="registra()">REGISTRATI</button>
+  </div>
 
-<div class="card" id="auth-screen">
-  <h2>Accesso Animatore</h2>
-  <input type="text" id="nome" placeholder="Nome e Cognome">
-  <input type="number" id="anno" placeholder="Anno di nascita">
-  <button class="btn btn-main" onclick="accedi()">ENTRA</button>
-</div>
-
-<div id="app-screen">
-  <h2 id="welcome-msg">Benvenuto</h2>
-  <button class="btn btn-green" onclick="doStamp('Ingresso')">⬆ REGISTRA INGRESSO</button>
-  <button class="btn btn-red" onclick="doStamp('Uscita')">⬇ REGISTRA USCITA</button>
-  <button class="btn" style="background:#ddd;" onclick="location.reload()">Esci</button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const supabase = window.supabase.createClient('TUA_URL_SUPABASE', 'TUA_ANON_KEY');
+
+  async function registra() {
+    const nome = document.getElementById('nome').value.trim();
+    const pass = document.getElementById('pass').value.trim();
+    
+    // Inseriamo direttamente nel database senza auth
+    const { error } = await supabase.from('utenti').insert([{ nome, password: pass }]);
+    if (error) alert("Errore: " + error.message);
+    else alert("Registrato con successo!");
+  }
 
   async function accedi() {
     const nome = document.getElementById('nome').value.trim();
-    const anno = parseInt(document.getElementById('anno').value);
-    if (!nome || !anno) { alert("Inserisci Nome e Anno"); return; }
+    const pass = document.getElementById('pass').value.trim();
 
-    // 1. Registra o aggiorna l'anagrafica nella tabella 'utenti'
-    // Upsert gestisce l'inserimento o l'aggiornamento automatico
-    await supabase.from('utenti').upsert({ nome, anno }, { onConflict: 'nome, anno' });
+    // Verifichiamo nel database
+    const { data, error } = await supabase
+      .from('utenti')
+      .select('*')
+      .eq('nome', nome)
+      .eq('password', pass)
+      .maybeSingle();
 
-    // 2. Salva in memoria locale
-    localStorage.setItem('animatore', JSON.stringify({ nome, anno }));
-    
-    // 3. Mostra app
-    mostraApp(nome);
-  }
-
-  function mostraApp(nome) {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    document.getElementById('welcome-msg').textContent = `Ciao, ${nome}`;
-  }
-
-  async function doStamp(tipo) {
-    const user = JSON.parse(localStorage.getItem('animatore'));
-    const now = new Date();
-    const data = now.toLocaleDateString('it-IT');
-    const ora = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-
-    const { error } = await supabase.from('timbrature').insert({
-      nome: user.nome,
-      anno: user.anno,
-      data, ora, tipo
-    });
-
-    if (error) alert("Errore: " + error.message);
-    else alert("Registrato: " + tipo);
+    if (data) {
+      localStorage.setItem('animatore', JSON.stringify(data));
+      window.location.href = 'timbratura.html';
+    } else {
+      alert("Credenziali errate.");
+    }
   }
 </script>
 </body>
