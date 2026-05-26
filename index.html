@@ -1,6 +1,407 @@
-<html>
+<!DOCTYPE html>
+<html lang="it">
 <head>
-  <meta http-equiv="refresh" content="0; url=timbratura.html" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timbratura Animatori</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f5f2eb;
+      --surface:   #ffffff;
+      --border:    #d8d2c4;
+      --ink:       #1a1714;
+      --ink2:      #5a5148;
+      --ink3:      #8a7f72;
+      --accent:    #2d4a3e;
+      --accent-lt: #e8f0ec;
+      --red:       #8b2e2e;
+      --red-lt:    #f5e8e8;
+      --green:     #2d5a3d;
+      --green-lt:  #e5f2ea;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono:  'Geist Mono', 'Courier New', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%);
+    }
+
+    /* ══════════════ SCHERMATE DI AUTENTICAZIONE ══════════════ */
+    #auth-screen {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; overflow-y: auto;
+    }
+
+    .auth-card {
+      width: 100%; max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    }
+
+    .auth-title {
+      font-family: var(--font-serif); font-size: 32px;
+      line-height: 1.1; color: var(--ink); margin-bottom: 24px;
+      text-align: center;
+    }
+    .auth-title em { font-style: italic; color: var(--accent); }
+
+    label {
+      display: block; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--ink3); margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono);
+      font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px;
+    }
+    input:focus { border-color: var(--accent); }
+    input[type=number] { -moz-appearance: textfield; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px;
+      font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all .15s; margin-bottom: 12px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #1f3329; }
+    
+    .btn-green { background: var(--green); color: white; font-size: 16px; padding: 20px; }
+    .btn-green:hover { background: #1f3f2a; }
+    .btn-red { background: var(--red); color: white; font-size: 16px; padding: 20px; }
+    .btn-red:hover { background: #662121; }
+
+    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; }
+    .auth-toggle span { text-decoration: underline; color: var(--accent); }
+
+    /* ══════════════ APPLICAZIONE REALE ══════════════ */
+    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px;
+    }
+    .topbar-title { font-family: var(--font-serif); font-size: 20px; }
+    .topbar-title em { font-style: italic; color: var(--accent); }
+    
+    .main-panel { max-width: 460px; margin: 40px auto; padding: 0 24px; text-align: center; }
+    
+    .welcome-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 32px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.04); margin-bottom: 24px;
+    }
+    .welcome-name { font-family: var(--font-serif); font-size: 28px; margin-bottom: 4px; }
+    .welcome-meta { font-size: 12px; color: var(--ink3); margin-bottom: 24px; }
+
+    .stamp-box { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Avvisi QR Code */
+    .qr-alert {
+      background: var(--accent-lt); color: var(--accent); border: 1px solid #b2ccbc;
+      padding: 12px; border-radius: 4px; font-size: 12px; margin-bottom: 16px; font-weight: 500;
+      animation: pulseAlert 1.5s infinite alternate; display: none;
+    }
+    @keyframes pulseAlert {
+      from { opacity: 0.7; } to { opacity: 1; }
+    }
+
+    /* Sistema Notifiche Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 24px;
+      font-size: 12px; opacity: 0; transition: all .3s cubic-bezier(.23,1,.32,1); z-index: 300;
+      white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+  </style>
 </head>
-<body></body>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card" id="login-card">
+    <div class="auth-title">Accedi all'<em>Oratorio</em></div>
+    <div class="qr-alert" id="qr-alert-login">Hai scansionato un QR Code! Accedi per registrare la timbratura.</div>
+    
+    <label>Email</label>
+    <input type="email" id="login-email" placeholder="nome@esempio.com" />
+    
+    <label>Password</label>
+    <input type="password" id="login-password" placeholder="••••••••" />
+    
+    <button class="btn btn-primary" onclick="handleLogin()">Entra →</button>
+    <div class="auth-toggle" onclick="toggleAuth(true)">Non hai un account? <span>Registrati</span></div>
+  </div>
+
+  <div class="auth-card" id="register-card" style="display:none;">
+    <div class="auth-title">Nuovo <em>Animatore</em></div>
+    <div class="qr-alert" id="qr-alert-reg">Hai scansionato un QR Code! Registrati per registrare la timbratura.</div>
+    
+    <label>Nome e Cognome</label>
+    <input type="text" id="reg-nome" placeholder="Mario Rossi" />
+    
+    <label>Anno di Nascita</label>
+    <input type="number" id="reg-anno" placeholder="2008" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
+
+    <label>Email</label>
+    <input type="email" id="reg-email" placeholder="nome@esempio.com" />
+    
+    <label>Password (min. 6 caratteri)</label>
+    <input type="password" id="reg-password" placeholder="••••••••" />
+    
+    <button class="btn btn-primary" onclick="handleRegister()">Registrati e Accedi</button>
+    <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi</span></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-title">tim<em>bratura</em></div>
+    <button style="background:transparent; border:1px solid var(--border); padding:5px 10px; border-radius:3px; font-family:var(--font-mono); font-size:11px; cursor:pointer;" onclick="handleLogout()">Esci</button>
+  </div>
+
+  <div class="main-panel">
+    <div class="welcome-card">
+      <div class="welcome-name" id="user-display-name">—</div>
+      <div class="welcome-meta" id="user-display-meta">—</div>
+      
+      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">Elaborazione timbratura da QR Code...</div>
+
+      <div class="stamp-box">
+        <button class="btn btn-green" id="btn-in" onclick="doStamp('Ingresso')">⬆ REGISTRA INGRESSO</button>
+        <button class="btn btn-red" id="btn-out" onclick="doStamp('Uscita')">⬇ REGISTRA USCITA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // CONFIGURAZIONI SUPABASE
+  const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const TABLE = 'timbrature';
+
+  // 📍 CONTROLLO GPS: Imposta qui le coordinate del tuo oratorio
+  const ORATORIO_LAT   = 45.4642;  // <--- SOSTITUISCI CON LA TUA LATITUDINE
+  const ORATORIO_LON   = 9.1900;   // <--- SOSTITUISCI CON LA TUA LONGITUDINE
+  const MAX_DISTANZA   = 80;       // Tolleranza massima in metri dal centro dell'oratorio
+
+  let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let currentUser = null;
+
+  // 1. GESTIONE AVVIO PAGINA
+  window.addEventListener('load', async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    // Controlla se l'URL contiene comandi (?action=Ingresso o ?action=Uscita)
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+
+    if (session) {
+      showApp(session.user);
+      
+      // Se l'utente è loggato e arriva da un QR Code, esegue l'autotimbratura
+      if (action === 'Ingresso' || action === 'Uscita') {
+        document.getElementById('qr-alert-processing').style.display = 'block';
+        // Pulisce i parametri dell'URL per evitare timbrature fantasma se ricarica la pagina
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        setTimeout(async () => {
+          await doStamp(action);
+          document.getElementById('qr-alert-processing').style.display = 'none';
+        }, 1000);
+      }
+    } else {
+      // Se non è loggato ma scansiona il QR, salva l'azione e mostra gli avvisi dedicati
+      if (action === 'Ingresso' || action === 'Uscita') {
+        sessionStorage.setItem('pending_qr_action', action);
+        document.getElementById('qr-alert-login').style.display = 'block';
+        document.getElementById('qr-alert-reg').style.display = 'block';
+      }
+    }
+  });
+
+  function toggleAuth(showRegister) {
+    document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
+    document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
+  }
+
+  // 2. LOGICA DI REGISTRAZIONE
+  async function handleRegister() {
+    const nome = document.getElementById('reg-nome').value.trim();
+    const anno = document.getElementById('reg-anno').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+
+    if (!nome || !anno || !email || !password) { toast('Compila tutti i campi richiesti', 'error'); return; }
+    if (password.length < 6) { toast('La password deve contenere almeno 6 caratteri', 'error'); return; }
+
+    const { data, error } = await supabaseClient.auth.signUp({
+      email, password,
+      options: { data: { display_name: nome, anno: parseInt(anno) } }
+    });
+
+    if (error) { toast(error.message, 'error'); return; }
+    
+    toast('Account creato con successo!', 'success');
+    showApp(data.user);
+    checkPendingQR();
+  }
+
+  // 3. LOGICA DI LOGIN
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) { toast('Inserisci email e password', 'error'); return; }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { toast('Email o password errate', 'error'); return; }
+    
+    showApp(data.user);
+    checkPendingQR();
+  }
+
+  // Se c'era un'autotimbratura bloccata dal login, la esegue ora
+  async function checkPendingQR() {
+    const pendingAction = sessionStorage.getItem('pending_qr_action');
+    if (pendingAction) {
+      sessionStorage.removeItem('pending_qr_action');
+      document.getElementById('qr-alert-processing').style.display = 'block';
+      await doStamp(pendingAction);
+      document.getElementById('qr-alert-processing').style.display = 'none';
+    }
+  }
+
+  function showApp(user) {
+    currentUser = user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    
+    const nome = user.user_metadata.display_name || 'Animatore';
+    const anno = user.user_metadata.anno || '—';
+
+    document.getElementById('user-display-name').textContent = nome;
+    document.getElementById('user-display-meta').textContent = `Classe/Anno di nascita: ${anno}`;
+  }
+
+  async function handleLogout() {
+    await supabaseClient.auth.signOut();
+    location.reload();
+  }
+
+  // 📐 ALGORITMO DI HAVERSINE (Calcolo distanza geografica accurata in metri)
+  function calcolaDistanza(lat1, lon1, lat2, lon2) {
+    const R = 6371000; 
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // ⚡ PROCESSO DI TIMBRATURA CON BLOCCO GPS
+  async function doStamp(tipo) {
+    if (!currentUser) return;
+
+    if (!navigator.geolocation) {
+      toast("La geolocalizzazione non è supportata o è disattivata sul telefono.", "error");
+      return;
+    }
+
+    toast("Controllo posizione GPS...", "info");
+
+    // Blocco temporaneo dei pulsanti di input per evitare invii multipli
+    document.getElementById('btn-in').disabled = true;
+    document.getElementById('btn-out').disabled = true;
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const userLat = position.coords.latitude;
+      const userLon = position.coords.longitude;
+
+      const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
+
+      // SE L'ANIMATORE È TROPPO LONTANO DALL'ORATORIO
+      if (distanza > MAX_DISTANZA) {
+        toast(`Errore: Sei a ${Math.round(distanza)} metri dall'oratorio! Avvicinati per timbrare.`, "error");
+        document.getElementById('btn-in').disabled = false;
+        document.getElementById('btn-out').disabled = false;
+        return;
+      }
+
+      // SE LA POSIZIONE È CORRETTA -> PROCEDE AL SALVATAGGIO
+      const nome = currentUser.user_metadata.display_name;
+      const anno = currentUser.user_metadata.anno;
+      const now = new Date();
+      const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+      const ora = now.toTimeString().slice(0,5);
+
+      const { error } = await supabaseClient.from(TABLE).insert({
+        user_id: currentUser.id,
+        nome: nome,
+        anno: anno ? parseInt(anno) : null,
+        data: data,
+        ora: ora,
+        tipo: tipo
+      });
+
+      document.getElementById('btn-in').disabled = false;
+      document.getElementById('btn-out').disabled = false;
+
+      if (error) {
+        toast('Errore di connessione a Supabase: ' + error.message, 'error');
+      } else {
+        toast(`Registrato con successo: ${tipo} ore ${ora}`, 'success');
+      }
+
+    }, (error) => {
+      toast("Devi autorizzare l'accesso al GPS del telefono per poter procedere!", "error");
+      document.getElementById('btn-in').disabled = false;
+      document.getElementById('btn-out').disabled = false;
+    }, {
+      enableHighAccuracy: true, // Forza l'uso del GPS hardware ad alta precisione
+      timeout: 7000
+    });
+  }
+
+  function toast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+</script>
+</body>
 </html>
