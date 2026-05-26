@@ -176,7 +176,7 @@
     
     <div class="error-msg" id="login-error"></div>
     
-    <button class="btn btn-primary" onclick="handleLogin()">Entra →</button>
+    <button class="btn btn-primary" id="login-btn">Entra →</button>
     <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo animatore? <span>Registrati qui</span></div>
   </div>
 
@@ -196,7 +196,7 @@
     <div class="error-msg" id="reg-error"></div>
     <div class="success-msg" id="reg-success"></div>
     
-    <button class="btn btn-primary" onclick="handleRegister()">Registrati e Accedi</button>
+    <button class="btn btn-primary" id="register-btn">Registrati e Accedi</button>
     <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi ora</span></div>
   </div>
 </div>
@@ -204,7 +204,7 @@
 <div id="app-screen">
   <div class="topbar">
     <div class="topbar-title">tim<em>bratura</em></div>
-    <button style="background:transparent; border:1px solid var(--border); padding:5px 10px; border-radius:3px; font-family:var(--font-mono); font-size:11px; cursor:pointer;" onclick="handleLogout()">Esci</button>
+    <button style="background:transparent; border:1px solid var(--border); padding:5px 10px; border-radius:3px; font-family:var(--font-mono); font-size:11px; cursor:pointer;" id="logout-btn">Esci</button>
   </div>
 
   <div class="main-panel">
@@ -215,11 +215,11 @@
       <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">⏳ Elaborazione presenza da QR Code in corso...</div>
 
       <div class="stamp-box">
-        <button class="btn btn-green" id="btn-in" onclick="doStamp('Ingresso')">⬆ REGISTRA INGRESSO</button>
-        <button class="btn btn-red" id="btn-out" onclick="doStamp('Uscita')">⬇ REGISTRA USCITA</button>
+        <button class="btn btn-green" id="btn-in">⬆ REGISTRA INGRESSO</button>
+        <button class="btn btn-red" id="btn-out">⬇ REGISTRA USCITA</button>
       </div>
       
-      <!-- Debug info (nascosto di default, visibile solo in caso di errore GPS) -->
+      <!-- Debug info -->
       <div id="gps-debug" style="margin-top: 20px; font-size: 10px; color: var(--ink3); display: none; border-top: 1px solid var(--border); padding-top: 15px;">
         <div id="debug-position"></div>
         <div id="debug-distance"></div>
@@ -229,13 +229,13 @@
     <div class="welcome-card admin-card" id="admin-panel" style="display: none;">
       <div class="admin-header">
         <div class="admin-title">Pannello Admin 🛠️</div>
-        <button onclick="caricaRegistroAdmin()" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px; font-family:var(--font-mono);">Aggiorna Registro 🔄</button>
+        <button id="aggiorna-registro">Aggiorna Registro 🔄</button>
       </div>
       
       <p style="font-size:11px; color:var(--ink2); margin-bottom:8px; font-weight:600;">🔒 Blocco pulsanti di timbratura:</p>
       <div class="admin-toggle-wrapper">
-        <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStatoSistema('ingresso_aperto')">Ingressi: ...</button>
-        <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStatoSistema('uscita_aperta')">Uscite: ...</button>
+        <button id="toggle-in-btn" class="btn-toggle">Ingressi: ...</button>
+        <button id="toggle-out-btn" class="btn-toggle">Uscite: ...</button>
       </div>
 
       <p style="font-size:11px; color:var(--ink2); margin-bottom:10px; border-top:1px solid var(--border); padding-top:10px;">📋 Elenco ultime timbrature effettuate:</p>
@@ -259,467 +259,469 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // ============================================================
-  // CONFIGURAZIONE SUPABASE
-  // ============================================================
-  const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  
-  const TABLE_TIMBRATURE = 'timbrature';
-  const TABLE_UTENTI = 'utenti';
-  const TABLE_IMPOSTAZIONI = 'impostazioni';
-  
-  // ============================================================
-  // 🔴 MODIFICA QUI LE COORDINATE DEL TUO ORATORIO 🔴
-  // Per trovare le coordinate esatte: https://www.latlong.net/
-  // Oppure su Google Maps: tieni premuto sul punto → copia coordinate
-  // ============================================================
-  const ORATORIO_LAT   = 45.706869501092136;   // <-- SOSTITUISCI CON LATITUDINE REALE
-  const ORATORIO_LON   = 8.800464096722195;    // <-- SOSTITUISCI CON LONGITUDINE REALE
-  const MAX_DISTANZA   = 150;                  // Raggio in metri (aumenta se necessario)
-  
-  // Nomi degli admin (inserisci qui i nomi degli animatori che devono avere i privilegi)
-  const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
-  
-  // ============================================================
-  
-  let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let currentUser = null;
-
-  let ingressoAperto = true;
-  let uscitaAperta = true;
-
-  // ==================== FUNZIONI DI UTILITY ====================
-  
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-
-  function toast(msg, type = 'info') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'toast ' + type;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 4000);
-  }
-
-  // ==================== CALCOLO DISTANZA ====================
-  function calcolaDistanza(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Raggio Terra in metri
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  // ==================== GESTIONE SCHERMATE ====================
-  
-  function toggleAuth(showRegister) {
-    document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
-    document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
-    document.getElementById('login-error').style.display = 'none';
-    document.getElementById('reg-error').style.display = 'none';
-    document.getElementById('reg-success').style.display = 'none';
-  }
-
-  function showLoginError(msg) {
-    const errDiv = document.getElementById('login-error');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
-    setTimeout(() => errDiv.style.display = 'none', 3000);
-  }
-
-  function showRegError(msg) {
-    const errDiv = document.getElementById('reg-error');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
-    setTimeout(() => errDiv.style.display = 'none', 3000);
-  }
-
-  function showRegSuccess(msg) {
-    const successDiv = document.getElementById('reg-success');
-    successDiv.textContent = msg;
-    successDiv.style.display = 'block';
-    setTimeout(() => successDiv.style.display = 'none', 3000);
-  }
-
-  // ==================== REGISTRAZIONE ====================
-  
-  async function handleRegister() {
-    const nome = document.getElementById('reg-nome').value.trim();
-    const anno = document.getElementById('reg-anno').value.trim();
-    const password = document.getElementById('reg-password').value;
-
-    if (!nome || !anno || !password) {
-      showRegError('❌ Tutti i campi sono obbligatori');
-      return;
-    }
-    if (password.length < 4) {
-      showRegError('❌ La password deve essere di almeno 4 caratteri');
-      return;
-    }
-    if (anno.length !== 4 || isNaN(parseInt(anno))) {
-      showRegError('❌ Inserisci un anno valido (es. 2008)');
-      return;
-    }
-
-    // Verifica se l'utente esiste già
-    const { data: esistente, error: checkError } = await supabaseClient
-      .from(TABLE_UTENTI)
-      .select('nome')
-      .eq('nome', nome)
-      .maybeSingle();
-
-    if (esistente) {
-      showRegError('❌ Questo nome è già registrato!');
-      return;
-    }
-
-    // Inserisci il nuovo utente
-    const { error } = await supabaseClient
-      .from(TABLE_UTENTI)
-      .insert([{ 
-        nome: nome, 
-        password: password,
-        anno: parseInt(anno),
-        created_at: new Date()
-      }]);
-
-    if (error) {
-      showRegError('❌ Errore: ' + error.message);
-      return;
-    }
+  (function() {
+    // ============================================================
+    // CONFIGURAZIONE SUPABASE
+    // ============================================================
+    const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
     
-    showRegSuccess('✅ Registrazione riuscita! Ora puoi accedere.');
+    const TABLE_TIMBRATURE = 'timbrature';
+    const TABLE_UTENTI = 'utenti';
+    const TABLE_IMPOSTAZIONI = 'impostazioni';
     
-    // Pulisci campi
-    document.getElementById('reg-nome').value = '';
-    document.getElementById('reg-anno').value = '';
-    document.getElementById('reg-password').value = '';
+    // ============================================================
+    // 🔴 MODIFICA QUI LE COORDINATE DEL TUO ORATORIO 🔴
+    // ============================================================
+    const ORATORIO_LAT   = 45.706869501092136;
+    const ORATORIO_LON   = 8.800464096722195;
+    const MAX_DISTANZA   = 150;
     
-    // Torna al login dopo 2 secondi
-    setTimeout(() => {
-      toggleAuth(false);
-    }, 2000);
-  }
-
-  // ==================== LOGIN ====================
-  
-  async function handleLogin() {
-    const nome = document.getElementById('login-nome').value.trim();
-    const password = document.getElementById('login-password').value;
-
-    if (!nome || !password) {
-      showLoginError('❌ Inserisci nome e password');
-      return;
-    }
-
-    // Verifica nel database
-    const { data, error } = await supabaseClient
-      .from(TABLE_UTENTI)
-      .select('*')
-      .eq('nome', nome)
-      .eq('password', password)
-      .maybeSingle();
-
-    if (error || !data) {
-      showLoginError('❌ Nome o password errati');
-      return;
-    }
+    const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
     
-    currentUser = {
-      id: data.id,
-      nome: data.nome,
-      anno: data.anno,
-      email: data.email || null
-    };
+    // ============================================================
     
-    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-    showApp();
-    checkPendingQR();
-  }
+    let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentUser = null;
+    let ingressoAperto = true;
+    let uscitaAperta = true;
 
-  // ==================== PENDING QR ====================
-  
-  async function checkPendingQR() {
-    const pendingAction = sessionStorage.getItem('pending_qr_action');
-    if (pendingAction) {
-      sessionStorage.removeItem('pending_qr_action');
-      document.getElementById('qr-alert-processing').style.display = 'block';
-      await doStamp(pendingAction);
-      document.getElementById('qr-alert-processing').style.display = 'none';
-    }
-  }
-
-  // ==================== MOSTRA APP ====================
-  
-  function showApp() {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    
-    document.getElementById('user-display-name').textContent = currentUser.nome;
-    document.getElementById('user-display-meta').textContent = `📅 Anno: ${currentUser.anno || '—'}`;
-
-    aggiornaInterfacciaBottoni();
-
-    // Controlla se l'utente è admin
-    if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
-      document.getElementById('admin-panel').style.display = 'block';
-      caricaRegistroAdmin();
-    } else {
-      document.getElementById('admin-panel').style.display = 'none';
-    }
-  }
-
-  // ==================== STATO BLOCCHI ====================
-  
-  async function scaricaStatoBlocchi() {
-    const { data, error } = await supabaseClient.from(TABLE_IMPOSTAZIONI).select('*');
-    if (!error && data) {
-      data.forEach(row => {
-        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+    // ==================== UTILITY ====================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
       });
-    } else {
-      // Se la tabella non esiste o è vuota, crea valori default
-      ingressoAperto = true;
-      uscitaAperta = true;
-    }
-  }
-
-  function aggiornaInterfacciaBottoni() {
-    const btnIn = document.getElementById('btn-in');
-    const btnOut = document.getElementById('btn-out');
-
-    if (ingressoAperto) {
-      btnIn.disabled = false;
-      btnIn.textContent = '⬆ REGISTRA INGRESSO';
-    } else {
-      btnIn.disabled = true;
-      btnIn.textContent = '🔒 INGRESSO BLOCCATO';
     }
 
-    if (uscitaAperta) {
-      btnOut.disabled = false;
-      btnOut.textContent = '⬇ REGISTRA USCITA';
-    } else {
-      btnOut.disabled = true;
-      btnOut.textContent = '🔒 USCITA BLOCCATA';
+    function toast(msg, type = 'info') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + type;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 4000);
     }
 
-    const toggleInBtn = document.getElementById('toggle-in-btn');
-    const toggleOutBtn = document.getElementById('toggle-out-btn');
-    
-    if (toggleInBtn && toggleOutBtn) {
-      toggleInBtn.textContent = ingressoAperto ? '✅ Ingressi: APERTI' : '🔒 Ingressi: BLOCCATI';
-      toggleInBtn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
-      toggleInBtn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
-
-      toggleOutBtn.textContent = uscitaAperta ? '✅ Uscite: APERTE' : '🔒 Uscite: BLOCCATE';
-      toggleOutBtn.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
-      toggleOutBtn.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
-    }
-  }
-
-  async function toggleStatoSistema(chiave) {
-    if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
-      toast('Solo l\'admin può modificare questa impostazione', 'error');
-      return;
-    }
-    
-    const statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
-    const nuovoStato = !statoCorrente;
-
-    const { error } = await supabaseClient
-      .from(TABLE_IMPOSTAZIONI)
-      .update({ valore: nuovoStato })
-      .eq('chiave', chiave);
-
-    if (error) {
-      toast('Errore nel cambiare blocco: ' + error.message, 'error');
-    } else {
-      toast('Stato aggiornato!', 'success');
-      await scaricaStatoBlocchi();
-      aggiornaInterfacciaBottoni();
-    }
-  }
-
-  // ==================== ADMIN REGISTRO ====================
-  
-  async function caricaRegistroAdmin() {
-    if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) return;
-    
-    const tbody = document.getElementById('admin-table-body');
-    
-    const { data, error } = await supabaseClient
-      .from(TABLE_TIMBRATURE)
-      .select('*')
-      .order('id', { ascending: false })
-      .limit(60);
-
-    if (error) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">❌ Errore: ${error.message}</td></tr>`;
-      return;
+    function calcolaDistanza(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
     }
 
-    if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">📭 Nessuna timbratura registrata.</td></tr>`;
-      return;
+    // ==================== GESTIONE SCHERMATE ====================
+    window.toggleAuth = function(showRegister) {
+      document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
+      document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('reg-error').style.display = 'none';
+      document.getElementById('reg-success').style.display = 'none';
     }
 
-    tbody.innerHTML = '';
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      const badgeClass = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
-      tr.innerHTML = `
-        <td style="font-weight:600;">${escapeHtml(row.nome)}</td>
-        <td style="color:var(--ink2);">${row.anno || '—'}</td>
-        <td>${row.data}</td>
-        <td style="font-weight:500;">${row.ora}</td>
-        <td><span class="badge ${badgeClass}">${row.tipo}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+    // ==================== REGISTRAZIONE ====================
+    window.handleRegister = async function() {
+      const nome = document.getElementById('reg-nome').value.trim();
+      const anno = document.getElementById('reg-anno').value.trim();
+      const password = document.getElementById('reg-password').value;
 
-  // ==================== LOGOUT ====================
-  
-  async function handleLogout() {
-    sessionStorage.removeItem('currentUser');
-    currentUser = null;
-    location.reload();
-  }
+      const showRegError = (msg) => {
+        const errDiv = document.getElementById('reg-error');
+        errDiv.textContent = msg;
+        errDiv.style.display = 'block';
+        setTimeout(() => errDiv.style.display = 'none', 3000);
+      };
+      const showRegSuccess = (msg) => {
+        const successDiv = document.getElementById('reg-success');
+        successDiv.textContent = msg;
+        successDiv.style.display = 'block';
+        setTimeout(() => successDiv.style.display = 'none', 3000);
+      };
 
-  // ==================== TIMBRATURA CON GPS ====================
-  
-  async function doStamp(tipo) {
-    if (!currentUser) return;
-
-    await scaricaStatoBlocchi();
-    aggiornaInterfacciaBottoni();
-
-    if (tipo === 'Ingresso' && !ingressoAperto) {
-      toast("🔒 Ingresso bloccato dal coordinatore!", "error");
-      return;
-    }
-    if (tipo === 'Uscita' && !uscitaAperta) {
-      toast("🔒 Uscite bloccate dal coordinatore!", "error");
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      toast("❌ Il tuo browser non supporta la geolocalizzazione", "error");
-      return;
-    }
-
-    toast("📍 Verifica della posizione in corso...", "info");
-
-    // Disabilita bottoni durante la verifica
-    document.getElementById('btn-in').disabled = true;
-    document.getElementById('btn-out').disabled = true;
-    
-    // Nascondi debug
-    document.getElementById('gps-debug').style.display = 'none';
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const userLat = position.coords.latitude;
-      const userLon = position.coords.longitude;
-      const precisione = position.coords.accuracy;
-
-      const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
-      
-      // Mostra debug per aiutare a trovare le coordinate giuste
-      const debugDiv = document.getElementById('gps-debug');
-      document.getElementById('debug-position').innerHTML = `📍 La tua posizione: ${userLat.toFixed(6)}, ${userLon.toFixed(6)}<br>🎯 Oratorio: ${ORATORIO_LAT}, ${ORATORIO_LON}<br>📡 Precisione: ±${Math.round(precisione)}m`;
-      document.getElementById('debug-distance').innerHTML = `📏 Distanza: ${Math.round(distanza)} metri (limite: ${MAX_DISTANZA}m)`;
-      
-      if (distanza > MAX_DISTANZA) {
-        debugDiv.style.display = 'block';
-        toast(`❌ Sei fuori dall'oratorio! Distanza: ${Math.round(distanza)} metri (max ${MAX_DISTANZA}m)`, "error");
-        aggiornaInterfacciaBottoni();
+      if (!nome || !anno || !password) {
+        showRegError('❌ Tutti i campi sono obbligatori');
+        return;
+      }
+      if (password.length < 4) {
+        showRegError('❌ La password deve essere di almeno 4 caratteri');
+        return;
+      }
+      if (anno.length !== 4 || isNaN(parseInt(anno))) {
+        showRegError('❌ Inserisci un anno valido (es. 2008)');
         return;
       }
 
-      // Se siamo dentro il raggio, nascondi debug
-      debugDiv.style.display = 'none';
+      const { data: esistente } = await supabaseClient
+        .from(TABLE_UTENTI)
+        .select('nome')
+        .eq('nome', nome)
+        .maybeSingle();
 
-      const now = new Date();
-      const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-      const ora = now.toTimeString().slice(0,5);
+      if (esistente) {
+        showRegError('❌ Questo nome è già registrato!');
+        return;
+      }
 
-      const { error } = await supabaseClient.from(TABLE_TIMBRATURE).insert({
-        user_id: currentUser.id,
-        nome: currentUser.nome,
-        anno: currentUser.anno ? parseInt(currentUser.anno) : null,
-        data: data,
-        ora: ora,
-        tipo: tipo
-      });
-
-      aggiornaInterfacciaBottoni();
+      const { error } = await supabaseClient
+        .from(TABLE_UTENTI)
+        .insert([{ 
+          nome: nome, 
+          password: password,
+          anno: parseInt(anno),
+          created_at: new Date()
+        }]);
 
       if (error) {
-        toast('❌ Errore: ' + error.message, 'error');
+        showRegError('❌ Errore: ' + error.message);
+        return;
+      }
+      
+      showRegSuccess('✅ Registrazione riuscita! Ora puoi accedere.');
+      
+      document.getElementById('reg-nome').value = '';
+      document.getElementById('reg-anno').value = '';
+      document.getElementById('reg-password').value = '';
+      
+      setTimeout(() => {
+        window.toggleAuth(false);
+      }, 2000);
+    }
+
+    // ==================== LOGIN ====================
+    window.handleLogin = async function() {
+      const nome = document.getElementById('login-nome').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      const showLoginError = (msg) => {
+        const errDiv = document.getElementById('login-error');
+        errDiv.textContent = msg;
+        errDiv.style.display = 'block';
+        setTimeout(() => errDiv.style.display = 'none', 3000);
+      };
+
+      if (!nome || !password) {
+        showLoginError('❌ Inserisci nome e password');
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from(TABLE_UTENTI)
+        .select('*')
+        .eq('nome', nome)
+        .eq('password', password)
+        .maybeSingle();
+
+      if (error || !data) {
+        showLoginError('❌ Nome o password errati');
+        return;
+      }
+      
+      currentUser = {
+        id: data.id,
+        nome: data.nome,
+        anno: data.anno,
+        email: data.email || null
+      };
+      
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showApp();
+      
+      const pendingAction = sessionStorage.getItem('pending_qr_action');
+      if (pendingAction) {
+        sessionStorage.removeItem('pending_qr_action');
+        document.getElementById('qr-alert-processing').style.display = 'block';
+        await window.doStamp(pendingAction);
+        document.getElementById('qr-alert-processing').style.display = 'none';
+      }
+    }
+
+    // ==================== MOSTRA APP ====================
+    async function showApp() {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      
+      document.getElementById('user-display-name').textContent = currentUser.nome;
+      document.getElementById('user-display-meta').textContent = `📅 Anno: ${currentUser.anno || '—'}`;
+
+      await scaricaStatoBlocchi();
+      aggiornaInterfacciaBottoni();
+
+      if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+        document.getElementById('admin-panel').style.display = 'block';
+        await caricaRegistroAdmin();
       } else {
-        toast(`✅ ${tipo} registrato alle ${ora} (distanza: ${Math.round(distanza)}m)`, 'success');
+        document.getElementById('admin-panel').style.display = 'none';
+      }
+    }
+
+    // ==================== STATO BLOCCHI ====================
+    async function scaricaStatoBlocchi() {
+      const { data, error } = await supabaseClient.from(TABLE_IMPOSTAZIONI).select('*');
+      if (!error && data && data.length > 0) {
+        data.forEach(row => {
+          if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+          if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+        });
+      } else {
+        ingressoAperto = true;
+        uscitaAperta = true;
+      }
+    }
+
+    function aggiornaInterfacciaBottoni() {
+      const btnIn = document.getElementById('btn-in');
+      const btnOut = document.getElementById('btn-out');
+
+      if (ingressoAperto) {
+        btnIn.disabled = false;
+        btnIn.textContent = '⬆ REGISTRA INGRESSO';
+      } else {
+        btnIn.disabled = true;
+        btnIn.textContent = '🔒 INGRESSO BLOCCATO';
+      }
+
+      if (uscitaAperta) {
+        btnOut.disabled = false;
+        btnOut.textContent = '⬇ REGISTRA USCITA';
+      } else {
+        btnOut.disabled = true;
+        btnOut.textContent = '🔒 USCITA BLOCCATA';
+      }
+
+      const toggleInBtn = document.getElementById('toggle-in-btn');
+      const toggleOutBtn = document.getElementById('toggle-out-btn');
+      
+      if (toggleInBtn && toggleOutBtn) {
+        toggleInBtn.textContent = ingressoAperto ? '✅ Ingressi: APERTI' : '🔒 Ingressi: BLOCCATI';
+        toggleInBtn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
+        toggleInBtn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
+
+        toggleOutBtn.textContent = uscitaAperta ? '✅ Uscite: APERTE' : '🔒 Uscite: BLOCCATE';
+        toggleOutBtn.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
+        toggleOutBtn.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
+      }
+    }
+
+    window.toggleStatoSistema = async function(chiave) {
+      if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+        toast('Solo l\'admin può modificare questa impostazione', 'error');
+        return;
+      }
+      
+      const statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
+      const nuovoStato = !statoCorrente;
+
+      const { error } = await supabaseClient
+        .from(TABLE_IMPOSTAZIONI)
+        .update({ valore: nuovoStato })
+        .eq('chiave', chiave);
+
+      if (error) {
+        toast('Errore nel cambiare blocco: ' + error.message, 'error');
+      } else {
+        toast('Stato aggiornato!', 'success');
+        await scaricaStatoBlocchi();
+        aggiornaInterfacciaBottoni();
+      }
+    }
+
+    // ==================== ADMIN REGISTRO ====================
+    window.caricaRegistroAdmin = async function() {
+      if (!ADMIN_NAMES.includes(currentUser?.nome.toLowerCase())) return;
+      
+      const tbody = document.getElementById('admin-table-body');
+      
+      const { data, error } = await supabaseClient
+        .from(TABLE_TIMBRATURE)
+        .select('*')
+        .order('id', { ascending: false })
+        .limit(60);
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">❌ Errore: ${error.message}</td></tr>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">📭 Nessuna timbratura registrata.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        const badgeClass = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
+        tr.innerHTML = `
+          <td style="font-weight:600;">${escapeHtml(row.nome)}</td>
+          <td style="color:var(--ink2);">${row.anno || '—'}</td>
+          <td>${row.data}</td>
+          <td style="font-weight:500;">${row.ora}</td>
+          <td><span class="badge ${badgeClass}">${row.tipo}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ==================== LOGOUT ====================
+    window.handleLogout = function() {
+      sessionStorage.removeItem('currentUser');
+      currentUser = null;
+      location.reload();
+    }
+
+    // ==================== TIMBRATURA ====================
+    window.doStamp = async function(tipo) {
+      if (!currentUser) return;
+
+      await scaricaStatoBlocchi();
+      aggiornaInterfacciaBottoni();
+
+      if (tipo === 'Ingresso' && !ingressoAperto) {
+        toast("🔒 Ingresso bloccato dal coordinatore!", "error");
+        return;
+      }
+      if (tipo === 'Uscita' && !uscitaAperta) {
+        toast("🔒 Uscite bloccate dal coordinatore!", "error");
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        toast("❌ Il tuo browser non supporta la geolocalizzazione", "error");
+        return;
+      }
+
+      toast("📍 Verifica della posizione in corso...", "info");
+
+      document.getElementById('btn-in').disabled = true;
+      document.getElementById('btn-out').disabled = true;
+      document.getElementById('gps-debug').style.display = 'none';
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const userLat = position.coords.latitude;
+        const userLon = position.coords.longitude;
+        const precisione = position.coords.accuracy;
+
+        const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
         
-        if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
-          caricaRegistroAdmin();
+        const debugDiv = document.getElementById('gps-debug');
+        document.getElementById('debug-position').innerHTML = `📍 La tua posizione: ${userLat.toFixed(6)}, ${userLon.toFixed(6)}<br>🎯 Oratorio: ${ORATORIO_LAT}, ${ORATORIO_LON}<br>📡 Precisione: ±${Math.round(precisione)}m`;
+        document.getElementById('debug-distance').innerHTML = `📏 Distanza: ${Math.round(distanza)} metri (limite: ${MAX_DISTANZA}m)`;
+        
+        if (distanza > MAX_DISTANZA) {
+          debugDiv.style.display = 'block';
+          toast(`❌ Sei fuori dall'oratorio! Distanza: ${Math.round(distanza)} metri`, "error");
+          aggiornaInterfacciaBottoni();
+          return;
+        }
+
+        debugDiv.style.display = 'none';
+
+        const now = new Date();
+        const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+        const ora = now.toTimeString().slice(0,5);
+
+        const { error } = await supabaseClient.from(TABLE_TIMBRATURE).insert({
+          user_id: currentUser.id,
+          nome: currentUser.nome,
+          anno: currentUser.anno ? parseInt(currentUser.anno) : null,
+          data: data,
+          ora: ora,
+          tipo: tipo
+        });
+
+        aggiornaInterfacciaBottoni();
+
+        if (error) {
+          toast('❌ Errore: ' + error.message, 'error');
+        } else {
+          toast(`✅ ${tipo} registrato alle ${ora}`, 'success');
+          if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+            await caricaRegistroAdmin();
+          }
+        }
+
+      }, (error) => {
+        let msg = "";
+        switch(error.code) {
+          case error.PERMISSION_DENIED: 
+            msg = "❌ Devi dare il permesso alla geolocalizzazione!"; 
+            break;
+          case error.POSITION_UNAVAILABLE: 
+            msg = "❌ Posizione non disponibile, attiva il GPS"; 
+            break;
+          case error.TIMEOUT: 
+            msg = "⏰ Tempo scaduto, riprova"; 
+            break;
+          default: 
+            msg = "❌ Errore GPS: " + error.message;
+        }
+        toast(msg, "error");
+        aggiornaInterfacciaBottoni();
+      }, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+    }
+
+    // ==================== ATTACCA EVENTI ====================
+    function attachEvents() {
+      const loginBtn = document.getElementById('login-btn');
+      const registerBtn = document.getElementById('register-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const btnIn = document.getElementById('btn-in');
+      const btnOut = document.getElementById('btn-out');
+      const aggiornaBtn = document.getElementById('aggiorna-registro');
+      const toggleIn = document.getElementById('toggle-in-btn');
+      const toggleOut = document.getElementById('toggle-out-btn');
+
+      if (loginBtn) loginBtn.onclick = () => window.handleLogin();
+      if (registerBtn) registerBtn.onclick = () => window.handleRegister();
+      if (logoutBtn) logoutBtn.onclick = () => window.handleLogout();
+      if (btnIn) btnIn.onclick = () => window.doStamp('Ingresso');
+      if (btnOut) btnOut.onclick = () => window.doStamp('Uscita');
+      if (aggiornaBtn) aggiornaBtn.onclick = () => window.caricaRegistroAdmin();
+      if (toggleIn) toggleIn.onclick = () => window.toggleStatoSistema('ingresso_aperto');
+      if (toggleOut) toggleOut.onclick = () => window.toggleStatoSistema('uscita_aperta');
+    }
+
+    // ==================== INIT ====================
+    window.addEventListener('DOMContentLoaded', async () => {
+      attachEvents();
+      
+      await scaricaStatoBlocchi();
+      
+      const savedUser = sessionStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        await showApp();
+      }
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = urlParams.get('action');
+      
+      if (action === 'Ingresso' || action === 'Uscita') {
+        if (currentUser) {
+          document.getElementById('qr-alert-processing').style.display = 'block';
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(async () => {
+            await window.doStamp(action);
+            document.getElementById('qr-alert-processing').style.display = 'none';
+          }, 1000);
+        } else {
+          sessionStorage.setItem('pending_qr_action', action);
+          document.getElementById('qr-alert-login').style.display = 'block';
+          document.getElementById('qr-alert-reg').style.display = 'block';
         }
       }
-
-    }, (error) => {
-      let msg = "";
-      switch(error.code) {
-        case error.PERMISSION_DENIED: 
-          msg = "❌ Devi dare il permesso alla geolocalizzazione!"; 
-          break;
-        case error.POSITION_UNAVAILABLE: 
-          msg = "❌ Posizione non disponibile, attiva il GPS"; 
-          break;
-        case error.TIMEOUT: 
-          msg = "⏰ Tempo scaduto, riprova"; 
-          break;
-        default: 
-          msg = "❌ Errore GPS: " + error.message;
-      }
-      toast(msg, "error");
-      aggiornaInterfacciaBottoni();
-    }, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
     });
-  }
-
-  // ==================== INIT E QR ====================
-  
-  window.addEventListener('load', async () => {
-    // Carica stato blocchi
-    await scaricaStatoBlocchi();
-    
-    // Controlla se c'è un utente salvato nella sessione
-    const savedUser = sessionStorage.getItem('currentUser');
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      showApp();
-    }
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    
-    if (action === 'Ingresso' || action === 'Uscita') {
-      if (currentUser) {
-        document.getElementById('qr-alert-processing').style.display = 'block';
-        window.history.replaceState({}, document.title, window.location.pathname);
-        setTimeout(async () => {
-          await doStamp(action);
+  })();
+</script>
+</body>
+</html>
