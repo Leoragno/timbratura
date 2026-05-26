@@ -43,7 +43,6 @@
       background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%);
     }
 
-    /* SCHERMATE DI ACCESSO */
     #auth-screen {
       position: fixed; inset: 0; z-index: 100;
       display: flex; align-items: center; justify-content: center;
@@ -101,7 +100,6 @@
     .error-msg { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
     .success-msg { color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
 
-    /* INTERFACCIA TIMBRATURA */
     #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
 
     .topbar {
@@ -131,6 +129,15 @@
     @keyframes pulseAlert {
       from { opacity: 0.7; } to { opacity: 1; }
     }
+
+    /* Banner permesso GPS — mostrato prima del tap su iOS */
+    #geo-permission-banner {
+      display: none;
+      background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px;
+      padding: 14px 16px; margin-bottom: 16px; font-size: 12px;
+      color: var(--amber, #7a5c1e); text-align: left; line-height: 1.6;
+    }
+    #geo-permission-banner strong { display: block; margin-bottom: 4px; font-size: 13px; }
 
     .admin-card { text-align: left; background: #faf9f5; border: 2px dashed var(--accent); }
     .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
@@ -214,12 +221,19 @@
       
       <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">⏳ Elaborazione presenza da QR Code in corso...</div>
 
+      <!-- Banner visibile su iOS prima del primo tap -->
+      <div id="geo-permission-banner">
+        <strong>📍 Posizione richiesta</strong>
+        Quando premi il pulsante, Safari ti chiederà di condividere la posizione. Premi <strong>"Consenti"</strong> per poter timbrare.
+        <br><br>
+        Se non vedi il popup: vai su <em>Impostazioni → Privacy → Servizi di localizzazione → Safari</em> e impostalo su <strong>"Mentre uso l'app"</strong>.
+      </div>
+
       <div class="stamp-box">
         <button class="btn btn-green" id="btn-in">⬆ REGISTRA INGRESSO</button>
-        <button class="btn btn-red" id="btn-out">⬇ REGISTRA USCITA</button>
+        <button class="btn btn-red" id="btn-out">⬇REGISTRA USCITA</button>
       </div>
       
-      <!-- Debug info -->
       <div id="gps-debug" style="margin-top: 20px; font-size: 10px; color: var(--ink3); display: none; border-top: 1px solid var(--border); padding-top: 15px;">
         <div id="debug-position"></div>
         <div id="debug-distance"></div>
@@ -260,60 +274,54 @@
 
 <script>
   (function() {
-    // ============================================================
-    // CONFIGURAZIONE SUPABASE
-    // ============================================================
     const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
     
-    const TABLE_TIMBRATURE = 'timbrature';
-    const TABLE_UTENTI = 'utenti';
-    const TABLE_IMPOSTAZIONI = 'impostazioni';
+    const TABLE_TIMBRATURE  = 'timbrature';
+    const TABLE_UTENTI      = 'utenti';
+    const TABLE_IMPOSTAZIONI= 'impostazioni';
     
-    // ============================================================
-    // 🔴 MODIFICA QUI LE COORDINATE DEL TUO ORATORIO 🔴
-    // ============================================================
-    const ORATORIO_LAT   = 45.706869501092136;
-    const ORATORIO_LON   = 8.800464096722195;
-    const MAX_DISTANZA   = 150;
+    const ORATORIO_LAT = 45.706869501092136;
+    const ORATORIO_LON = 8.800464096722195;
+    const MAX_DISTANZA = 150;
     
     const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
     
-    // ============================================================
-    
     let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let currentUser = null;
+    let currentUser    = null;
     let ingressoAperto = true;
-    let uscitaAperta = true;
+    let uscitaAperta   = true;
+    let stampInProgress = false;
 
     // ==================== UTILITY ====================
     function escapeHtml(str) {
       if (!str) return '';
-      return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
+      return str.replace(/[&<>"']/g, function(m) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
       });
     }
 
-    function toast(msg, type = 'info') {
-      const el = document.getElementById('toast');
+    function toast(msg, type) {
+      type = type || 'info';
+      var el = document.getElementById('toast');
       el.textContent = msg;
-      el.className = 'toast ' + type;
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 4000);
+      el.className = 'toast ' + type + ' show';
+      setTimeout(function() { el.classList.remove('show'); }, 4000);
     }
 
     function calcolaDistanza(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+      var R = 6371000;
+      var dLat = (lat2 - lat1) * Math.PI / 180;
+      var dLon = (lon2 - lon1) * Math.PI / 180;
+      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function setButtonsDisabled(disabled) {
+      document.getElementById('btn-in').disabled = disabled || !ingressoAperto;
+      document.getElementById('btn-out').disabled = disabled || !uscitaAperta;
     }
 
     // ==================== GESTIONE SCHERMATE ====================
@@ -323,134 +331,92 @@
       document.getElementById('login-error').style.display = 'none';
       document.getElementById('reg-error').style.display = 'none';
       document.getElementById('reg-success').style.display = 'none';
-    }
+    };
 
     // ==================== REGISTRAZIONE ====================
     window.handleRegister = async function() {
-      const nome = document.getElementById('reg-nome').value.trim();
-      const anno = document.getElementById('reg-anno').value.trim();
-      const password = document.getElementById('reg-password').value;
+      var nome     = document.getElementById('reg-nome').value.trim();
+      var anno     = document.getElementById('reg-anno').value.trim();
+      var password = document.getElementById('reg-password').value;
 
-      const showRegError = (msg) => {
-        const errDiv = document.getElementById('reg-error');
-        errDiv.textContent = msg;
-        errDiv.style.display = 'block';
-        setTimeout(() => errDiv.style.display = 'none', 3000);
-      };
-      const showRegSuccess = (msg) => {
-        const successDiv = document.getElementById('reg-success');
-        successDiv.textContent = msg;
-        successDiv.style.display = 'block';
-        setTimeout(() => successDiv.style.display = 'none', 3000);
-      };
-
-      if (!nome || !anno || !password) {
-        showRegError('❌ Tutti i campi sono obbligatori');
-        return;
+      function showRegError(msg) {
+        var d = document.getElementById('reg-error');
+        d.textContent = msg; d.style.display = 'block';
+        setTimeout(function(){ d.style.display = 'none'; }, 3000);
       }
-      if (password.length < 4) {
-        showRegError('❌ La password deve essere di almeno 4 caratteri');
-        return;
-      }
-      if (anno.length !== 4 || isNaN(parseInt(anno))) {
-        showRegError('❌ Inserisci un anno valido (es. 2008)');
-        return;
+      function showRegSuccess(msg) {
+        var d = document.getElementById('reg-success');
+        d.textContent = msg; d.style.display = 'block';
+        setTimeout(function(){ d.style.display = 'none'; }, 3000);
       }
 
-      const { data: esistente } = await supabaseClient
-        .from(TABLE_UTENTI)
-        .select('nome')
-        .eq('nome', nome)
-        .maybeSingle();
+      if (!nome || !anno || !password) { showRegError('❌ Tutti i campi sono obbligatori'); return; }
+      if (password.length < 4) { showRegError('❌ Password di almeno 4 caratteri'); return; }
+      if (anno.length !== 4 || isNaN(parseInt(anno))) { showRegError('❌ Anno non valido (es. 2008)'); return; }
 
-      if (esistente) {
-        showRegError('❌ Questo nome è già registrato!');
-        return;
-      }
+      var check = await supabaseClient.from(TABLE_UTENTI).select('nome').eq('nome', nome).maybeSingle();
+      if (check.data) { showRegError('❌ Nome già registrato!'); return; }
 
-      const { error } = await supabaseClient
-        .from(TABLE_UTENTI)
-        .insert([{ 
-          nome: nome, 
-          password: password,
-          anno: parseInt(anno),
-          created_at: new Date()
-        }]);
+      var ins = await supabaseClient.from(TABLE_UTENTI).insert([{
+        nome: nome, password: password, anno: parseInt(anno), created_at: new Date()
+      }]);
+      if (ins.error) { showRegError('❌ Errore: ' + ins.error.message); return; }
 
-      if (error) {
-        showRegError('❌ Errore: ' + error.message);
-        return;
-      }
-      
       showRegSuccess('✅ Registrazione riuscita! Ora puoi accedere.');
-      
       document.getElementById('reg-nome').value = '';
       document.getElementById('reg-anno').value = '';
       document.getElementById('reg-password').value = '';
-      
-      setTimeout(() => {
-        window.toggleAuth(false);
-      }, 2000);
-    }
+      setTimeout(function() { window.toggleAuth(false); }, 2000);
+    };
 
     // ==================== LOGIN ====================
     window.handleLogin = async function() {
-      const nome = document.getElementById('login-nome').value.trim();
-      const password = document.getElementById('login-password').value;
+      var nome     = document.getElementById('login-nome').value.trim();
+      var password = document.getElementById('login-password').value;
 
-      const showLoginError = (msg) => {
-        const errDiv = document.getElementById('login-error');
-        errDiv.textContent = msg;
-        errDiv.style.display = 'block';
-        setTimeout(() => errDiv.style.display = 'none', 3000);
-      };
-
-      if (!nome || !password) {
-        showLoginError('❌ Inserisci nome e password');
-        return;
+      function showLoginError(msg) {
+        var d = document.getElementById('login-error');
+        d.textContent = msg; d.style.display = 'block';
+        setTimeout(function(){ d.style.display = 'none'; }, 3000);
       }
 
-      const { data, error } = await supabaseClient
-        .from(TABLE_UTENTI)
-        .select('*')
-        .eq('nome', nome)
-        .eq('password', password)
-        .maybeSingle();
+      if (!nome || !password) { showLoginError('❌ Inserisci nome e password'); return; }
 
-      if (error || !data) {
-        showLoginError('❌ Nome o password errati');
-        return;
-      }
-      
-      currentUser = {
-        id: data.id,
-        nome: data.nome,
-        anno: data.anno,
-        email: data.email || null
-      };
-      
+      var res = await supabaseClient
+        .from(TABLE_UTENTI).select('*')
+        .eq('nome', nome).eq('password', password).maybeSingle();
+
+      if (res.error || !res.data) { showLoginError('❌ Nome o password errati'); return; }
+
+      currentUser = { id: res.data.id, nome: res.data.nome, anno: res.data.anno };
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       showApp();
-      
-      const pendingAction = sessionStorage.getItem('pending_qr_action');
+
+      var pendingAction = sessionStorage.getItem('pending_qr_action');
       if (pendingAction) {
         sessionStorage.removeItem('pending_qr_action');
         document.getElementById('qr-alert-processing').style.display = 'block';
         await window.doStamp(pendingAction);
         document.getElementById('qr-alert-processing').style.display = 'none';
       }
-    }
+    };
 
     // ==================== MOSTRA APP ====================
     async function showApp() {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-screen').style.display = 'block';
-      
       document.getElementById('user-display-name').textContent = currentUser.nome;
-      document.getElementById('user-display-meta').textContent = `📅 Anno: ${currentUser.anno || '—'}`;
+      document.getElementById('user-display-meta').textContent = '📅 Anno: ' + (currentUser.anno || '—');
 
       await scaricaStatoBlocchi();
       aggiornaInterfacciaBottoni();
+
+      // Mostra il banner GPS su mobile (specialmente iOS)
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      var isMobile = /Mobi|Android/i.test(navigator.userAgent) || isIOS;
+      if (isMobile) {
+        document.getElementById('geo-permission-banner').style.display = 'block';
+      }
 
       if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
         document.getElementById('admin-panel').style.display = 'block';
@@ -462,255 +428,272 @@
 
     // ==================== STATO BLOCCHI ====================
     async function scaricaStatoBlocchi() {
-      const { data, error } = await supabaseClient.from(TABLE_IMPOSTAZIONI).select('*');
-      if (!error && data && data.length > 0) {
-        data.forEach(row => {
+      var res = await supabaseClient.from(TABLE_IMPOSTAZIONI).select('*');
+      if (!res.error && res.data) {
+        res.data.forEach(function(row) {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-          if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+          if (row.chiave === 'uscita_aperta')   uscitaAperta   = row.valore;
         });
-      } else {
-        ingressoAperto = true;
-        uscitaAperta = true;
       }
     }
 
     function aggiornaInterfacciaBottoni() {
-      const btnIn = document.getElementById('btn-in');
-      const btnOut = document.getElementById('btn-out');
+      var btnIn  = document.getElementById('btn-in');
+      var btnOut = document.getElementById('btn-out');
 
-      if (ingressoAperto) {
-        btnIn.disabled = false;
-        btnIn.textContent = '⬆ REGISTRA INGRESSO';
-      } else {
-        btnIn.disabled = true;
-        btnIn.textContent = '🔒 INGRESSO BLOCCATO';
-      }
+      btnIn.disabled  = !ingressoAperto;
+      btnIn.textContent  = ingressoAperto  ? '⬆ REGISTRA INGRESSO' : '🔒 INGRESSO BLOCCATO';
+      btnOut.disabled = !uscitaAperta;
+      btnOut.textContent = uscitaAperta ? '⬇ REGISTRA USCITA'  : '🔒 USCITA BLOCCATA';
 
-      if (uscitaAperta) {
-        btnOut.disabled = false;
-        btnOut.textContent = '⬇ REGISTRA USCITA';
-      } else {
-        btnOut.disabled = true;
-        btnOut.textContent = '🔒 USCITA BLOCCATA';
-      }
-
-      const toggleInBtn = document.getElementById('toggle-in-btn');
-      const toggleOutBtn = document.getElementById('toggle-out-btn');
-      
-      if (toggleInBtn && toggleOutBtn) {
-        toggleInBtn.textContent = ingressoAperto ? '✅ Ingressi: APERTI' : '🔒 Ingressi: BLOCCATI';
-        toggleInBtn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
-        toggleInBtn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
-
-        toggleOutBtn.textContent = uscitaAperta ? '✅ Uscite: APERTE' : '🔒 Uscite: BLOCCATE';
-        toggleOutBtn.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
-        toggleOutBtn.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
+      var tIn  = document.getElementById('toggle-in-btn');
+      var tOut = document.getElementById('toggle-out-btn');
+      if (tIn && tOut) {
+        tIn.textContent = ingressoAperto ? '✅ Ingressi: APERTI' : '🔒 Ingressi: BLOCCATI';
+        tIn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
+        tIn.style.color      = ingressoAperto ? 'var(--green)'    : 'var(--red)';
+        tOut.textContent = uscitaAperta ? '✅ Uscite: APERTE' : '🔒 Uscite: BLOCCATE';
+        tOut.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
+        tOut.style.color      = uscitaAperta ? 'var(--green)'    : 'var(--red)';
       }
     }
 
     window.toggleStatoSistema = async function(chiave) {
       if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
-        toast('Solo l\'admin può modificare questa impostazione', 'error');
-        return;
+        toast("Solo l'admin può modificare questa impostazione", 'error'); return;
       }
-      
-      const statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
-      const nuovoStato = !statoCorrente;
-
-      const { error } = await supabaseClient
-        .from(TABLE_IMPOSTAZIONI)
-        .update({ valore: nuovoStato })
-        .eq('chiave', chiave);
-
-      if (error) {
-        toast('Errore nel cambiare blocco: ' + error.message, 'error');
-      } else {
-        toast('Stato aggiornato!', 'success');
-        await scaricaStatoBlocchi();
-        aggiornaInterfacciaBottoni();
-      }
-    }
+      var statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
+      var res = await supabaseClient.from(TABLE_IMPOSTAZIONI)
+        .update({ valore: !statoCorrente }).eq('chiave', chiave);
+      if (res.error) { toast('Errore: ' + res.error.message, 'error'); return; }
+      toast('Stato aggiornato!', 'success');
+      await scaricaStatoBlocchi();
+      aggiornaInterfacciaBottoni();
+    };
 
     // ==================== ADMIN REGISTRO ====================
     window.caricaRegistroAdmin = async function() {
-      if (!ADMIN_NAMES.includes(currentUser?.nome.toLowerCase())) return;
-      
-      const tbody = document.getElementById('admin-table-body');
-      
-      const { data, error } = await supabaseClient
-        .from(TABLE_TIMBRATURE)
-        .select('*')
-        .order('id', { ascending: false })
-        .limit(60);
-
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">❌ Errore: ${error.message}</td></tr>`;
+      if (!ADMIN_NAMES.includes(currentUser && currentUser.nome.toLowerCase())) return;
+      var tbody = document.getElementById('admin-table-body');
+      var res = await supabaseClient.from(TABLE_TIMBRATURE)
+        .select('*').order('id', { ascending: false }).limit(60);
+      if (res.error) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--red); text-align:center;">❌ ' + escapeHtml(res.error.message) + '</td></tr>';
         return;
       }
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">📭 Nessuna timbratura registrata.</td></tr>`;
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3);">📭 Nessuna timbratura.</td></tr>';
         return;
       }
-
       tbody.innerHTML = '';
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        const badgeClass = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
-        tr.innerHTML = `
-          <td style="font-weight:600;">${escapeHtml(row.nome)}</td>
-          <td style="color:var(--ink2);">${row.anno || '—'}</td>
-          <td>${row.data}</td>
-          <td style="font-weight:500;">${row.ora}</td>
-          <td><span class="badge ${badgeClass}">${row.tipo}</span></td>
-        `;
+      res.data.forEach(function(row) {
+        var tr = document.createElement('tr');
+        var bc = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
+        tr.innerHTML = '<td style="font-weight:600;">' + escapeHtml(row.nome) + '</td>' +
+          '<td style="color:var(--ink2);">' + (row.anno || '—') + '</td>' +
+          '<td>' + escapeHtml(row.data) + '</td>' +
+          '<td style="font-weight:500;">' + escapeHtml(row.ora) + '</td>' +
+          '<td><span class="badge ' + bc + '">' + escapeHtml(row.tipo) + '</span></td>';
         tbody.appendChild(tr);
       });
-    }
+    };
 
     // ==================== LOGOUT ====================
     window.handleLogout = function() {
       sessionStorage.removeItem('currentUser');
       currentUser = null;
       location.reload();
-    }
+    };
 
-    // ==================== TIMBRATURA ====================
-    window.doStamp = async function(tipo) {
+    // ==================== TIMBRATURA (FIX iOS) ====================
+    //
+    // PROBLEMA: su Safari iOS, navigator.geolocation.getCurrentPosition()
+    // deve essere chiamato DIRETTAMENTE dentro l'handler del tap utente,
+    // senza nessun await prima — altrimenti iOS non mostra il popup
+    // di permesso e restituisce PERMISSION_DENIED silenziosamente.
+    //
+    // SOLUZIONE: avviamo subito getCurrentPosition() al tap, poi in
+    // parallelo facciamo i controlli sui blocchi via fetch normale.
+    // I due rami (posizione + stato blocchi) si incontrano quando
+    // entrambi sono pronti, e solo allora scriviamo la timbratura.
+    //
+    window.doStamp = function(tipo) {
       if (!currentUser) return;
+      if (stampInProgress) { toast('⏳ Attendi la timbratura in corso...', 'info'); return; }
 
-      await scaricaStatoBlocchi();
-      aggiornaInterfacciaBottoni();
-
+      // Controlla subito lo stato locale (già scaricato)
       if (tipo === 'Ingresso' && !ingressoAperto) {
-        toast("🔒 Ingresso bloccato dal coordinatore!", "error");
-        return;
+        toast('🔒 Ingresso bloccato dal coordinatore!', 'error'); return;
       }
       if (tipo === 'Uscita' && !uscitaAperta) {
-        toast("🔒 Uscite bloccate dal coordinatore!", "error");
-        return;
+        toast('🔒 Uscite bloccate dal coordinatore!', 'error'); return;
       }
 
       if (!navigator.geolocation) {
-        toast("❌ Il tuo browser non supporta la geolocalizzazione", "error");
-        return;
+        toast('❌ Il tuo browser non supporta la geolocalizzazione', 'error'); return;
       }
 
-      toast("📍 Verifica della posizione in corso...", "info");
+      stampInProgress = true;
+      setButtonsDisabled(true);
+      document.getElementById('geo-permission-banner').style.display = 'none';
+      toast('📍 Verifica posizione in corso...', 'info');
 
-      document.getElementById('btn-in').disabled = true;
-      document.getElementById('btn-out').disabled = true;
-      document.getElementById('gps-debug').style.display = 'none';
+      // ─── PASSO 1: chiediamo la posizione IMMEDIATAMENTE (richiesto da iOS)
+      //     Non c'è nessun await prima di questa riga.
+      var geoPromise = new Promise(function(resolve, reject) {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        });
+      });
 
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const userLat = position.coords.latitude;
-        const userLon = position.coords.longitude;
-        const precisione = position.coords.accuracy;
+      // ─── PASSO 2: in parallelo aggiorniamo lo stato blocchi dal server
+      var blocchiPromise = scaricaStatoBlocchi();
 
-        const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
-        
-        const debugDiv = document.getElementById('gps-debug');
-        document.getElementById('debug-position').innerHTML = `📍 La tua posizione: ${userLat.toFixed(6)}, ${userLon.toFixed(6)}<br>🎯 Oratorio: ${ORATORIO_LAT}, ${ORATORIO_LON}<br>📡 Precisione: ±${Math.round(precisione)}m`;
-        document.getElementById('debug-distance').innerHTML = `📏 Distanza: ${Math.round(distanza)} metri (limite: ${MAX_DISTANZA}m)`;
-        
+      // ─── PASSO 3: aspettiamo entrambi
+      Promise.all([geoPromise, blocchiPromise]).then(function(results) {
+        var position = results[0];
+
+        // Ricontrolliamo i blocchi con dati freschi dal server
+        if (tipo === 'Ingresso' && !ingressoAperto) {
+          toast('🔒 Ingresso bloccato dal coordinatore!', 'error');
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          return;
+        }
+        if (tipo === 'Uscita' && !uscitaAperta) {
+          toast('🔒 Uscite bloccate dal coordinatore!', 'error');
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          return;
+        }
+
+        var userLat   = position.coords.latitude;
+        var userLon   = position.coords.longitude;
+        var precisione = position.coords.accuracy;
+        var distanza  = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
+
+        var debugDiv = document.getElementById('gps-debug');
+        document.getElementById('debug-position').innerHTML =
+          '📍 Posizione: ' + userLat.toFixed(6) + ', ' + userLon.toFixed(6) +
+          '<br>🎯 Oratorio: ' + ORATORIO_LAT + ', ' + ORATORIO_LON +
+          '<br>📡 Precisione: ±' + Math.round(precisione) + 'm';
+        document.getElementById('debug-distance').innerHTML =
+          '📏 Distanza: ' + Math.round(distanza) + 'm (limite: ' + MAX_DISTANZA + 'm)';
+
         if (distanza > MAX_DISTANZA) {
           debugDiv.style.display = 'block';
-          toast(`❌ Sei fuori dall'oratorio! Distanza: ${Math.round(distanza)} metri`, "error");
+          toast('❌ Sei fuori dall\'oratorio! Distanza: ' + Math.round(distanza) + 'm', 'error');
+          stampInProgress = false;
           aggiornaInterfacciaBottoni();
           return;
         }
 
         debugDiv.style.display = 'none';
 
-        const now = new Date();
-        const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-        const ora = now.toTimeString().slice(0,5);
+        var now  = new Date();
+        var data = String(now.getDate()).padStart(2,'0') + '/' +
+                   String(now.getMonth()+1).padStart(2,'0') + '/' +
+                   now.getFullYear();
+        var ora  = now.toTimeString().slice(0,5);
 
-        const { error } = await supabaseClient.from(TABLE_TIMBRATURE).insert({
+        supabaseClient.from(TABLE_TIMBRATURE).insert({
           user_id: currentUser.id,
-          nome: currentUser.nome,
-          anno: currentUser.anno ? parseInt(currentUser.anno) : null,
-          data: data,
-          ora: ora,
-          tipo: tipo
+          nome:    currentUser.nome,
+          anno:    currentUser.anno ? parseInt(currentUser.anno) : null,
+          data:    data,
+          ora:     ora,
+          tipo:    tipo
+        }).then(function(res) {
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          if (res.error) {
+            toast('❌ Errore: ' + res.error.message, 'error');
+          } else {
+            toast('✅ ' + tipo + ' registrato alle ' + ora, 'success');
+            if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+              caricaRegistroAdmin();
+            }
+          }
         });
 
+      }).catch(function(err) {
+        stampInProgress = false;
         aggiornaInterfacciaBottoni();
 
-        if (error) {
-          toast('❌ Errore: ' + error.message, 'error');
-        } else {
-          toast(`✅ ${tipo} registrato alle ${ora}`, 'success');
-          if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
-            await caricaRegistroAdmin();
+        // Gestione errori geolocalizzazione
+        var msg;
+        if (err && err.code) {
+          switch(err.code) {
+            case 1: // PERMISSION_DENIED
+              msg = '❌ Permesso posizione negato. Vai su Impostazioni → Privacy → Servizi di localizzazione → Safari → "Mentre uso l\'app"';
+              break;
+            case 2: // POSITION_UNAVAILABLE
+              msg = '❌ Posizione non disponibile. Attiva il GPS e riprova.';
+              break;
+            case 3: // TIMEOUT
+              msg = '⏰ Tempo scaduto. Assicurati di avere il GPS attivo e riprova.';
+              break;
+            default:
+              msg = '❌ Errore GPS: ' + (err.message || err.code);
           }
+        } else {
+          msg = '❌ Errore sconosciuto. Riprova.';
         }
+        toast(msg, 'error');
 
-      }, (error) => {
-        let msg = "";
-        switch(error.code) {
-          case error.PERMISSION_DENIED: 
-            msg = "❌ Devi dare il permesso alla geolocalizzazione!"; 
-            break;
-          case error.POSITION_UNAVAILABLE: 
-            msg = "❌ Posizione non disponibile, attiva il GPS"; 
-            break;
-          case error.TIMEOUT: 
-            msg = "⏰ Tempo scaduto, riprova"; 
-            break;
-          default: 
-            msg = "❌ Errore GPS: " + error.message;
+        // Su iOS mostriamo di nuovo il banner con istruzioni
+        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS && err && err.code === 1) {
+          document.getElementById('geo-permission-banner').style.display = 'block';
         }
-        toast(msg, "error");
-        aggiornaInterfacciaBottoni();
-      }, {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
       });
-    }
+    };
 
     // ==================== ATTACCA EVENTI ====================
     function attachEvents() {
-      const loginBtn = document.getElementById('login-btn');
-      const registerBtn = document.getElementById('register-btn');
-      const logoutBtn = document.getElementById('logout-btn');
-      const btnIn = document.getElementById('btn-in');
-      const btnOut = document.getElementById('btn-out');
-      const aggiornaBtn = document.getElementById('aggiorna-registro');
-      const toggleIn = document.getElementById('toggle-in-btn');
-      const toggleOut = document.getElementById('toggle-out-btn');
+      document.getElementById('login-btn').addEventListener('click', window.handleLogin);
+      document.getElementById('register-btn').addEventListener('click', window.handleRegister);
+      document.getElementById('logout-btn').addEventListener('click', window.handleLogout);
 
-      if (loginBtn) loginBtn.onclick = () => window.handleLogin();
-      if (registerBtn) registerBtn.onclick = () => window.handleRegister();
-      if (logoutBtn) logoutBtn.onclick = () => window.handleLogout();
-      if (btnIn) btnIn.onclick = () => window.doStamp('Ingresso');
-      if (btnOut) btnOut.onclick = () => window.doStamp('Uscita');
-      if (aggiornaBtn) aggiornaBtn.onclick = () => window.caricaRegistroAdmin();
-      if (toggleIn) toggleIn.onclick = () => window.toggleStatoSistema('ingresso_aperto');
-      if (toggleOut) toggleOut.onclick = () => window.toggleStatoSistema('uscita_aperta');
+      // I pulsanti di timbratura usano addEventListener per garantire
+      // che il contesto "user gesture" sia preservato su iOS
+      document.getElementById('btn-in').addEventListener('click', function() { window.doStamp('Ingresso'); });
+      document.getElementById('btn-out').addEventListener('click', function() { window.doStamp('Uscita'); });
+
+      document.getElementById('aggiorna-registro').addEventListener('click', window.caricaRegistroAdmin);
+      document.getElementById('toggle-in-btn').addEventListener('click', function() { window.toggleStatoSistema('ingresso_aperto'); });
+      document.getElementById('toggle-out-btn').addEventListener('click', function() { window.toggleStatoSistema('uscita_aperta'); });
+
+      // Enter sui campi login
+      document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') window.handleLogin();
+      });
+      document.getElementById('reg-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') window.handleRegister();
+      });
     }
 
     // ==================== INIT ====================
-    window.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('DOMContentLoaded', async function() {
       attachEvents();
-      
       await scaricaStatoBlocchi();
-      
-      const savedUser = sessionStorage.getItem('currentUser');
+
+      var savedUser = sessionStorage.getItem('currentUser');
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
         await showApp();
       }
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const action = urlParams.get('action');
-      
+
+      var urlParams = new URLSearchParams(window.location.search);
+      var action    = urlParams.get('action');
+
       if (action === 'Ingresso' || action === 'Uscita') {
         if (currentUser) {
           document.getElementById('qr-alert-processing').style.display = 'block';
           window.history.replaceState({}, document.title, window.location.pathname);
-          setTimeout(async () => {
+          setTimeout(async function() {
             await window.doStamp(action);
             document.getElementById('qr-alert-processing').style.display = 'none';
           }, 1000);
@@ -721,6 +704,7 @@
         }
       }
     });
+
   })();
 </script>
 </body>
