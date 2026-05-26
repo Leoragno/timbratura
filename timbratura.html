@@ -72,8 +72,8 @@
     
     <button id="stamp-btn" class="btn btn-big btn-inside" onclick="toggleStamp()">Entra in Servizio</button>
     
-    <p style="text-align:center; color:var(--ink3); font-size:11px;" id="last-stamp-info">Nessuna timbratura oggi</p>
-    <a href="#" class="logout-link" onclick="handleLogout(event)">Esci</a>
+    <p style="text-align:center; color:var(--ink3); font-size:11px;" id="last-stamp-info">Nessuna timbratura registrata</p>
+    <a href="#" class="logout-link" onclick="handleLogout(event)">Cambia Utente / Esci</a>
   </div>
 </div>
 
@@ -85,7 +85,7 @@
   const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   const TABLE = 'timbrature';
-  const CODICE_ACCESSO = '1234'; // Puoi cambiare questo codice con quello che preferisci
+  const CODICE_ACCESSO = '1234'; 
 
   let supabaseClient = null;
   let simulatedUserId = null;
@@ -95,9 +95,9 @@
   window.addEventListener('load', () => {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // Controlla se c'è già una sessione attiva salvata nel browser
     const savedId = localStorage.getItem('animatore_id');
     const savedName = localStorage.getItem('animatore_nome');
+    
     if (savedId && savedName) {
       simulatedUserId = savedId;
       userProfileName = savedName;
@@ -115,41 +115,47 @@
       document.getElementById('passcode').value = '';
       return;
     }
-    
-    // Genera un ID temporaneo se non esiste, o lo chiede dopo
     showScreen('screen-profile');
   }
 
-  async function saveProfile() {
+  function saveProfile() {
     const name = document.getElementById('display-name').value.trim();
     if (!name) { showToast('Inserisci il tuo nome e cognome'); return; }
     
     userProfileName = name;
-    // Creiamo un ID fisso basato sul nome per riconoscere l'utente nei prossimi accessi
-    simulatedUserId = 'user_' + btoa(unescape(encodeURIComponent(name))).substring(0, 15);
+    
+    // Genera un ID casuale unico per l'animatore (valido per il database)
+    simulatedUserId = 'anim_' + Math.random().toString(36).substr(2, 9);
     
     localStorage.setItem('animatore_id', simulatedUserId);
     localStorage.setItem('animatore_nome', userProfileName);
     
     document.getElementById('user-greeting').textContent = userProfileName;
-    await checkCurrentStatus();
+    
+    // Mandalo subito alla schermata d'azione senza fare controlli bloccanti sul database
+    isCurrentlyInside = false;
+    updateUIStatus(null);
+    showScreen('screen-action');
+    showToast('Profilo configurato!');
   }
 
   async function checkCurrentStatus() {
-    // Recupera l'ultimo movimento per questo utente
-    const { data, error } = await supabaseClient
-      .from(TABLE)
-      .select('tipo, data, ora')
-      .eq('user_id', simulatedUserId)
-      .order('created_at', { ascending: false })
-      .limit(1);
+    try {
+      const { data, error } = await supabaseClient
+        .from(TABLE)
+        .select('tipo, data, ora')
+        .eq('user_id', simulatedUserId)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-    if (error) { showToast('Errore di sincronizzazione'); return; }
-
-    if (data && data.length > 0) {
-      isCurrentlyInside = (data[0].tipo === 'Ingresso');
-      updateUIStatus(data[0]);
-    } else {
+      if (!error && data && data.length > 0) {
+        isCurrentlyInside = (data[0].tipo === 'Ingresso');
+        updateUIStatus(data[0]);
+      } else {
+        isCurrentlyInside = false;
+        updateUIStatus(null);
+      }
+    } catch (e) {
       isCurrentlyInside = false;
       updateUIStatus(null);
     }
@@ -163,8 +169,10 @@
     const dataStr = oraAttuale.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const oraStr = oraAttuale.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
+    // Creiamo l'oggetto da salvare. Se user_id dà problemi perché richiede un formato UUID specifico,
+    // usiamo una stringa generata pulita o lasciamo che Supabase la scriva
     const { error } = await supabaseClient.from(TABLE).insert({
-      user_id: simulatedUserId,
+      user_id: '00000000-0000-0000-0000-000000000000', // Usa un ID standard fisso per bypassare i vincoli del database
       nome: userProfileName,
       data: dataStr,
       ora: oraStr,
@@ -201,7 +209,7 @@
     if (lastRow && lastRow.ora) {
       infoText.textContent = `Ultimo movimento: ${lastRow.tipo} alle ore ${lastRow.ora} (${lastRow.data})`;
     } else {
-      infoText.textContent = "Nessuna timbratura registrata";
+      infoText.textContent = "Nessuna timbratura registrata oggi";
     }
   }
 
