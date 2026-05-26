@@ -145,6 +145,18 @@
 
     .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
 
+    /* ══════════════ MASTER LOCKS ══════════════ */
+    .control-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+      margin-bottom: 28px;
+    }
+    .btn-toggle {
+      width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-toggle:active { transform: scale(0.98); }
+
     /* ══════════════ MAIN APP ══════════════ */
     #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
 
@@ -343,6 +355,14 @@
     </div>
 
     <div class="section-header">
+      <div class="section-title">Controllo accessi in tempo reale (Locks)</div>
+    </div>
+    <div class="control-row">
+      <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStato('ingresso_aperto')">Ingressi: Caricamento...</button>
+      <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStato('uscita_aperta')">Uscite: Caricamento...</button>
+    </div>
+
+    <div class="section-header">
       <div class="section-title">Stato animatori</div>
       <button class="btn btn-sm btn-ghost" onclick="loadAll()">↻ Aggiorna</button>
     </div>
@@ -499,6 +519,10 @@
   let manualUserAnno = null;
   let refreshInterval = null;
 
+  // Variabili globali per lo stato dei blocchi pulsanti ragazzi
+  let ingressoAperto = true;
+  let uscitaAperta = true;
+
   function doLogin() {
     const pw = document.getElementById('admin-pass').value;
     if (pw !== ADMIN_PASSWORD) {
@@ -532,8 +556,56 @@
   }
 
   async function loadAll() {
+    await scaricaStatoBlocchi(); // Sincronizza lo stato dei telecomandi on/off
     await loadLog();
     await loadAnimators();
+  }
+
+  // 1. Scarica lo stato dei blocchi dal Database impostazioni
+  async function scaricaStatoBlocchi() {
+    const { data, error } = await supabaseClient.from('impostazioni').select('*');
+    if (!error && data) {
+      data.forEach(row => {
+        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+      });
+      aggiornaGraficaPulsanti();
+    }
+  }
+
+  // 2. Cambia l'estetica dei pulsanti telecomando in base allo stato
+  function aggiornaGraficaPulsanti() {
+    const btnIn = document.getElementById('toggle-in-btn');
+    const btnOut = document.getElementById('toggle-out-btn');
+    if (!btnIn || !btnOut) return;
+
+    btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
+    btnIn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
+    btnIn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
+    btnIn.style.borderColor = ingressoAperto ? '#b2d4bc' : '#dbb2b2';
+
+    btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
+    btnOut.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
+    btnOut.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
+    btnOut.style.borderColor = uscitaAperta ? '#b2d4bc' : '#dbb2b2';
+  }
+
+  // 3. Esegue l'inversione dello stato (on/off) cliccando sul telecomando
+  async function toggleStato(chiave) {
+    const statoCorrente = (chiave === 'ingresso_aperto') ? ingressoAperto : uscitaAperta;
+    const nuovoStato = !statoCorrente;
+
+    const { error } = await supabaseClient
+      .from('impostazioni')
+      .update({ valore: nuovoStato })
+      .eq('chiave', chiave);
+    
+    if (error) {
+      toast('Errore salvataggio blocco: ' + error.message, 'error');
+    } else {
+      toast('Configurazione sincronizzata!', 'success');
+      await scaricaStatoBlocchi();
+    }
   }
 
   async function loadLog() {
@@ -585,7 +657,6 @@
       return true;
     });
 
-    // Gestione Ordinamento Stato Animatori
     if (sortVal === 'status') {
       list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
     } else if (sortVal === 'alpha') {
@@ -650,7 +721,6 @@
       return true;
     });
 
-    // Gestione Ordinamento Tabella Log
     if (sortVal === 'ora-desc') {
       filteredLog.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (sortVal === 'ora-asc') {
@@ -822,42 +892,7 @@
     await loadAll();
   }
 
+  // 4. Completamento ed eliminazione record dal database
   async function deleteStamp(id) {
     if (!confirm('Eliminare questa timbratura?')) return;
-    const { error } = await supabaseClient.from(TABLE).delete().eq('id', id);
-    if (error) { toast('Errore: ' + error.message, 'error'); return; }
-    toast('Timbratura eliminata', 'success');
-    await loadAll();
-  }
-
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-  
-  document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
-  });
-
-  function toast(msg, type = 'info', duration = 3500) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'toast ' + type;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), duration);
-  }
-
-  function esc(str) {
-    return String(str ?? '')
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  window.addEventListener('load', () => {
-    if (sessionStorage.getItem('admin_auth') === '1') {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      initAdmin();
-    }
-  });
-</script>
-</body>
-</html>
+    const { error } = await supabaseClient.from(TABLE).
