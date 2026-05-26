@@ -22,7 +22,7 @@
       --accent:    #2d4a3e;
       --accent-lt: #e8f0ec;
       --red:       #8b2e2e;
-      --red-lt: #f5e8e8;
+      --red-lt:    #f5e8e8;
       --amber:     #7a5c1e;
       --amber-lt:  #fdf3dc;
       --green:     #2d5a3d;
@@ -89,7 +89,7 @@
       text-transform: uppercase; color: var(--ink3); margin-bottom: 6px;
     }
 
-    input[type="password"], input[type="text"], input[type="time"], input[type="date"], select {
+    input[type="password"], input[type="text"], input[type="time"], input[type="date"], select, input[type="number"] {
       width: 100%;
       background: var(--bg);
       border: 1px solid var(--border);
@@ -101,6 +101,8 @@
       transition: border-color .15s, box-shadow .15s;
       margin-bottom: 16px;
     }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
 
     input:focus, select:focus {
       border-color: var(--accent);
@@ -194,7 +196,7 @@
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .section-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; }
 
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
 
     .status-grid {
@@ -208,7 +210,7 @@
     .animator-card.outside { border-left: 3px solid var(--border2); }
 
     .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
-    .anim-email { font-size: 11px; color: var(--ink3); margin-bottom: 10px; }
+    .anim-name span { font-size: 13px; color: var(--ink3); font-family: var(--font-mono); margin-left: 6px; }
 
     .anim-status {
       display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; letter-spacing: .5px;
@@ -221,28 +223,26 @@
     .anim-status.out::before { background: var(--ink3); }
 
     .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .anim-actions { display: flex; gap: 6px; }
+    .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 
-    /* FIX COMPENETRAZIONE TABELLA LOG */
-    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-top: 10px; position: relative; }
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
 
     thead th {
       background: var(--bg2); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--ink3); font-weight: 500; padding: 12px 14px; text-align: left;
-      border-bottom: 1px solid var(--border);
+      color: var(--ink3); font-weight: 500; padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border); position: sticky; top: 56px;
     }
 
     tbody tr { border-bottom: 1px solid var(--bg2); transition: background .1s; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: var(--bg); }
-    tbody td { padding: 12px 14px; font-size: 12px; vertical-align: middle; }
+    tbody td { padding: 10px 14px; font-size: 12px; vertical-align: middle; }
 
     .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: .5px; padding: 2px 8px; border-radius: 20px; }
     .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
     .tipo-badge.uscita   { background: var(--red-lt);   color: var(--red);   }
 
-    /* ── MODAL ── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 200; background: rgba(26,23,20,.45);
       display: flex; align-items: center; justify-content: center; padding: 24px;
@@ -259,7 +259,6 @@
     .modal-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 20px; }
     .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
-    /* ── TOAST ── */
     .toast {
       position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg);
       border-radius: 4px; padding: 12px 18px; font-size: 12px;
@@ -273,7 +272,10 @@
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
     .empty-icon { font-size: 32px; margin-bottom: 12px; }
 
-    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--ink3); }
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+      border-top: 1px solid var(--border); font-size: 11px; color: var(--ink3);
+    }
     .pagination-btns { display: flex; gap: 6px; }
 
     @media (max-width: 700px) {
@@ -282,7 +284,6 @@
       .stats-row { grid-template-columns: 1fr 1fr; }
       .filter-bar { flex-direction: column; }
       .filter-bar input, .filter-bar select { width: 100%; }
-      thead th:nth-child(4), tbody td:nth-child(4) { display: none; }
     }
   </style>
 </head>
@@ -334,7 +335,7 @@
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="filter-name" placeholder="Cerca animatore…" oninput="renderAnimators()" style="max-width:220px;">
+      <input type="text" id="filter-name" placeholder="Cerca nome o anno…" oninput="renderAnimators()" style="max-width:220px;">
       <select id="filter-status" onchange="renderAnimators()">
         <option value="">Tutti</option>
         <option value="inside">Dentro</option>
@@ -346,12 +347,12 @@
       <div class="empty"><div class="empty-icon">⏳</div>Caricamento…</div>
     </div>
 
-    <div class="section-header" style="margin-top:24px;">
+    <div class="section-header" style="margin-top:8px;">
       <div class="section-title">Log timbrature</div>
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="log-search" placeholder="Cerca nome…" oninput="renderLog()" style="max-width:200px;">
+      <input type="text" id="log-search" placeholder="Cerca nome o anno…" oninput="renderLog()" style="max-width:200px;">
       <input type="date" id="log-date" oninput="renderLog()">
       <select id="log-tipo" onchange="renderLog()">
         <option value="">Tutti i tipi</option>
@@ -365,6 +366,7 @@
         <thead>
           <tr>
             <th>Nome</th>
+            <th>Anno Nascita</th>
             <th>Data</th>
             <th>Ora</th>
             <th>Tipo</th>
@@ -372,7 +374,7 @@
           </tr>
         </thead>
         <tbody id="log-tbody">
-          <tr><td colspan="5" class="empty"><div class="empty-icon">⏳</div>Caricamento…</td></tr>
+          <tr><td colspan="6" class="empty"><div class="empty-icon">⏳</div>Caricamento…</td></tr>
         </tbody>
       </table>
       <div class="pagination">
@@ -408,12 +410,34 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-edit-profile">
+  <div class="modal">
+    <div class="modal-title">Modifica Anagrafica</div>
+    <p style="font-size:11px; color:var(--ink3); margin-bottom:15px;">Le modifiche aggiorneranno i dati su tutti i record esistenti.</p>
+    <input type="hidden" id="profile-old-nome" />
+    <input type="hidden" id="profile-old-anno" />
+    
+    <label>Nome e Cognome</label>
+    <input type="text" id="profile-new-nome" />
+    
+    <label>Anno di Nascita</label>
+    <input type="number" id="profile-new-anno" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
+    
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-profile')">Annulla</button>
+      <button class="btn btn-amber" onclick="saveProfileEdit()">Salva modifiche</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
     <div class="modal-title">Modifica timbratura</div>
     <input type="hidden" id="edit-id" />
     <label>Nome</label>
     <input type="text" id="edit-nome" />
+    <label>Anno di nascita</label>
+    <input type="number" id="edit-anno" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
     <label>Data</label>
     <input type="date" id="edit-data" />
     <label>Ora</label>
@@ -442,13 +466,13 @@
   const TABLE = 'timbrature';
   const PAGE_SIZE = 20;
 
-  let supabaseClient = null;
+  let supabase = null;
   let allAnimators = [];   
   let allLog = [];         
   let filteredLog = [];
   let currentPage = 0;
-  let manualUserId = null;
   let manualUserNome = null;
+  let manualUserAnno = null;
   let refreshInterval = null;
 
   function doLogin() {
@@ -470,11 +494,11 @@
   }
 
   async function initAdmin() {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     startClock();
     await loadAll();
     if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadAll, 15000); // Aggiorna ogni 15 secondi
+    refreshInterval = setInterval(loadAll, 15000);
   }
 
   function startClock() {
@@ -489,7 +513,7 @@
   }
 
   async function loadLog() {
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from(TABLE)
       .select('*')
       .order('created_at', { ascending: false });
@@ -500,23 +524,22 @@
   }
 
   async function loadAnimators() {
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from(TABLE)
-      .select('user_id, nome, data, ora, tipo, created_at')
+      .select('nome, anno, data, ora, tipo, created_at')
       .order('created_at', { ascending: false });
 
     if (error) { toast('Errore caricamento animatori: ' + error.message, 'error'); return; }
 
     const map = {};
     for (const row of (data || [])) {
-      // Se l'utente usa l'ID condiviso, raggruppiamo unicamente per "nome" per non accavallare i profili
-      const key = row.user_id === '00000000-0000-0000-0000-000000000000' ? row.nome : row.user_id;
+      const key = (row.nome || '').trim() + '___' + (row.anno || '');
       if (!map[key]) map[key] = row;
     }
 
     allAnimators = Object.values(map).map(r => ({
-      user_id: r.user_id,
       nome: r.nome,
+      anno: r.anno || '',
       lastStamp: r,
       isInside: r.tipo === 'Ingresso',
     }));
@@ -530,7 +553,8 @@
     const statusF = document.getElementById('filter-status').value;
 
     let list = allAnimators.filter(a => {
-      if (search && !a.nome.toLowerCase().includes(search)) return false;
+      const matchSearch = a.nome.toLowerCase().includes(search) || a.anno.toString().includes(search);
+      if (search && !matchSearch) return false;
       if (statusF === 'inside'  && !a.isInside) return false;
       if (statusF === 'outside' &&  a.isInside) return false;
       return true;
@@ -553,12 +577,13 @@
 
       return `
         <div class="animator-card ${cardClass}">
-          <div class="anim-name">${esc(a.nome)}</div>
+          <div class="anim-name">${esc(a.nome)} <span>(${esc(a.anno)})</span></div>
           <div class="anim-status ${statusClass}">${statusText}</div>
           <div class="anim-last">${esc(lastTxt)}</div>
           <div class="anim-actions">
-            <button class="btn btn-green btn-sm" onclick="openManual('${esc(a.user_id)}','${esc(a.nome)}','Ingresso')">⬆ Ingresso</button>
-            <button class="btn btn-red btn-sm"   onclick="openManual('${esc(a.user_id)}','${esc(a.nome)}','Uscita')">⬇ Uscita</button>
+            <button class="btn btn-green btn-sm" onclick="openManual('${esc(a.nome)}','${esc(a.anno)}','Ingresso')">⬆ In</button>
+            <button class="btn btn-red btn-sm"   onclick="openManual('${esc(a.nome)}','${esc(a.anno)}','Uscita')">⬇ Out</button>
+            <button class="btn btn-amber btn-sm" onclick="openProfileEdit('${esc(a.nome)}','${esc(a.anno)}')">✎ Anagrafica</button>
           </div>
         </div>`;
     }).join('');
@@ -578,7 +603,8 @@
     const tipo   = document.getElementById('log-tipo').value;
 
     filteredLog = allLog.filter(r => {
-      if (search && !r.nome.toLowerCase().includes(search)) return false;
+      const matchSearch = r.nome.toLowerCase().includes(search) || (r.anno && r.anno.toString().includes(search));
+      if (search && !matchSearch) return false;
       if (tipo && r.tipo !== tipo) return false;
       if (date) {
         const parts = r.data.split('/');
@@ -599,13 +625,14 @@
     const tbody = document.getElementById('log-tbody');
 
     if (page.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>Nessuna timbratura trovata.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="empty"><div class="empty-icon">📋</div>Nessuna timbratura trovata.</td></tr>`;
     } else {
       tbody.innerHTML = page.map(r => {
         const tipoClass = r.tipo === 'Ingresso' ? 'ingresso' : 'uscita';
         return `
           <tr>
             <td><strong>${esc(r.nome)}</strong></td>
+            <td>${esc(r.anno || '—')}</td>
             <td>${esc(r.data)}</td>
             <td>${esc(r.ora)}</td>
             <td><span class="tipo-badge ${tipoClass}">${esc(r.tipo)}</span></td>
@@ -632,10 +659,10 @@
     _renderLogPage();
   }
 
-  function openManual(userId, nome, tipoDefault) {
-    manualUserId   = userId || '00000000-0000-0000-0000-000000000000';
+  function openManual(nome, anno, tipoDefault) {
     manualUserNome = nome;
-    document.getElementById('manual-name-label').textContent = nome;
+    manualUserAnno = anno;
+    document.getElementById('manual-name-label').textContent = nome + ' (' + anno + ')';
     document.getElementById('manual-tipo').value = tipoDefault;
     const now = new Date();
     document.getElementById('manual-data').value = now.toISOString().slice(0,10);
@@ -653,9 +680,10 @@
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    const { error } = await supabaseClient.from(TABLE).insert({
-      user_id: manualUserId,
+    const { error } = await supabase.from(TABLE).insert({
+      user_id: '00000000-0000-0000-0000-000000000000',
       nome:    manualUserNome,
+      anno:    parseInt(manualUserAnno),
       data, ora, tipo,
     });
 
@@ -665,9 +693,48 @@
     await loadAll();
   }
 
+  /* ══ APRI MODIFICA PROFILO (DALLO STATO ANIMATORI) ══ */
+  function openProfileEdit(nome, anno) {
+    document.getElementById('profile-old-nome').value = nome;
+    document.getElementById('profile-old-anno').value = anno;
+    document.getElementById('profile-new-nome').value = nome;
+    document.getElementById('profile-new-anno').value = anno;
+    openModal('modal-edit-profile');
+  }
+
+  /* ══ SALVA MODIFICA PROFILO COMPLETO ══ */
+  async function saveProfileEdit() {
+    const oldNome = document.getElementById('profile-old-nome').value;
+    const oldAnno = document.getElementById('profile-old-anno').value;
+    const newNome = document.getElementById('profile-new-nome').value.trim();
+    const newAnno = document.getElementById('profile-new-anno').value.trim();
+
+    if (!newNome || !newAnno || newAnno.length !== 4) {
+      toast('Inserisci un nome e un anno di nascita valido di 4 cifre', 'error');
+      return;
+    }
+
+    toast('Aggiornamento in corso...', 'info');
+
+    // Aggiorna tutte le righe che corrispondono al vecchio profilo
+    const { error } = await supabase.from(TABLE)
+      .update({ nome: newNome, anno: parseInt(newAnno) })
+      .eq('nome', oldNome)
+      .eq('anno', parseInt(oldAnno));
+
+    if (error) {
+      toast('Errore: ' + error.message, 'error');
+    } else {
+      toast('Anagrafica dell\'animatore aggiornata ovunque con successo!', 'success');
+      closeModal('modal-edit-profile');
+      await loadAll();
+    }
+  }
+
   function openEdit(row) {
     document.getElementById('edit-id').value   = row.id;
     document.getElementById('edit-nome').value = row.nome;
+    document.getElementById('edit-anno').value = row.anno || '';
     document.getElementById('edit-tipo').value = row.tipo;
 
     const parts = row.data.split('/');
@@ -680,6 +747,7 @@
   async function saveEdit() {
     const id   = document.getElementById('edit-id').value;
     const nome = document.getElementById('edit-nome').value.trim();
+    const anno = document.getElementById('edit-anno').value.trim();
     const tipo = document.getElementById('edit-tipo').value;
     const dataRaw = document.getElementById('edit-data').value;
     const ora  = document.getElementById('edit-ora').value;
@@ -689,8 +757,8 @@
     const parts = dataRaw.split('-');
     const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    const { error } = await supabaseClient.from(TABLE)
-      .update({ nome, data, ora, tipo })
+    const { error } = await supabase.from(TABLE)
+      .update({ nome, anno: parseInt(anno), data, ora, tipo })
       .eq('id', id);
 
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
@@ -701,7 +769,7 @@
 
   async function deleteStamp(id) {
     if (!confirm('Eliminare questa timbratura?')) return;
-    const { error } = await supabaseClient.from(TABLE).delete().eq('id', id);
+    const { error } = await supabase.from(TABLE).delete().eq('id', id);
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
     toast('Timbratura eliminata', 'success');
     await loadAll();
@@ -711,6 +779,7 @@
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   
   document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.preventDefault;
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
   });
 
