@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <style>
-    /* IL TUO CSS ORIGINALE - INVARIATO */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -320,8 +319,8 @@
     <div class="login-eyebrow">Pannello di controllo</div>
     <div class="login-title">Accesso <em>Admin</em></div>
     <label for="admin-pass">Password</label>
-    <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()" />
-    <button class="btn btn-primary" onclick="doLogin()">Entra →</button>
+    <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') window.doLogin()" />
+    <button class="btn btn-primary" onclick="window.doLogin()">Entra →</button>
     <div class="login-err" id="login-err">Password errata. Riprova.</div>
   </div>
 </div>
@@ -335,7 +334,7 @@
     <div class="topbar-right">
       <span class="live-dot">Live</span>
       <span class="topbar-clock" id="top-clock">—</span>
-      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Esci</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.doLogout()">Esci</button>
     </div>
   </div>
 
@@ -359,23 +358,23 @@
       <div class="section-title">Controllo accessi in tempo reale (Locks)</div>
     </div>
     <div class="control-row">
-      <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStato('ingresso_aperto')">Ingressi: Caricamento...</button>
-      <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStato('uscita_aperta')">Uscite: Caricamento...</button>
+      <button id="toggle-in-btn" class="btn-toggle" onclick="window.toggleStato('ingresso_aperto')">Ingressi: Caricamento...</button>
+      <button id="toggle-out-btn" class="btn-toggle" onclick="window.toggleStato('uscita_aperta')">Uscite: Caricamento...</button>
     </div>
 
     <div class="section-header">
       <div class="section-title">Stato animatori</div>
-      <button class="btn btn-sm btn-ghost" onclick="loadAll()">↻ Aggiorna</button>
+      <button class="btn btn-sm btn-ghost" onclick="window.loadAll()">↻ Aggiorna</button>
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="filter-name" placeholder="Cerca nome o anno…" oninput="renderAnimators()" style="max-width:220px;">
-      <select id="filter-status" onchange="renderAnimators()">
+      <input type="text" id="filter-name" placeholder="Cerca nome o anno…" oninput="window.renderAnimators()" style="max-width:220px;">
+      <select id="filter-status" onchange="window.renderAnimators()">
         <option value="">Tutti gli stati</option>
         <option value="inside">Dentro</option>
         <option value="outside">Fuori</option>
       </select>
-      <select id="filter-sort" onchange="renderAnimators()">
+      <select id="filter-sort" onchange="window.renderAnimators()">
         <option value="status">Ordina per: Stato (Dentro/Fuori)</option>
         <option value="alpha">Ordina per: Alfabetico (A-Z)</option>
         <option value="anno">Ordina per: Anno di Nascita</option>
@@ -391,14 +390,14 @@
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="log-search" placeholder="Cerca nome o anno…" oninput="renderLog()" style="max-width:200px;">
-      <input type="date" id="log-date" oninput="renderLog()">
-      <select id="log-tipo" onchange="renderLog()">
+      <input type="text" id="log-search" placeholder="Cerca nome o anno…" oninput="window.renderLog()" style="max-width:200px;">
+      <input type="date" id="log-date" oninput="window.renderLog()">
+      <select id="log-tipo" onchange="window.renderLog()">
         <option value="">Tutti i tipi</option>
         <option value="Ingresso">Ingresso</option>
         <option value="Uscita">Uscita</option>
       </select>
-      <select id="log-sort" onchange="renderLog()">
+      <select id="log-sort" onchange="window.renderLog()">
         <option value="ora-desc">Ordina per: Ora (Più recenti)</option>
         <option value="ora-asc">Ordina per: Ora (Più vecchi)</option>
         <option value="alpha">Ordina per: Alfabetico (A-Z)</option>
@@ -425,8 +424,8 @@
       <div class="pagination">
         <span id="pag-info">—</span>
         <div class="pagination-btns">
-          <button class="btn btn-ghost btn-sm" id="pag-prev" onclick="changePage(-1)">← Prec</button>
-          <button class="btn btn-ghost btn-sm" id="pag-next" onclick="changePage(1)">Succ →</button>
+          <button class="btn btn-ghost btn-sm" id="pag-prev" onclick="window.changePage(-1)">← Prec</button>
+          <button class="btn btn-ghost btn-sm" id="pag-next" onclick="window.changePage(1)">Succ →</button>
         </div>
       </div>
     </div>
@@ -449,8 +448,8 @@
     <label>Ora</label>
     <input type="time" id="manual-ora" step="60" />
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-manual')">Annulla</button>
-      <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="saveManual()">Salva</button>
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-manual')">Annulla</button>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="window.saveManual()">Salva</button>
     </div>
   </div>
 </div>
@@ -469,8 +468,8 @@
     <input type="number" id="profile-new-anno" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
     
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-edit-profile')">Annulla</button>
-      <button class="btn btn-amber" onclick="saveProfileEdit()">Salva modifiche</button>
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-edit-profile')">Annulla</button>
+      <button class="btn btn-amber" onclick="window.saveProfileEdit()">Salva modifiche</button>
     </div>
   </div>
 </div>
@@ -493,8 +492,8 @@
       <option value="Uscita">⬇ Uscita</option>
     </select>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-edit')">Annulla</button>
-      <button class="btn btn-amber" onclick="saveEdit()">Salva modifiche</button>
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-edit')">Annulla</button>
+      <button class="btn btn-amber" onclick="window.saveEdit()">Salva modifiche</button>
     </div>
   </div>
 </div>
@@ -504,10 +503,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+  // ============================================================
+  // CONFIGURAZIONE
+  // ============================================================
   const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   
-  // ✅ CAMBIATO: password più semplice
+  // ✅ PASSWORD ADMIN (usa questa per fare login)
   const ADMIN_PASSWORD    = 'admin123';
 
   const TABLE = 'timbrature';
@@ -525,7 +527,9 @@
   let ingressoAperto = true;
   let uscitaAperta = true;
 
-  function doLogin() {
+  // ==================== FUNZIONI GLOBALI ====================
+  
+  window.doLogin = function() {
     const pw = document.getElementById('admin-pass').value;
     if (pw !== ADMIN_PASSWORD) {
       document.getElementById('login-err').style.display = 'block';
@@ -545,62 +549,15 @@
     }
   }
 
-  function doLogout() {
+  window.doLogout = function() {
     sessionStorage.removeItem('admin_auth');
     location.reload();
   }
 
-  async function initAdmin() {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    startClock();
-    await loadAll();
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadAll, 15000);
-  }
-
-  function startClock() {
-    setInterval(() => {
-      document.getElementById('top-clock').textContent = new Date().toLocaleTimeString('it-IT');
-    }, 1000);
-  }
-
-  async function loadAll() {
+  window.loadAll = async function() {
     await scaricaStatoBlocchi();
     await loadLog();
     await loadAnimators();
-  }
-
-  async function scaricaStatoBlocchi() {
-    try {
-      const { data, error } = await supabaseClient.from('impostazioni').select('*');
-      if (error) throw error;
-      if (data && data.length > 0) {
-        data.forEach(row => {
-          if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-          if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
-        });
-      }
-      aggiornaGraficaPulsanti();
-    } catch(err) {
-      console.error("Errore nel caricamento dei blocchi (Locks):", err);
-      aggiornaGraficaPulsanti();
-    }
-  }
-
-  function aggiornaGraficaPulsanti() {
-    const btnIn = document.getElementById('toggle-in-btn');
-    const btnOut = document.getElementById('toggle-out-btn');
-    if (!btnIn || !btnOut) return;
-
-    btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
-    btnIn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
-    btnIn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
-    btnIn.style.borderColor = ingressoAperto ? '#b2d4bc' : '#dbb2b2';
-
-    btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
-    btnOut.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
-    btnOut.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
-    btnOut.style.borderColor = uscitaAperta ? '#b2d4bc' : '#dbb2b2';
   }
 
   window.toggleStato = async function(chiave) {
@@ -620,62 +577,98 @@
     }
   }
 
-  async function loadLog() {
-    const { data, error } = await supabaseClient
-      .from(TABLE)
-      .select('*')
-      .order('created_at', { ascending: false });
+  window.renderLog = function() {
+    const search = (document.getElementById('log-search').value || '').toLowerCase();
+    const date   = document.getElementById('log-date').value;     
+    const tipo   = document.getElementById('log-tipo').value;
+    const sortVal = document.getElementById('log-sort').value;
 
-    if (error) { toast('Errore caricamento log: ' + error.message, 'error'); return; }
-    allLog = data || [];
-    renderLog();
-  }
-
-  async function loadAnimators() {
-    const { data: listaUtenti, error: errUtenti } = await supabaseClient
-      .from('utenti')
-      .select('nome, anno');
-
-    if (errUtenti) { 
-      toast('Errore caricamento anagrafica utenti: ' + errUtenti.message, 'error'); 
-      return; 
-    }
-
-    const { data: listaTimbrature, error: errTimbrature } = await supabaseClient
-      .from(TABLE)
-      .select('nome, anno, data, ora, tipo, created_at')
-      .order('created_at', { ascending: false });
-
-    if (errTimbrature) { 
-      toast('Errore caricamento timbrature: ' + errTimbrature.message, 'error'); 
-      return; 
-    }
-
-    const mappaUltimeTimbrature = {};
-    for (const row of (listaTimbrature || [])) {
-      const key = (row.nome || '').trim().toLowerCase() + '___' + (row.anno || '');
-      if (!mappaUltimeTimbrature[key]) {
-        mappaUltimeTimbrature[key] = row;
+    filteredLog = allLog.filter(r => {
+      const matchSearch = r.nome.toLowerCase().includes(search) || (r.anno && r.anno.toString().includes(search));
+      if (search && !matchSearch) return false;
+      if (tipo && r.tipo !== tipo) return false;
+      if (date) {
+        const parts = r.data.split('/');
+        const rowDate = parts.length === 3
+          ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
+          : r.data;
+        if (rowDate !== date) return false;
       }
-    }
-
-    allAnimators = (listaUtenti || []).map(u => {
-      const key = (u.nome || '').trim().toLowerCase() + '___' + (u.anno || '');
-      const ultimaTimbratura = mappaUltimeTimbrature[key];
-
-      return {
-        nome: u.nome,
-        anno: u.anno || '',
-        lastStamp: ultimaTimbratura || null,
-        isInside: ultimaTimbratura ? ultimaTimbratura.tipo === 'Ingresso' : false,
-      };
+      return true;
     });
 
-    renderAnimators();
-    updateStats();
+    if (sortVal === 'ora-desc') {
+      filteredLog.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (sortVal === 'ora-asc') {
+      filteredLog.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sortVal === 'alpha') {
+      filteredLog.sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+    } else if (sortVal === 'anno') {
+      filteredLog.sort((a, b) => (a.anno || 0) - (b.anno || 0));
+    }
+
+    _renderLogPage();
   }
 
-  function renderAnimators() {
+  window.changePage = function(dir) {
+    const pages = Math.ceil(filteredLog.length / PAGE_SIZE) || 1;
+    currentPage = Math.max(0, Math.min(pages - 1, currentPage + dir));
+    _renderLogPage();
+  }
+
+  window.renderAnimators = function() {
     const search = (document.getElementById('filter-name').value || '').toLowerCase();
     const statusF = document.getElementById('filter-status').value;
-   
+    const sortVal = document.getElementById('filter-sort').value;
+
+    let list = allAnimators.filter(a => {
+      const matchSearch = a.nome.toLowerCase().includes(search) || a.anno.toString().includes(search);
+      if (search && !matchSearch) return false;
+      if (statusF === 'inside'  && !a.isInside) return false;
+      if (statusF === 'outside' &&  a.isInside) return false;
+      return true;
+    });
+
+    if (sortVal === 'status') {
+      list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
+    } else if (sortVal === 'alpha') {
+      list.sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+    } else if (sortVal === 'anno') {
+      list.sort((a, b) => (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0));
+    }
+
+    const grid = document.getElementById('animators-grid');
+
+    if (list.length === 0) {
+      grid.innerHTML = `<div class="empty"><div class="empty-icon">👤</div>Nessun animatore trovato.</div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map(a => {
+      const ls = a.lastStamp;
+      const statusClass = a.isInside ? 'in' : 'out';
+      const cardClass   = a.isInside ? 'inside' : 'outside';
+      const statusText  = a.isInside ? 'Dentro' : 'Fuori';
+      const lastTxt = ls ? `${ls.tipo} — ${ls.data} ${ls.ora}` : 'Nessuna timbratura';
+
+      return `
+        <div class="animator-card ${cardClass}">
+          <div class="anim-name">${esc(a.nome)} <span>(${esc(a.anno)})</span></div>
+          <div class="anim-status ${statusClass}">${statusText}</div>
+          <div class="anim-last">${esc(lastTxt)}</div>
+          <div class="anim-actions">
+            <button class="btn btn-green btn-sm" onclick="window.openManual('${esc(a.nome)}','${esc(a.anno)}','Ingresso')">⬆ In</button>
+            <button class="btn btn-red btn-sm"   onclick="window.openManual('${esc(a.nome)}','${esc(a.anno)}','Uscita')">⬇ Out</button>
+            <button class="btn btn-amber btn-sm" onclick="window.openProfileEdit('${esc(a.nome)}','${esc(a.anno)}')">✎ Anagrafica</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window.openManual = function(nome, anno, tipoDefault) {
+    manualUserNome = nome;
+    manualUserAnno = anno;
+    document.getElementById('manual-name-label').textContent = nome + ' (' + (anno || '—') + ')';
+    document.getElementById('manual-tipo').value = tipoDefault;
+    const now = new Date();
+    document.getElementById('manual-data').value = now.toISOString().slice(0,
