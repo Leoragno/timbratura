@@ -275,21 +275,6 @@
       font-size: 11px; color: var(--ink3); background: var(--surface);
     }
     .pagination-btns { display: flex; gap: 6px; }
-
-    .geo-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-      padding: 22px 24px; margin-bottom: 28px;
-    }
-    .geo-row {
-      display: grid; grid-template-columns: 1fr 2fr; gap: 28px;
-    }
-    @media (max-width: 640px) { .geo-row { grid-template-columns: 1fr; } }
-    .geo-fields {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;
-    }
-    @media (max-width: 640px) { .geo-fields { grid-template-columns: 1fr; } }
-    .geo-fields input { margin-bottom: 0; }
-    .geo-toggle-col { display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
@@ -333,49 +318,10 @@
       <button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button>
     </div>
 
-
-    <div class="section-header">
-      <div class="section-title">Geolocalizzazione</div>
-    </div>
-    <div class="geo-card">
-      <div class="geo-row">
-        <div class="geo-toggle-col">
-          <div class="stat-label" style="margin-bottom:10px;">Controllo GPS</div>
-          <button id="toggle-geo-btn" class="btn-toggle">Caricamento...</button>
-          <div style="font-size:11px; color:var(--ink3); margin-top:8px; line-height:1.5;">
-            Se disabilitato, gli animatori possono timbrare da qualsiasi luogo senza verifica posizione.
-          </div>
-        </div>
-        <div class="geo-coords-col">
-          <div class="stat-label" style="margin-bottom:10px;">Coordinate Oratorio</div>
-          <div class="geo-fields">
-            <div>
-              <label>Latitudine</label>
-              <input type="text" id="geo-lat" placeholder="45.706869" />
-            </div>
-            <div>
-              <label>Longitudine</label>
-              <input type="text" id="geo-lon" placeholder="8.800464" />
-            </div>
-            <div>
-              <label>Raggio massimo (metri)</label>
-              <input type="number" id="geo-radius" placeholder="150" />
-            </div>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-            <button class="btn btn-ghost btn-sm" id="geo-use-current">📍 Usa posizione attuale</button>
-            <button class="btn btn-primary btn-sm" id="geo-save-btn" style="width:auto; margin-bottom:0;">💾 Salva</button>
-          </div>
-          <div id="geo-current-preview" style="font-size:11px; color:var(--ink3); margin-top:10px; display:none;"></div>
-        </div>
-      </div>
-    </div>
-
     <div class="section-header">
       <div class="section-title">Stato animatori</div>
-      <button class="btn btn-sm btn-ghost" id="refreshBtn">&#8635; Aggiorna</button>
+      <button class="btn btn-sm btn-ghost" id="refreshBtn">↻ Aggiorna</button>
     </div>
-
 
     <div class="filter-bar">
       <input type="text" id="filter-name" placeholder="Cerca nome o anno…">
@@ -522,49 +468,18 @@
 
     async function loadSettings() {
       const { data } = await supabase.from('impostazioni').select('*');
-      var geoAbilitata = true;
-      var geoLat = '', geoLon = '', geoRadius = '';
       if (data) {
         data.forEach(function(row) {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
-          if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore;
-          if (row.chiave === 'oratorio_lat') geoLat = row.valore;
-          if (row.chiave === 'oratorio_lon') geoLon = row.valore;
-          if (row.chiave === 'max_distanza') geoRadius = row.valore;
         });
       }
-      // Pulsanti lock
       var btnIn = document.getElementById('toggle-in-btn');
       var btnOut = document.getElementById('toggle-out-btn');
       btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
       btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
       btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
       btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
-      // Pulsante GPS toggle
-      var btnGeo = document.getElementById('toggle-geo-btn');
-      btnGeo.textContent = geoAbilitata ? '🛰️ GPS: ATTIVO' : '🚫 GPS: DISABILITATO';
-      btnGeo.className = 'btn-toggle ' + (geoAbilitata ? 'open' : 'locked');
-      // Campi coordinate
-      if (geoLat) document.getElementById('geo-lat').value = geoLat;
-      if (geoLon) document.getElementById('geo-lon').value = geoLon;
-      if (geoRadius) document.getElementById('geo-radius').value = geoRadius;
-      // Preview coordinate attuali
-      if (geoLat && geoLon) {
-        var preview = document.getElementById('geo-current-preview');
-        preview.style.display = 'block';
-        preview.innerHTML = '📌 Attuali: <strong>' + geoLat + '</strong>, <strong>' + geoLon + '</strong> · raggio <strong>' + (geoRadius || '150') + 'm</strong>';
-      }
-    }
-
-    async function upsertImpostazione(chiave, valore) {
-      // Prova update, se non esiste fa insert
-      var { data: existing } = await supabase.from('impostazioni').select('chiave').eq('chiave', chiave).maybeSingle();
-      if (existing) {
-        return supabase.from('impostazioni').update({ valore: valore }).eq('chiave', chiave);
-      } else {
-        return supabase.from('impostazioni').insert({ chiave: chiave, valore: valore });
-      }
     }
 
     async function loadUsers() {
@@ -764,46 +679,6 @@
       await supabase.from('impostazioni').update({ valore: !res.data.valore }).eq('chiave', 'uscita_aperta');
       await loadSettings();
       toast('Stato uscite aggiornato!', 'success');
-    });
-
-    // Toggle GPS
-    document.getElementById('toggle-geo-btn').addEventListener('click', async function() {
-      var res = await supabase.from('impostazioni').select('valore').eq('chiave', 'geo_abilitata').maybeSingle();
-      var currentVal = res.data ? res.data.valore : true;
-      await upsertImpostazione('geo_abilitata', !currentVal);
-      await loadSettings();
-      toast('Stato GPS aggiornato!', 'success');
-    });
-
-    // Usa posizione attuale
-    document.getElementById('geo-use-current').addEventListener('click', function() {
-      if (!navigator.geolocation) { toast('GPS non disponibile su questo browser', 'error'); return; }
-      toast('📍 Rilevamento posizione...', 'info');
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(8);
-        document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(8);
-        toast('✅ Coordinate rilevate! Premi Salva per confermare.', 'success');
-      }, function() {
-        toast('❌ Impossibile rilevare la posizione', 'error');
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    });
-
-    // Salva coordinate
-    document.getElementById('geo-save-btn').addEventListener('click', async function() {
-      var lat    = document.getElementById('geo-lat').value.trim();
-      var lon    = document.getElementById('geo-lon').value.trim();
-      var radius = document.getElementById('geo-radius').value.trim();
-
-      if (!lat || !lon) { toast('Inserisci latitudine e longitudine', 'error'); return; }
-      if (isNaN(parseFloat(lat)) || isNaN(parseFloat(lon))) { toast('Coordinate non valide', 'error'); return; }
-      if (radius && isNaN(parseInt(radius))) { toast('Raggio non valido', 'error'); return; }
-
-      await upsertImpostazione('oratorio_lat', lat);
-      await upsertImpostazione('oratorio_lon', lon);
-      if (radius) await upsertImpostazione('max_distanza', parseInt(radius));
-
-      await loadSettings();
-      toast('✅ Coordinate salvate!', 'success');
     });
 
     // Aggiorna
