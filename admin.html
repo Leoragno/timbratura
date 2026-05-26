@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Timbratura</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -569,7 +569,7 @@
     document.getElementById('stat-out').textContent   = total - inside;
   }
 
-  function renderLog() {
+  window.renderLog = function() {
     const search = (document.getElementById('log-search').value || '').toLowerCase();
     const date   = document.getElementById('log-date').value;     
     const tipo   = document.getElementById('log-tipo').value;
