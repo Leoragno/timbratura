@@ -43,7 +43,7 @@
       background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%);
     }
 
-    /* ══════════════ AUTH SCREEN (LOGIN / REGISTRAZIONE) ══════════════ */
+    /* ══════════════ SCHERMATE DI ACCESSO (LOGIN / REGISTRAZIONE) ══════════════ */
     #auth-screen {
       position: fixed; inset: 0; z-index: 100;
       display: flex; align-items: center; justify-content: center;
@@ -98,7 +98,7 @@
     .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; }
     .auth-toggle span { text-decoration: underline; color: var(--accent); }
 
-    /* ══════════════ SCHERMATA TIMBRATURA (DENTRO L'APP) ══════════════ */
+    /* ══════════════ INTERFACCIA TIMBRATURA APERTA ══════════════ */
     #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
 
     .topbar {
@@ -119,7 +119,7 @@
 
     .stamp-box { display: flex; flex-direction: column; gap: 14px; }
 
-    /* Avvisi per QR Code automatico */
+    /* Notifica QR rilevato */
     .qr-alert {
       background: var(--accent-lt); color: var(--accent); border: 1px solid #b2ccbc;
       padding: 12px; border-radius: 4px; font-size: 12px; margin-bottom: 16px; font-weight: 500;
@@ -129,7 +129,7 @@
       from { opacity: 0.7; } to { opacity: 1; }
     }
 
-    /* Sistema Notifiche a scomparsa (Toast) */
+    /* Notifiche Toast di successo/errore */
     .toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
       background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 24px;
@@ -147,7 +147,7 @@
   
   <div class="auth-card" id="login-card">
     <div class="auth-title">Accedi all'<em>Oratorio</em></div>
-    <div class="qr-alert" id="qr-alert-login">Hai scansionato un QR Code! Accedi per registrare la timbratura.</div>
+    <div class="qr-alert" id="qr-alert-login">Hai letto un QR Code! Accedi per registrare la presenza.</div>
     
     <label>Email</label>
     <input type="email" id="login-email" placeholder="nome@esempio.com" />
@@ -156,12 +156,12 @@
     <input type="password" id="login-password" placeholder="••••••••" />
     
     <button class="btn btn-primary" onclick="handleLogin()">Entra →</button>
-    <div class="auth-toggle" onclick="toggleAuth(true)">Non hai un account? <span>Registrati</span></div>
+    <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo animatore? <span>Registrati qui</span></div>
   </div>
 
   <div class="auth-card" id="register-card" style="display:none;">
     <div class="auth-title">Nuovo <em>Animatore</em></div>
-    <div class="qr-alert" id="qr-alert-reg">Hai scansionato un QR Code! Registrati per registrare la timbratura.</div>
+    <div class="qr-alert" id="qr-alert-reg">Hai letto un QR Code! Registrati per registrare la presenza.</div>
     
     <label>Nome e Cognome</label>
     <input type="text" id="reg-nome" placeholder="Mario Rossi" />
@@ -172,11 +172,11 @@
     <label>Email</label>
     <input type="email" id="reg-email" placeholder="nome@esempio.com" />
     
-    <label>Password (min. 6 caratteri)</label>
+    <label>Password (almeno 6 caratteri)</label>
     <input type="password" id="reg-password" placeholder="••••••••" />
     
     <button class="btn btn-primary" onclick="handleRegister()">Registrati e Accedi</button>
-    <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi</span></div>
+    <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi ora</span></div>
   </div>
 </div>
 
@@ -191,7 +191,7 @@
       <div class="welcome-name" id="user-display-name">—</div>
       <div class="welcome-meta" id="user-display-meta">—</div>
       
-      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">Elaborazione timbratura da QR Code...</div>
+      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">Elaborazione presenza da QR Code in corso...</div>
 
       <div class="stamp-box">
         <button class="btn btn-green" id="btn-in" onclick="doStamp('Ingresso')">⬆ REGISTRA INGRESSO</button>
@@ -206,34 +206,34 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // CONNESSIONE DATABASE SUPABASE
+  // PARAMETRI REALI DI SUPABASE
   const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   const TABLE = 'timbrature';
 
-  // 📍 SCUDO GPS: Inserisci qui le coordinate esatte del tuo oratorio
-  const ORATORIO_LAT   = 45.4642;  // <--- CAMBIA CON LA TUA LATITUDINE DI GOOGLE MAPS
-  const ORATORIO_LON   = 9.1900;   // <--- CAMBIA CON LA TUA LONGITUDINE DI GOOGLE MAPS
-  const MAX_DISTANZA   = 80;       // Tolleranza in metri (Raggio massimo consentito per timbrare)
+  // 📍 BLOCCO GPS: Incolla qui le coordinate del centro del tuo oratorio
+  const ORATORIO_LAT   = 45.4642;  // <--- METTI LA TUA LATITUDINE DA GOOGLE MAPS
+  const ORATORIO_LON   = 9.1900;   // <--- METTI LA TUA LONGITUDINE DA GOOGLE MAPS
+  const MAX_DISTANZA   = 80;       // Distanza massima consentita per timbrare (in metri)
 
   let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let currentUser = null;
 
-  // CONTROLLO STATO AL CARICAMENTO DELLA PAGINA
+  // VERIFICA LO STATO DELLA PAGINA AL CARICAMENTO
   window.addEventListener('load', async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     
-    // Legge se nell'indirizzo internet c'è un comando QR (?action=Ingresso o ?action=Uscita)
+    // Intercetta se nell'indirizzo c'è l'azione del QR (?action=Ingresso o ?action=Uscita)
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
 
     if (session) {
       showApp(session.user);
       
-      // Se l'utente è loggato e arriva da QR, scatta la timbratura automatica immediata
+      // Se l'utente è loggato ed è arrivato scansionando il QR, timbra all'istante
       if (action === 'Ingresso' || action === 'Uscita') {
         document.getElementById('qr-alert-processing').style.display = 'block';
-        // Pulisce la barra dell'URL eliminando il comando per evitare doppie timbrature se aggiorna la pagina
+        // Pulisce la barra degli indirizzi per evitare reinvii automatici rinfrescando la pagina
         window.history.replaceState({}, document.title, window.location.pathname);
         
         setTimeout(async () => {
@@ -242,7 +242,7 @@
         }, 1000);
       }
     } else {
-      // Se l'utente NON è loggato ma ha letto il QR, salva l'azione in memoria temporanea
+      // Se non è loggato ma ha scansionato il QR, salva temporaneamente l'operazione
       if (action === 'Ingresso' || action === 'Uscita') {
         sessionStorage.setItem('pending_qr_action', action);
         document.getElementById('qr-alert-login').style.display = 'block';
@@ -251,13 +251,12 @@
     }
   });
 
-  // Passa tra la schermata Login e Registrazione
   function toggleAuth(showRegister) {
     document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
     document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
   }
 
-  // AZIONE: REGISTRAZIONE NUOVO UTENTE
+  // REGISTRAZIONE UTENTE
   async function handleRegister() {
     const nome = document.getElementById('reg-nome').value.trim();
     const anno = document.getElementById('reg-anno').value.trim();
@@ -274,26 +273,26 @@
 
     if (error) { toast(error.message, 'error'); return; }
     
-    toast('Registrazione completata!', 'success');
+    toast('Profilo creato correttamente!', 'success');
     showApp(data.user);
     checkPendingQR();
   }
 
-  // AZIONE: LOGIN
+  // LOGIN UTENTE
   async function handleLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
 
-    if (!email || !password) { toast('Inserisci sia l'email che la password', 'error'); return; }
+    if (!email || !password) { toast('Inserisci email e password', 'error'); return; }
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { toast('Credenziali non corrette', 'error'); return; }
+    if (error) { toast('Credenziali non valide', 'error'); return; }
     
     showApp(data.user);
     checkPendingQR();
   }
 
-  // Controlla ed esegue timbrature lasciate in sospeso durante il login
+  // Controlla se c'era una timbratura QR bloccata prima del login
   async function checkPendingQR() {
     const pendingAction = sessionStorage.getItem('pending_qr_action');
     if (pendingAction) {
@@ -304,7 +303,6 @@
     }
   }
 
-  // Mostra l'applicazione principale ad utente autenticato
   function showApp(user) {
     currentUser = user;
     document.getElementById('auth-screen').style.display = 'none';
@@ -314,16 +312,15 @@
     const anno = user.user_metadata.anno || '—';
 
     document.getElementById('user-display-name').textContent = nome;
-    document.getElementById('user-display-meta').textContent = `Classe/Anno nascita: ${anno}`;
+    document.getElementById('user-display-meta').textContent = `Classe/Anno: ${anno}`;
   }
 
-  // DISCONNETTI UTENTE
   async function handleLogout() {
     await supabaseClient.auth.signOut();
     location.reload();
   }
 
-  // FUNZIONE MATEMATICA: Calcolo distanza tra coordinate (Formula di Haversine)
+  // CALCOLO DISTANZA GPS (Haversine)
   function calcolaDistanza(lat1, lon1, lat2, lon2) {
     const R = 6371000; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -335,18 +332,17 @@
     return R * c;
   }
 
-  // AZIONE: TIMBRATURA CON VERIFICA GEOLOCALIZZAZIONE (GPS)
+  // SALVATAGGIO TIMBRATURA CON VERIFICA GEOLOCALIZZAZIONE
   async function doStamp(tipo) {
     if (!currentUser) return;
 
     if (!navigator.geolocation) {
-      toast("Il tuo smartphone blocca la geolocalizzazione.", "error");
+      toast("Geolocalizzazione disattivata o non supportata dal telefono.", "error");
       return;
     }
 
-    toast("Verifica della posizione GPS...", "info");
+    toast("Verifica della posizione in corso...", "info");
 
-    // Disabilita momentaneamente i pulsanti per impedire click multipli compulsivi
     document.getElementById('btn-in').disabled = true;
     document.getElementById('btn-out').disabled = true;
 
@@ -356,15 +352,15 @@
 
       const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
 
-      // BLOCCO DI SICUREZZA: SE SEI TROPPO LONTANO DALL'ORATORIO
+      // BLOCCO DI SICUREZZA ANTI-FURBETTI
       if (distanza > MAX_DISTANZA) {
-        toast(`Rifiutato: Sei troppo lontano! Disti ${Math.round(distanza)} metri dall'oratorio.`, "error");
+        toast(`Rifiutato! Sei fuori oratorio di ${Math.round(distanza)} metri. Avvicinati!`, "error");
         document.getElementById('btn-in').disabled = false;
         document.getElementById('btn-out').disabled = false;
         return;
       }
 
-      // POSIZIONE VALIDA -> REGISTRAZIONE SU SUPABASE
+      // SE LA POSIZIONE È VALIDA SALVA SU SUPABASE
       const nome = currentUser.user_metadata.display_name;
       const anno = currentUser.user_metadata.anno;
       const now = new Date();
@@ -384,22 +380,21 @@
       document.getElementById('btn-out').disabled = false;
 
       if (error) {
-        toast('Errore database: ' + error.message, 'error');
+        toast('Errore di rete: ' + error.message, 'error');
       } else {
-        toast(`Timbratura salvata! ${tipo} alle ore ${ora}`, 'success');
+        toast(`Presenza registrata: ${tipo} delle ore ${ora}`, 'success');
       }
 
     }, (error) => {
-      toast("È obbligatorio attivare il GPS e dare il consenso per poter registrare la presenza!", "error");
+      toast("Per timbrare devi attivare la localizzazione GPS e dare il consenso!", "error");
       document.getElementById('btn-in').disabled = false;
       document.getElementById('btn-out').disabled = false;
     }, {
-      enableHighAccuracy: true, // Chiede al telefono la massima precisione hardware (GPS vero)
+      enableHighAccuracy: true, // Richiede geolocalizzazione satellitare ad alta precisione
       timeout: 7000
     });
   }
 
-  // Mostra notifiche grafiche pulite
   function toast(msg, type = 'info') {
     const el = document.getElementById('toast');
     el.textContent = msg;
