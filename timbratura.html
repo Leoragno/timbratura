@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Timbratura Animatori</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Oratorio Timbratura | Animatori</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
       background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%);
     }
 
-    /* ══════════════ SCHERMATE DI ACCESSO (LOGIN / REGISTRAZIONE) ══════════════ */
+    /* SCHERMATE DI ACCESSO */
     #auth-screen {
       position: fixed; inset: 0; z-index: 100;
       display: flex; align-items: center; justify-content: center;
@@ -91,17 +91,17 @@
     .btn-primary:hover { background: #1f3329; }
     
     .btn-green { background: var(--green); color: white; font-size: 16px; padding: 20px; }
-    .btn-green:hover { background: #1f3f2a; }
+    .btn-green:hover:not(:disabled) { background: #1f3f2a; }
     .btn-red { background: var(--red); color: white; font-size: 16px; padding: 20px; }
-    .btn-red:hover { background: #662121; }
+    .btn-red:hover:not(:disabled) { background: #662121; }
 
-    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; }
+    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; margin-top: 8px; }
     .auth-toggle span { text-decoration: underline; color: var(--accent); }
     
     .error-msg { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
     .success-msg { color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
 
-    /* ══════════════ INTERFACCIA TIMBRATURA APERTA ══════════════ */
+    /* INTERFACCIA TIMBRATURA */
     #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
 
     .topbar {
@@ -157,6 +157,7 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.success { background: var(--green); }
     .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--accent); }
   </style>
 </head>
 <body>
@@ -165,12 +166,12 @@
   
   <div class="auth-card" id="login-card">
     <div class="auth-title">Accedi all'<em>Oratorio</em></div>
-    <div class="qr-alert" id="qr-alert-login">Hai letto un QR Code! Accedi per registrare la presenza.</div>
+    <div class="qr-alert" id="qr-alert-login">📱 QR Code rilevato! Accedi per timbrare.</div>
     
-    <label>Nome e Cognome</label>
-    <input type="text" id="login-nome" placeholder="Mario Rossi" />
+    <label>👤 Nome e Cognome</label>
+    <input type="text" id="login-nome" placeholder="Mario Rossi" autocomplete="off" />
     
-    <label>Password</label>
+    <label>🔐 Password</label>
     <input type="password" id="login-password" placeholder="••••••••" />
     
     <div class="error-msg" id="login-error"></div>
@@ -181,15 +182,15 @@
 
   <div class="auth-card" id="register-card" style="display:none;">
     <div class="auth-title">Nuovo <em>Animatore</em></div>
-    <div class="qr-alert" id="qr-alert-reg">Hai letto un QR Code! Registrati per registrare la presenza.</div>
+    <div class="qr-alert" id="qr-alert-reg">📱 QR Code rilevato! Registrati per timbrare.</div>
     
-    <label>Nome e Cognome</label>
+    <label>📛 Nome e Cognome</label>
     <input type="text" id="reg-nome" placeholder="Mario Rossi" />
     
-    <label>Anno di Nascita</label>
+    <label>🎂 Anno di Nascita</label>
     <input type="number" id="reg-anno" placeholder="2008" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
 
-    <label>Password (almeno 4 caratteri)</label>
+    <label>🔐 Password (minimo 4 caratteri)</label>
     <input type="password" id="reg-password" placeholder="••••••••" />
     
     <div class="error-msg" id="reg-error"></div>
@@ -211,11 +212,17 @@
       <div class="welcome-name" id="user-display-name">—</div>
       <div class="welcome-meta" id="user-display-meta">—</div>
       
-      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">Elaborazione presenza da QR Code in corso...</div>
+      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">⏳ Elaborazione presenza da QR Code in corso...</div>
 
       <div class="stamp-box">
         <button class="btn btn-green" id="btn-in" onclick="doStamp('Ingresso')">⬆ REGISTRA INGRESSO</button>
         <button class="btn btn-red" id="btn-out" onclick="doStamp('Uscita')">⬇ REGISTRA USCITA</button>
+      </div>
+      
+      <!-- Debug info (nascosto di default, visibile solo in caso di errore GPS) -->
+      <div id="gps-debug" style="margin-top: 20px; font-size: 10px; color: var(--ink3); display: none; border-top: 1px solid var(--border); padding-top: 15px;">
+        <div id="debug-position"></div>
+        <div id="debug-distance"></div>
       </div>
     </div>
 
@@ -225,22 +232,25 @@
         <button onclick="caricaRegistroAdmin()" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px; font-family:var(--font-mono);">Aggiorna Registro 🔄</button>
       </div>
       
-      <p style="font-size:11px; color:var(--ink2); margin-bottom:8px; font-weight:600;">Blocco pulsanti di timbratura:</p>
+      <p style="font-size:11px; color:var(--ink2); margin-bottom:8px; font-weight:600;">🔒 Blocco pulsanti di timbratura:</p>
       <div class="admin-toggle-wrapper">
         <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStatoSistema('ingresso_aperto')">Ingressi: ...</button>
         <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStatoSistema('uscita_aperta')">Uscite: ...</button>
       </div>
 
-      <p style="font-size:11px; color:var(--ink2); margin-bottom:10px; border-top:1px solid var(--border); padding-top:10px;">Elenco ultime timbrature effettuate:</p>
+      <p style="font-size:11px; color:var(--ink2); margin-bottom:10px; border-top:1px solid var(--border); padding-top:10px;">📋 Elenco ultime timbrature effettuate:</p>
       <div class="admin-table-wrapper">
         <table class="admin-table">
           <thead>
             <tr><th>Animatore</th><th>Anno</th><th>Data</th><th>Ora</th><th>Azione</th></tr>
           </thead>
-          <tbody id="admin-table-body"><tr><td colspan="5" style="text-align:center; color:var(--ink3);">Caricamento dati...</td></tr></tbody>
+          <tbody id="admin-table-body">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink3);">Caricamento dati...</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -249,58 +259,70 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // PARAMETRI SUPABASE
+  // ============================================================
+  // CONFIGURAZIONE SUPABASE
+  // ============================================================
   const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   
   const TABLE_TIMBRATURE = 'timbrature';
-  const TABLE_UTENTI = 'utenti';     // TABELLA PER GLI UTENTI (NOME, PASSWORD, ANNO)
+  const TABLE_UTENTI = 'utenti';
   const TABLE_IMPOSTAZIONI = 'impostazioni';
   
-  // ADMIN EMAILS (ora usiamo i nomi degli admin)
-  const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];  // Aggiungi qui i nomi degli admin
+  // ============================================================
+  // 🔴 MODIFICA QUI LE COORDINATE DEL TUO ORATORIO 🔴
+  // Per trovare le coordinate esatte: https://www.latlong.net/
+  // Oppure su Google Maps: tieni premuto sul punto → copia coordinate
+  // ============================================================
+  const ORATORIO_LAT   = 45.706869501092136;   // <-- SOSTITUISCI CON LATITUDINE REALE
+  const ORATORIO_LON   = 8.800464096722195;    // <-- SOSTITUISCI CON LONGITUDINE REALE
+  const MAX_DISTANZA   = 150;                  // Raggio in metri (aumenta se necessario)
   
-  // COORDINATE ORATORIO
-  const ORATORIO_LAT   = 45.706869501092136;  
-  const ORATORIO_LON   = 8.800464096722195;   
-  const MAX_DISTANZA   = 100;       
-
+  // Nomi degli admin (inserisci qui i nomi degli animatori che devono avere i privilegi)
+  const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
+  
+  // ============================================================
+  
   let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let currentUser = null;
 
   let ingressoAperto = true;
   let uscitaAperta = true;
 
-  window.addEventListener('load', async () => {
-    // Controlla se c'è un utente salvato nella sessione
-    const savedUser = sessionStorage.getItem('currentUser');
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      await scaricaStatoBlocchi();
-      showApp();
-    }
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    
-    await scaricaStatoBlocchi();
+  // ==================== FUNZIONI DI UTILITY ====================
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
 
-    if (action === 'Ingresso' || action === 'Uscita') {
-      if (currentUser) {
-        document.getElementById('qr-alert-processing').style.display = 'block';
-        window.history.replaceState({}, document.title, window.location.pathname);
-        setTimeout(async () => {
-          await doStamp(action);
-          document.getElementById('qr-alert-processing').style.display = 'none';
-        }, 1000);
-      } else {
-        sessionStorage.setItem('pending_qr_action', action);
-        document.getElementById('qr-alert-login').style.display = 'block';
-        document.getElementById('qr-alert-reg').style.display = 'block';
-      }
-    }
-  });
+  function toast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
 
+  // ==================== CALCOLO DISTANZA ====================
+  function calcolaDistanza(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Raggio Terra in metri
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // ==================== GESTIONE SCHERMATE ====================
+  
   function toggleAuth(showRegister) {
     document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
     document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
@@ -309,22 +331,44 @@
     document.getElementById('reg-success').style.display = 'none';
   }
 
-  // REGISTRAZIONE UTENTE (SENZA EMAIL - DIRETTAMENTE NEL DB)
+  function showLoginError(msg) {
+    const errDiv = document.getElementById('login-error');
+    errDiv.textContent = msg;
+    errDiv.style.display = 'block';
+    setTimeout(() => errDiv.style.display = 'none', 3000);
+  }
+
+  function showRegError(msg) {
+    const errDiv = document.getElementById('reg-error');
+    errDiv.textContent = msg;
+    errDiv.style.display = 'block';
+    setTimeout(() => errDiv.style.display = 'none', 3000);
+  }
+
+  function showRegSuccess(msg) {
+    const successDiv = document.getElementById('reg-success');
+    successDiv.textContent = msg;
+    successDiv.style.display = 'block';
+    setTimeout(() => successDiv.style.display = 'none', 3000);
+  }
+
+  // ==================== REGISTRAZIONE ====================
+  
   async function handleRegister() {
     const nome = document.getElementById('reg-nome').value.trim();
     const anno = document.getElementById('reg-anno').value.trim();
     const password = document.getElementById('reg-password').value;
 
     if (!nome || !anno || !password) {
-      showRegError('Tutti i campi sono obbligatori');
+      showRegError('❌ Tutti i campi sono obbligatori');
       return;
     }
     if (password.length < 4) {
-      showRegError('La password deve essere di almeno 4 caratteri');
+      showRegError('❌ La password deve essere di almeno 4 caratteri');
       return;
     }
     if (anno.length !== 4 || isNaN(parseInt(anno))) {
-      showRegError('Inserisci un anno valido (es. 2008)');
+      showRegError('❌ Inserisci un anno valido (es. 2008)');
       return;
     }
 
@@ -336,27 +380,26 @@
       .maybeSingle();
 
     if (esistente) {
-      showRegError('Questo nome è già registrato!');
+      showRegError('❌ Questo nome è già registrato!');
       return;
     }
 
     // Inserisci il nuovo utente
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
       .from(TABLE_UTENTI)
       .insert([{ 
         nome: nome, 
         password: password,
         anno: parseInt(anno),
         created_at: new Date()
-      }])
-      .select();
+      }]);
 
     if (error) {
-      showRegError('Errore: ' + error.message);
+      showRegError('❌ Errore: ' + error.message);
       return;
     }
     
-    showRegSuccess('Registrazione riuscita! Ora puoi accedere.', true);
+    showRegSuccess('✅ Registrazione riuscita! Ora puoi accedere.');
     
     // Pulisci campi
     document.getElementById('reg-nome').value = '';
@@ -369,13 +412,14 @@
     }, 2000);
   }
 
-  // LOGIN UTENTE
+  // ==================== LOGIN ====================
+  
   async function handleLogin() {
     const nome = document.getElementById('login-nome').value.trim();
     const password = document.getElementById('login-password').value;
 
     if (!nome || !password) {
-      showLoginError('Inserisci nome e password');
+      showLoginError('❌ Inserisci nome e password');
       return;
     }
 
@@ -388,7 +432,7 @@
       .maybeSingle();
 
     if (error || !data) {
-      showLoginError('Nome o password errati');
+      showLoginError('❌ Nome o password errati');
       return;
     }
     
@@ -404,6 +448,8 @@
     checkPendingQR();
   }
 
+  // ==================== PENDING QR ====================
+  
   async function checkPendingQR() {
     const pendingAction = sessionStorage.getItem('pending_qr_action');
     if (pendingAction) {
@@ -414,16 +460,18 @@
     }
   }
 
+  // ==================== MOSTRA APP ====================
+  
   function showApp() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
     
     document.getElementById('user-display-name').textContent = currentUser.nome;
-    document.getElementById('user-display-meta').textContent = `Anno: ${currentUser.anno || '—'}`;
+    document.getElementById('user-display-meta').textContent = `📅 Anno: ${currentUser.anno || '—'}`;
 
     aggiornaInterfacciaBottoni();
 
-    // Controlla se l'utente è admin (per nome)
+    // Controlla se l'utente è admin
     if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
       document.getElementById('admin-panel').style.display = 'block';
       caricaRegistroAdmin();
@@ -432,6 +480,8 @@
     }
   }
 
+  // ==================== STATO BLOCCHI ====================
+  
   async function scaricaStatoBlocchi() {
     const { data, error } = await supabaseClient.from(TABLE_IMPOSTAZIONI).select('*');
     if (!error && data) {
@@ -439,6 +489,10 @@
         if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
         if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
       });
+    } else {
+      // Se la tabella non esiste o è vuota, crea valori default
+      ingressoAperto = true;
+      uscitaAperta = true;
     }
   }
 
@@ -466,11 +520,11 @@
     const toggleOutBtn = document.getElementById('toggle-out-btn');
     
     if (toggleInBtn && toggleOutBtn) {
-      toggleInBtn.textContent = ingressoAperto ? 'Ingressi: APERTI' : 'Ingressi: BLOCCATI';
+      toggleInBtn.textContent = ingressoAperto ? '✅ Ingressi: APERTI' : '🔒 Ingressi: BLOCCATI';
       toggleInBtn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
       toggleInBtn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
 
-      toggleOutBtn.textContent = uscitaAperta ? 'Uscite: APERTE' : 'Uscite: BLOCCATE';
+      toggleOutBtn.textContent = uscitaAperta ? '✅ Uscite: APERTE' : '🔒 Uscite: BLOCCATE';
       toggleOutBtn.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
       toggleOutBtn.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
     }
@@ -478,7 +532,7 @@
 
   async function toggleStatoSistema(chiave) {
     if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
-      toast('Solo admin può modificare questo setting', 'error');
+      toast('Solo l\'admin può modificare questa impostazione', 'error');
       return;
     }
     
@@ -493,12 +547,14 @@
     if (error) {
       toast('Errore nel cambiare blocco: ' + error.message, 'error');
     } else {
-      toast('Stato aggiornato sul database!', 'success');
+      toast('Stato aggiornato!', 'success');
       await scaricaStatoBlocchi();
       aggiornaInterfacciaBottoni();
     }
   }
 
+  // ==================== ADMIN REGISTRO ====================
+  
   async function caricaRegistroAdmin() {
     if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) return;
     
@@ -511,12 +567,12 @@
       .limit(60);
 
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">Errore: ${error.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">❌ Errore: ${error.message}</td></tr>`;
       return;
     }
 
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">Nessuna timbratura registrata.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">📭 Nessuna timbratura registrata.</td></tr>`;
       return;
     }
 
@@ -535,23 +591,16 @@
     });
   }
 
+  // ==================== LOGOUT ====================
+  
   async function handleLogout() {
     sessionStorage.removeItem('currentUser');
     currentUser = null;
     location.reload();
   }
 
-  function calcolaDistanza(lat1, lon1, lat2, lon2) {
-    const R = 6371000; 
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
+  // ==================== TIMBRATURA CON GPS ====================
+  
   async function doStamp(tipo) {
     if (!currentUser) return;
 
@@ -559,35 +608,49 @@
     aggiornaInterfacciaBottoni();
 
     if (tipo === 'Ingresso' && !ingressoAperto) {
-      toast("Impossibile procedere: l'ingresso è stato chiuso dal coordinatore.", "error");
+      toast("🔒 Ingresso bloccato dal coordinatore!", "error");
       return;
     }
     if (tipo === 'Uscita' && !uscitaAperta) {
-      toast("Impossibile procedere: le uscite sono state chiuse dal coordinatore.", "error");
+      toast("🔒 Uscite bloccate dal coordinatore!", "error");
       return;
     }
 
     if (!navigator.geolocation) {
-      toast("Geolocalizzazione non supportata dal telefono.", "error");
+      toast("❌ Il tuo browser non supporta la geolocalizzazione", "error");
       return;
     }
 
-    toast("Verifica della posizione in corso...", "info");
+    toast("📍 Verifica della posizione in corso...", "info");
 
+    // Disabilita bottoni durante la verifica
     document.getElementById('btn-in').disabled = true;
     document.getElementById('btn-out').disabled = true;
+    
+    // Nascondi debug
+    document.getElementById('gps-debug').style.display = 'none';
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const userLat = position.coords.latitude;
       const userLon = position.coords.longitude;
+      const precisione = position.coords.accuracy;
 
       const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
-
+      
+      // Mostra debug per aiutare a trovare le coordinate giuste
+      const debugDiv = document.getElementById('gps-debug');
+      document.getElementById('debug-position').innerHTML = `📍 La tua posizione: ${userLat.toFixed(6)}, ${userLon.toFixed(6)}<br>🎯 Oratorio: ${ORATORIO_LAT}, ${ORATORIO_LON}<br>📡 Precisione: ±${Math.round(precisione)}m`;
+      document.getElementById('debug-distance').innerHTML = `📏 Distanza: ${Math.round(distanza)} metri (limite: ${MAX_DISTANZA}m)`;
+      
       if (distanza > MAX_DISTANZA) {
-        toast(`Rifiutato! Sei fuori oratorio di ${Math.round(distanza)} metri. Avvicinati!`, "error");
+        debugDiv.style.display = 'block';
+        toast(`❌ Sei fuori dall'oratorio! Distanza: ${Math.round(distanza)} metri (max ${MAX_DISTANZA}m)`, "error");
         aggiornaInterfacciaBottoni();
         return;
       }
+
+      // Se siamo dentro il raggio, nascondi debug
+      debugDiv.style.display = 'none';
 
       const now = new Date();
       const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
@@ -605,9 +668,9 @@
       aggiornaInterfacciaBottoni();
 
       if (error) {
-        toast('Errore: ' + error.message, 'error');
+        toast('❌ Errore: ' + error.message, 'error');
       } else {
-        toast(`Presenza registrata: ${tipo} delle ore ${ora}`, 'success');
+        toast(`✅ ${tipo} registrato alle ${ora} (distanza: ${Math.round(distanza)}m)`, 'success');
         
         if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
           caricaRegistroAdmin();
@@ -615,52 +678,48 @@
       }
 
     }, (error) => {
-      toast("Per timbrare devi attivare la localizzazione GPS!", "error");
+      let msg = "";
+      switch(error.code) {
+        case error.PERMISSION_DENIED: 
+          msg = "❌ Devi dare il permesso alla geolocalizzazione!"; 
+          break;
+        case error.POSITION_UNAVAILABLE: 
+          msg = "❌ Posizione non disponibile, attiva il GPS"; 
+          break;
+        case error.TIMEOUT: 
+          msg = "⏰ Tempo scaduto, riprova"; 
+          break;
+        default: 
+          msg = "❌ Errore GPS: " + error.message;
+      }
+      toast(msg, "error");
       aggiornaInterfacciaBottoni();
     }, {
       enableHighAccuracy: true,
-      timeout: 7000
+      timeout: 15000,
+      maximumAge: 0
     });
   }
 
-  function showLoginError(msg) {
-    const errDiv = document.getElementById('login-error');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
-    setTimeout(() => errDiv.style.display = 'none', 3000);
-  }
-
-  function showRegError(msg) {
-    const errDiv = document.getElementById('reg-error');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
-    setTimeout(() => errDiv.style.display = 'none', 3000);
-  }
-
-  function showRegSuccess(msg, isSuccess) {
-    const successDiv = document.getElementById('reg-success');
-    successDiv.textContent = msg;
-    successDiv.style.display = 'block';
-    setTimeout(() => successDiv.style.display = 'none', 3000);
-  }
-
-  function toast(msg, type = 'info') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'toast ' + type;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 4000);
-  }
+  // ==================== INIT E QR ====================
   
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-</script>
-</body>
-</html>
+  window.addEventListener('load', async () => {
+    // Carica stato blocchi
+    await scaricaStatoBlocchi();
+    
+    // Controlla se c'è un utente salvato nella sessione
+    const savedUser = sessionStorage.getItem('currentUser');
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+      showApp();
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'Ingresso' || action === 'Uscita') {
+      if (currentUser) {
+        document.getElementById('qr-alert-processing').style.display = 'block';
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(async () => {
+          await doStamp(action);
