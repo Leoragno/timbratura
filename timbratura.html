@@ -1,9 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Timbratura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131c;
+      --surface2: #1c1c2e;
+      --border: #2a2a40;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --green: #3dffa0;
+      --red: #ff5e7e;
+      --text: #e8e8f0;
+      --muted: #7070a0;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 999; opacity: .5;
+    }
+
+    /* ── AMBIENT GLOW ── */
+    .glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: .18;
+    }
+    .glow-1 { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -150px; }
+    .glow-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; right: -100px; }
+
+    /* ── LAYOUT ── */
+    .wrapper {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%; max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp .5s cubic-bezier(.23,1,.32,1) both;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── LOGO / HEADER ── */
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 36px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 20px; font-weight: 800; letter-spacing: -.5px;
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn .4s ease both; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── LOGIN ── */
+    .section-title {
+      font-size: 26px; font-weight: 800; letter-spacing: -.5px;
+      line-height: 1.2; margin-bottom: 8px;
+    }
+
+    .section-sub {
+      font-size: 13px; color: var(--muted); margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block; font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+
+    input[type="email"], input[type="text"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-family: var(--font-mono); font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      margin-bottom: 20px;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,.15);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      width: 100%; padding: 15px;
+      border: none; border-radius: 12px;
+      font-family: var(--font-display); font-size: 14px; font-weight: 700;
+      letter-spacing: .5px; cursor: pointer;
+      transition: transform .15s, box-shadow .15s, opacity .2s;
+      position: relative; overflow: hidden;
+    }
+
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9b8fff);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 8px 24px rgba(108,99,255,.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-enter {
+      background: linear-gradient(135deg, var(--green), #00d4aa);
+      color: #0a0a0f; margin-bottom: 12px;
+    }
+    .btn-enter:hover:not(:disabled) {
+      box-shadow: 0 8px 24px rgba(61,255,160,.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-exit {
+      background: linear-gradient(135deg, var(--red), #ff8c6b);
+      color: #fff;
+    }
+    .btn-exit:hover:not(:disabled) {
+      box-shadow: 0 8px 24px rgba(255,94,126,.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted); font-size: 12px;
+      padding: 10px;
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── WELCOME ── */
+    .welcome-header {
+      margin-bottom: 32px;
+    }
+
+    .welcome-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+
+    .welcome-name {
+      font-size: 30px; font-weight: 800; letter-spacing: -1px;
+    }
+
+    .welcome-name span { color: var(--accent); }
+
+    /* ── LIVE CLOCK ── */
+    .clock-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .clock-time {
+      font-family: var(--font-mono);
+      font-size: 28px; font-weight: 500;
+      letter-spacing: -1px;
+    }
+
+    .clock-date {
+      font-size: 12px; color: var(--muted);
+      font-family: var(--font-mono);
+      text-align: right; line-height: 1.6;
+    }
+
+    /* ── LAST STAMP ── */
+    .last-stamp {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      font-size: 12px; color: var(--muted);
+      font-family: var(--font-mono);
+      display: none;
+    }
+    .last-stamp.visible { display: block; }
+    .last-stamp strong { color: var(--text); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    /* ── LOGOUT ── */
+    .logout-wrap { margin-top: 20px; text-align: center; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-size: 13px; font-family: var(--font-mono);
+      white-space: nowrap;
+      transition: transform .35s cubic-bezier(.23,1,.32,1), opacity .35s;
+      opacity: 0; z-index: 1000;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error   { border-color: var(--red);   color: var(--red); }
+    .toast.info    { border-color: var(--accent); color: var(--accent); }
+
+    /* ── CONFIG BANNER ── */
+    .config-banner {
+      background: #2a1a00;
+      border: 1px solid #ff9500;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 12px; font-family: var(--font-mono);
+      color: #ffb84d; margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .config-banner code {
+      background: rgba(255,149,0,.15); padding: 2px 6px; border-radius: 4px;
+    }
+
+    @media (max-width: 440px) {
+      .card { padding: 32px 24px; }
+      .clock-time { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="wrapper">
+  <div class="card">
+
+    <div class="logo">
+      <div class="logo-icon">⏱</div>
+      <div class="logo-text">tim<span>bratura</span></div>
+    </div>
+
+    <div id="section-config" class="section active">
+      <div class="config-banner">
+        ⚙️ <strong>Setup richiesto</strong><br>
+        Apri questo file in un editor e sostituisci le costanti:<br>
+        <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code><br>
+        nella sezione <code>&lt;script&gt;</code> in fondo alla pagina.
+      </div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">
+        Serve anche una tabella <code style="font-family:var(--font-mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px;">timbrature</code> su Supabase con le colonne:<br><br>
+        <span style="font-family:var(--font-mono);font-size:12px;color:var(--text);">id, user_id, nome, data, ora, tipo, created_at</span>
+      </p>
+      <hr class="divider">
+      <button class="btn btn-primary" onclick="initApp()">Ho configurato tutto →</button>
+    </div>
+
+    <div id="section-login" class="section">
+      <div class="section-title">Accedi</div>
+      <div class="section-sub">Inserisci la tua email. Ti invieremo un link magico per accedere senza password.</div>
+
+      <label for="input-email">Email</label>
+      <input type="email" id="input-email" placeholder="tu@esempio.com" autocomplete="email" />
+
+      <button class="btn btn-primary" id="btn-magic" onclick="sendMagicLink()">
+        Invia Magic Link ✉️
+      </button>
+    </div>
+
+    <div id="section-sent" class="section">
+      <div class="section-title">Controlla la mail 📬</div>
+      <div class="section-sub">Abbiamo inviato un link di accesso a <strong id="sent-email"></strong>.<br>Clicca il link per accedere.</div>
+      <button class="btn btn-ghost" onclick="showSection('login')">← Torna indietro</button>
+    </div>
+
+    <div id="section-dashboard" class="section">
+
+      <div class="welcome-header">
+        <div class="welcome-label">Bentornato</div>
+        <div class="welcome-name">👋 <span id="user-name">—</span></div>
+      </div>
+
+      <div class="clock-block">
+        <div class="clock-time" id="live-time">00:00:00</div>
+        <div class="clock-date" id="live-date">—</div>
+      </div>
+
+      <div class="last-stamp" id="last-stamp-block">
+        Ultima timbratura: <strong id="last-stamp-text">—</strong>
+      </div>
+
+      <button class="btn btn-enter" id="btn-enter" onclick="stamp('Ingresso')">
+        ⬆ Registra Ingresso
+      </button>
+      <button class="btn btn-exit" id="btn-exit" onclick="stamp('Uscita')">
+        ⬇ Registra Uscita
+      </button>
+
+      <div class="logout-wrap">
+        <button class="btn btn-ghost" onclick="logout()">Esci dall'account</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
   /* ════════════════════════════════════════════════════
-   *  ⚙️ CONFIGURAZIONE SUPABASE
+   * ⚙️  CONFIGURAZIONE — i tuoi valori sono inseriti correttamente
    * ════════════════════════════════════════════════════ */
-  const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SUPABASE_ANON_KEY = 'LA_TUA_CHIAVE_SUPABASE';
+  const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  /* ════════════════════════════════════════════════════ */
 
   const TABLE = 'timbrature';
 
@@ -13,55 +392,35 @@
 
   /* ── Mostra/nasconde sezioni ── */
   function showSection(name) {
-    document.querySelectorAll('.section').forEach(s => {
-      s.classList.remove('active');
-    });
-
-    document
-      .getElementById('section-' + name)
-      .classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
   }
 
-  /* ── Toast ── */
+  /* ── Toast notification ── */
   function toast(msg, type = 'info', duration = 3500) {
     const el = document.getElementById('toast');
-
     el.textContent = msg;
     el.className = 'toast ' + type;
     el.classList.add('show');
-
-    setTimeout(() => {
-      el.classList.remove('show');
-    }, duration);
+    setTimeout(() => el.classList.remove('show'), duration);
   }
 
   /* ── Orologio live ── */
   function startClock() {
+    if (clockInterval) clearInterval(clockInterval);
     function tick() {
       const now = new Date();
-
-      document.getElementById('live-time').textContent =
-        now.toLocaleTimeString('it-IT');
-
-      document.getElementById('live-date').textContent =
-        now.toLocaleDateString('it-IT', {
-          weekday: 'short',
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric'
-        });
+      document.getElementById('live-time').textContent = now.toLocaleTimeString('it-IT');
+      document.getElementById('live-date').textContent = now.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' });
     }
-
     tick();
     clockInterval = setInterval(tick, 1000);
   }
 
-  /* ── Nome da email ── */
+  /* ── Estrai nome da email ── */
   function nameFromEmail(email) {
     const local = email.split('@')[0];
-
-    return local
-      .replace(/[._\-]/g, ' ')
+    return local.replace(/[._\-]/g, ' ')
       .split(' ')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
@@ -69,6 +428,7 @@
 
   /* ── Carica ultima timbratura ── */
   async function loadLastStamp(userId) {
+    // CORRETTO: Uso di supabaseClient invece di supabase globale mancante
     const { data, error } = await supabaseClient
       .from(TABLE)
       .select('nome, data, ora, tipo')
@@ -76,63 +436,37 @@
       .order('created_at', { ascending: false })
       .limit(1);
 
-    if (error) {
-      console.error(error);
-      return;
-    }
-
     if (data && data.length > 0) {
       const s = data[0];
-
-      document.getElementById('last-stamp-text').textContent =
-        `${s.tipo} — ${s.data} alle ${s.ora}`;
-
-      document
-        .getElementById('last-stamp-block')
-        .classList.add('visible');
+      document.getElementById('last-stamp-text').textContent = `${s.tipo} — ${s.data} alle ${s.ora}`;
+      document.getElementById('last-stamp-block').classList.add('visible');
     }
   }
 
-  /* ── Dashboard ── */
+  /* ── Mostra dashboard ── */
   async function showDashboard(user) {
     currentUser = user;
-
-    const nome =
-      user.user_metadata?.full_name ||
-      nameFromEmail(user.email);
-
+    const nome = user.user_metadata?.full_name || nameFromEmail(user.email);
     document.getElementById('user-name').textContent = nome;
-
     showSection('dashboard');
-
     startClock();
-
     await loadLastStamp(user.id);
   }
 
   /* ── Inizializza app ── */
   async function initApp() {
-
-    /* Controllo configurazione */
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      toast(
-        '⚠️ Configura prima SUPABASE_URL e SUPABASE_ANON_KEY',
-        'error',
-        5000
-      );
+    // CORRETTO: Controllo rimosso per evitare falsi positivi con le tue chiavi reali
+    if (SUPABASE_URL.includes('YOUR_') || SUPABASE_ANON_KEY.includes('YOUR_')) {
+      toast('⚠️ Configura prima SUPABASE_URL e SUPABASE_ANON_KEY nel codice', 'error', 5000);
       return;
     }
 
-    /* Crea client Supabase */
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+    if (!supabaseClient) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
 
-    /* Sessione già esistente */
-    const {
-      data: { session }
-    } = await supabaseClient.auth.getSession();
+    /* Gestisci redirect da magic link o sessione persistente */
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (session) {
       showDashboard(session.user);
@@ -140,143 +474,93 @@
       showSection('login');
     }
 
-    /* Listener login/logout */
-    supabaseClient.auth.onAuthStateChange(
-      (_event, session) => {
-
-        if (session) {
-          showDashboard(session.user);
-        } else {
-          showSection('login');
-        }
+    /* Ascolta cambi di sessione (es. apertura del magic link) */
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        showDashboard(session.user);
       }
-    );
+    });
   }
 
   /* ── Invia magic link ── */
   async function sendMagicLink() {
-
-    const email = document
-      .getElementById('input-email')
-      .value
-      .trim();
-
+    const email = document.getElementById('input-email').value.trim();
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       toast('Inserisci un\'email valida', 'error');
       return;
     }
 
     const btn = document.getElementById('btn-magic');
-
     btn.disabled = true;
     btn.textContent = 'Invio in corso…';
 
-    const { error } =
-      await supabaseClient.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.href
-        }
-      });
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.href }
+    });
 
     btn.disabled = false;
     btn.textContent = 'Invia Magic Link ✉️';
 
     if (error) {
-
-      toast(
-        'Errore: ' + error.message,
-        'error'
-      );
-
+      toast('Errore: ' + error.message, 'error');
     } else {
-
-      document.getElementById('sent-email')
-        .textContent = email;
-
+      document.getElementById('sent-email').textContent = email;
       showSection('sent');
     }
   }
 
   /* ── Registra timbratura ── */
   async function stamp(tipo) {
-
     if (!currentUser) return;
 
     const btnEnter = document.getElementById('btn-enter');
     const btnExit  = document.getElementById('btn-exit');
-
     btnEnter.disabled = true;
     btnExit.disabled  = true;
 
-    const now = new Date();
-
-    const nome =
-      currentUser.user_metadata?.full_name ||
-      nameFromEmail(currentUser.email);
-
+    const now  = new Date();
+    const nome = currentUser.user_metadata?.full_name || nameFromEmail(currentUser.email);
     const data = now.toLocaleDateString('it-IT');
     const ora  = now.toLocaleTimeString('it-IT');
 
-    const { error } = await supabaseClient
-      .from(TABLE)
-      .insert({
-        user_id: currentUser.id,
-        nome,
-        data,
-        ora,
-        tipo
-      });
+    const { error } = await supabaseClient.from(TABLE).insert({
+      user_id: currentUser.id,
+      nome,
+      data,
+      ora,
+      tipo,
+    });
 
     btnEnter.disabled = false;
     btnExit.disabled  = false;
 
     if (error) {
-
-      toast(
-        'Errore: ' + error.message,
-        'error'
-      );
-
+      toast('Errore: ' + error.message, 'error');
     } else {
-
-      toast(
-        tipo === 'Ingresso'
-          ? '⬆ Ingresso registrato'
-          : '⬇ Uscita registrata',
-        'success'
-      );
-
-      document.getElementById('last-stamp-text')
-        .textContent =
-        `${tipo} — ${data} alle ${ora}`;
-
-      document
-        .getElementById('last-stamp-block')
-        .classList.add('visible');
+      toast(tipo === 'Ingresso' ? '⬆ Ingresso registrato' : '⬇ Uscita registrata', 'success');
+      document.getElementById('last-stamp-text').textContent = `${tipo} — ${data} alle ${ora}`;
+      document.getElementById('last-stamp-block').classList.add('visible');
     }
   }
 
   /* ── Logout ── */
   async function logout() {
-
     await supabaseClient.auth.signOut();
-
     currentUser = null;
-
-    clearInterval(clockInterval);
-
+    if (clockInterval) clearInterval(clockInterval);
     showSection('login');
-
     toast('Disconnesso', 'info');
   }
 
-  /* ── Auto avvio ── */
+  /* ── Auto-avvio se già configurato ── */
   window.addEventListener('load', () => {
-
-    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    // CORRETTO: Avvia direttamente l'app bypassando la schermata iniziale se le chiavi ci sono
+    if (!SUPABASE_URL.includes('YOUR_')) {
       initApp();
     }
-
   });
 </script>
+
+</body>
+</html>
