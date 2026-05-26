@@ -86,7 +86,7 @@
       font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer;
       transition: all .15s; margin-bottom: 12px;
     }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: #1f3329; }
     
@@ -99,7 +99,7 @@
     .auth-toggle span { text-decoration: underline; color: var(--accent); }
 
     /* ══════════════ INTERFACCIA TIMBRATURA APERTA ══════════════ */
-    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
 
     .topbar {
       background: var(--surface); border-bottom: 1px solid var(--border);
@@ -108,11 +108,12 @@
     .topbar-title { font-family: var(--font-serif); font-size: 20px; }
     .topbar-title em { font-style: italic; color: var(--accent); }
     
-    .main-panel { max-width: 460px; margin: 40px auto; padding: 0 24px; text-align: center; }
+    .main-panel { max-width: 550px; margin: 40px auto; padding: 0 24px; text-align: center; }
     
     .welcome-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
       padding: 32px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.04); margin-bottom: 24px;
+      text-align: center;
     }
     .welcome-name { font-family: var(--font-serif); font-size: 28px; margin-bottom: 4px; }
     .welcome-meta { font-size: 12px; color: var(--ink3); margin-bottom: 24px; }
@@ -128,6 +129,23 @@
     @keyframes pulseAlert {
       from { opacity: 0.7; } to { opacity: 1; }
     }
+
+    /* PANNELLO ADMIN (VISIBILE SOLO AI CAPICENTRO) */
+    .admin-card { text-align: left; background: #faf9f5; border: 2px dashed var(--accent); }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .admin-title { font-family: var(--font-serif); font-size: 22px; color: var(--accent); font-weight: bold; }
+    
+    .admin-toggle-wrapper { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn-toggle { flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; text-align: center; }
+
+    .admin-table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
+    .admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+    .admin-table th, .admin-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+    .admin-table th { background: var(--accent-lt); color: var(--accent); text-transform: uppercase; font-size: 9px; letter-spacing: 1px; }
+    
+    .badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; }
+    .badge-in { background: var(--green-lt); color: var(--green); }
+    .badge-out { background: var(--red-lt); color: var(--red); }
 
     /* Notifiche Toast di successo/errore */
     .toast {
@@ -198,6 +216,40 @@
         <button class="btn btn-red" id="btn-out" onclick="doStamp('Uscita')">⬇ REGISTRA USCITA</button>
       </div>
     </div>
+
+    <div class="welcome-card admin-card" id="admin-panel" style="display: none;">
+      <div class="admin-header">
+        <div class="admin-title">Pannello Admin 🛠️</div>
+        <button onclick="caricaRegistroAdmin()" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px; font-family:var(--font-mono);">Aggiorna Registro 🔄</button>
+      </div>
+      
+      <p style="font-size:11px; color:var(--ink2); margin-bottom:8px; font-weight:600;">Blocco pulsanti di timbratura:</p>
+      <div class="admin-toggle-wrapper">
+        <button id="toggle-in-btn" class="btn-toggle" onclick="toggleStatoSistema('ingresso_aperto')">Ingressi: ...</button>
+        <button id="toggle-out-btn" class="btn-toggle" onclick="toggleStatoSistema('uscita_aperta')">Uscite: ...</button>
+      </div>
+
+      <p style="font-size:11px; color:var(--ink2); margin-bottom:10px; border-top:1px solid var(--border); padding-top:10px;">Elenco ultime timbrature effettuate:</p>
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Animatore</th>
+              <th>Anno</th>
+              <th>Data</th>
+              <th>Ora</th>
+              <th>Azione</th>
+            </tr>
+          </thead>
+          <tbody id="admin-table-body">
+            <tr>
+              <td colspan="5" style="text-align:center; color:var(--ink3);">Caricamento dati...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -211,29 +263,39 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   const TABLE = 'timbrature';
 
+  // 👑 LISTA EMAIL ADMIN: Inserisci qui dentro la tua email
+  const ADMIN_EMAILS = [
+    'admin@oratorio.com', 
+    'il_tuo_indirizzo_admin@gmail.com' // <--- SCAMBIALA CON LA TUA EMAIL DA CAPOCENTRO
+  ];
+
   // 📍 BLOCCO GPS: Incolla qui le coordinate del centro del tuo oratorio
-  const ORATORIO_LAT   = 45.4642;  // <--- METTI LA TUA LATITUDINE DA GOOGLE MAPS
-  const ORATORIO_LON   = 9.1900;   // <--- METTI LA TUA LONGITUDINE DA GOOGLE MAPS
-  const MAX_DISTANZA   = 80;       // Distanza massima consentita per timbrare (in metri)
+  const ORATORIO_LAT   = 45.4642;  
+  const ORATORIO_LON   = 9.1900;   
+  const MAX_DISTANZA   = 80;       
 
   let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let currentUser = null;
+
+  // Variabili globali per memorizzare se i bottoni sono aperti o bloccati
+  let ingressoAperto = true;
+  let uscitaAperta = true;
 
   // VERIFICA LO STATO DELLA PAGINA AL CARICAMENTO
   window.addEventListener('load', async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     
-    // Intercetta se nell'indirizzo c'è l'azione del QR (?action=Ingresso o ?action=Uscita)
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
+
+    // Scarica lo stato attuale dei blocchi dal db per tutti prima di visualizzare i tasti
+    await scaricaStatoBlocchi();
 
     if (session) {
       showApp(session.user);
       
-      // Se l'utente è loggato ed è arrivato scansionando il QR, timbra all'istante
       if (action === 'Ingresso' || action === 'Uscita') {
         document.getElementById('qr-alert-processing').style.display = 'block';
-        // Pulisce la barra degli indirizzi per evitare reinvii automatici rinfrescando la pagina
         window.history.replaceState({}, document.title, window.location.pathname);
         
         setTimeout(async () => {
@@ -242,7 +304,6 @@
         }, 1000);
       }
     } else {
-      // Se non è loggato ma ha scansionato il QR, salva temporaneamente l'operazione
       if (action === 'Ingresso' || action === 'Uscita') {
         sessionStorage.setItem('pending_qr_action', action);
         document.getElementById('qr-alert-login').style.display = 'block';
@@ -283,7 +344,7 @@
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
 
-    if (!email || !password) { toast('Inserisci email e password', 'error'); return; }
+    if (!email || !password) { toast("Inserisci l'email e la password", "error"); return; }
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) { toast('Credenziali non valide', 'error'); return; }
@@ -292,7 +353,6 @@
     checkPendingQR();
   }
 
-  // Controlla se c'era una timbratura QR bloccata prima del login
   async function checkPendingQR() {
     const pendingAction = sessionStorage.getItem('pending_qr_action');
     if (pendingAction) {
@@ -303,6 +363,7 @@
     }
   }
 
+  // MOSTRA L'INTERFACCIA DOPO IL LOGIN
   function showApp(user) {
     currentUser = user;
     document.getElementById('auth-screen').style.display = 'none';
@@ -313,6 +374,119 @@
 
     document.getElementById('user-display-name').textContent = nome;
     document.getElementById('user-display-meta').textContent = `Classe/Anno: ${anno}`;
+
+    // Applica le restrizioni dei pulsanti visive
+    aggiornaInterfacciaBottoni();
+
+    // CONTROLLO SE L'UTENTE È UN ADMIN
+    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      document.getElementById('admin-panel').style.display = 'block';
+      caricaRegistroAdmin();
+    } else {
+      document.getElementById('admin-panel').style.display = 'none';
+    }
+  }
+
+  // SCARICA LO STATO DEL TELECOMANDO DAL DB
+  async function scaricaStatoBlocchi() {
+    const { data, error } = await supabaseClient.from('impostazioni').select('*');
+    if (!error && data) {
+      data.forEach(row => {
+        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+      });
+    }
+  }
+
+  // DISABILITA O ABILITA I PULSANTI DEI RAGAZZI IN BASE ALLO STATO SUL DB
+  function aggiornaInterfacciaBottoni() {
+    const btnIn = document.getElementById('btn-in');
+    const btnOut = document.getElementById('btn-out');
+
+    if (ingressoAperto) {
+      btnIn.disabled = false;
+      btnIn.textContent = '⬆ REGISTRA INGRESSO';
+    } else {
+      btnIn.disabled = true;
+      btnIn.textContent = '🔒 INGRESSO BLOCCATO';
+    }
+
+    if (uscitaAperta) {
+      btnOut.disabled = false;
+      btnOut.textContent = '⬇ REGISTRA USCITA';
+    } else {
+      btnOut.disabled = true;
+      btnOut.textContent = '🔒 USCITA BLOCCATA';
+    }
+
+    // Aggiorna la grafica dei pulsanti telecomando nel pannello dell'admin
+    const toggleInBtn = document.getElementById('toggle-in-btn');
+    const toggleOutBtn = document.getElementById('toggle-out-btn');
+    
+    if (toggleInBtn && toggleOutBtn) {
+      toggleInBtn.textContent = ingressoAperto ? 'Ingressi: APERTI' : 'Ingressi: BLOCCATI';
+      toggleInBtn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
+      toggleInBtn.style.color = ingressoAperto ? 'var(--green)' : 'var(--red)';
+
+      toggleOutBtn.textContent = uscitaAperta ? 'Uscite: APERTE' : 'Uscite: BLOCCATE';
+      toggleOutBtn.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
+      toggleOutBtn.style.color = uscitaAperta ? 'var(--green)' : 'var(--red)';
+    }
+  }
+
+  // CAMBIA LO STATO DEL SISTEMA (SOLO ADMIN)
+  async function toggleStatoSistema(chiave) {
+    const statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
+    const nuovoStato = !statoCorrente;
+
+    const { error } = await supabaseClient
+      .from('impostazioni')
+      .update({ valore: nuovoStato })
+      .eq('chiave', chiave);
+
+    if (error) {
+      toast('Errore nel cambiare blocco: ' + error.message, 'error');
+    } else {
+      toast('Stato aggiornato sul database!', 'success');
+      await scaricaStatoBlocchi();
+      aggiornaInterfacciaBottoni();
+    }
+  }
+
+  // SCARICA IL REGISTRO PRESENZE DAL DATABASE (SOLO PER GLI ADMIN)
+  async function caricaRegistroAdmin() {
+    const tbody = document.getElementById('admin-table-body');
+    
+    const { data, error } = await supabaseClient
+      .from(TABLE)
+      .select('*')
+      .order('id', { ascending: false })
+      .limit(60);
+
+    if (error) {
+      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center;">Errore: ${error.message}</td></tr>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink3);">Nessuna timbratura registrata oggi.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = '';
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      const badgeClass = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
+      
+      tr.innerHTML = `
+        <td style="font-weight:600;">${row.nome}</td>
+        <td style="color:var(--ink2);">${row.anno || '—'}</td>
+        <td>${row.data}</td>
+        <td style="font-weight:500;">${row.ora}</td>
+        <td><span class="badge ${badgeClass}">${row.tipo}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
   }
 
   async function handleLogout() {
@@ -336,6 +510,19 @@
   async function doStamp(tipo) {
     if (!currentUser) return;
 
+    // Controllo preventivo di sicurezza al millisecondo prima di premere
+    await scaricaStatoBlocchi();
+    aggiornaInterfacciaBottoni();
+
+    if (tipo === 'Ingresso' && !ingressoAperto) {
+      toast("Impossibile procedere: l'ingresso è stato chiuso dal coordinatore.", "error");
+      return;
+    }
+    if (tipo === 'Uscita' && !uscitaAperta) {
+      toast("Impossibile procedere: le uscite sono state chiuse dal coordinatore.", "error");
+      return;
+    }
+
     if (!navigator.geolocation) {
       toast("Geolocalizzazione disattivata o non supportata dal telefono.", "error");
       return;
@@ -352,15 +539,12 @@
 
       const distanza = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
 
-      // BLOCCO DI SICUREZZA ANTI-FURBETTI
       if (distanza > MAX_DISTANZA) {
         toast(`Rifiutato! Sei fuori oratorio di ${Math.round(distanza)} metri. Avvicinati!`, "error");
-        document.getElementById('btn-in').disabled = false;
-        document.getElementById('btn-out').disabled = false;
+        aggiornaInterfacciaBottoni();
         return;
       }
 
-      // SE LA POSIZIONE È VALIDA SALVA SU SUPABASE
       const nome = currentUser.user_metadata.display_name;
       const anno = currentUser.user_metadata.anno;
       const now = new Date();
@@ -376,21 +560,23 @@
         tipo: tipo
       });
 
-      document.getElementById('btn-in').disabled = false;
-      document.getElementById('btn-out').disabled = false;
+      aggiornaInterfacciaBottoni();
 
       if (error) {
         toast('Errore di rete: ' + error.message, 'error');
       } else {
         toast(`Presenza registrata: ${tipo} delle ore ${ora}`, 'success');
+        
+        if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
+          caricaRegistroAdmin();
+        }
       }
 
     }, (error) => {
       toast("Per timbrare devi attivare la localizzazione GPS e dare il consenso!", "error");
-      document.getElementById('btn-in').disabled = false;
-      document.getElementById('btn-out').disabled = false;
+      aggiornaInterfacciaBottoni();
     }, {
-      enableHighAccuracy: true, // Richiede geolocalizzazione satellitare ad alta precisione
+      enableHighAccuracy: true,
       timeout: 7000
     });
   }
