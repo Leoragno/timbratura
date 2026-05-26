@@ -48,7 +48,7 @@
         radial-gradient(ellipse 60% 80% at 80% 90%, rgba(100,130,110,.06) 0%, transparent 60%);
     }
 
-    /* ══════════════ LOGIN ══════════════ */
+    /* LOGIN */
     #login-screen {
       position: fixed; inset: 0; z-index: 100;
       display: flex; align-items: center; justify-content: center;
@@ -101,8 +101,6 @@
       transition: border-color .15s, box-shadow .15s;
       margin-bottom: 16px;
     }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type=number] { -moz-appearance: textfield; }
 
     input:focus, select:focus {
       border-color: var(--accent);
@@ -121,8 +119,6 @@
       white-space: nowrap;
     }
 
-    .btn:disabled { opacity: .4; cursor: not-allowed; }
-
     .btn-primary {
       background: var(--accent); color: #fff; border-color: var(--accent);
       width: 100%;  justify-content: center; padding: 12px;
@@ -130,34 +126,14 @@
     .btn-primary:hover:not(:disabled) { background: #1f3329; }
 
     .btn-sm { padding: 6px 12px; font-size: 11px; }
-
     .btn-green { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
-    .btn-green:hover:not(:disabled) { background: #d0eadb; }
-
     .btn-red { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
-    .btn-red:hover:not(:disabled) { background: #ead0d0; }
-
     .btn-amber { background: var(--amber-lt); color: var(--amber); border-color: #e0cfa0; }
-    .btn-amber:hover:not(:disabled) { background: #f5e8c0; }
-
     .btn-ghost { background: transparent; color: var(--ink3); border-color: var(--border); }
-    .btn-ghost:hover:not(:disabled) { background: var(--bg2); color: var(--ink); }
 
     .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
 
-    /* ══════════════ MASTER LOCKS ══════════════ */
-    .control-row {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
-      margin-bottom: 28px;
-    }
-    .btn-toggle {
-      width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600;
-      border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s;
-      text-align: center;
-    }
-    .btn-toggle:active { transform: scale(0.98); }
-
-    /* ══════════════ MAIN APP ══════════════ */
+    /* MAIN APP */
     #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
 
     .topbar {
@@ -165,13 +141,11 @@
       border-bottom: 1px solid var(--border);
       padding: 0 32px;
       display: flex; align-items: center; justify-content: space-between;
-      height: 56px; position: sticky; top: 0; z-index: 50;
+      height: 56px;
     }
 
-    .topbar-brand { display: flex; align-items: baseline; gap: 10px; }
     .topbar-title { font-family: var(--font-serif); font-size: 20px; }
     .topbar-title em { font-style: italic; color: var(--accent); }
-
     .topbar-badge {
       font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
       background: var(--accent-lt); color: var(--accent);
@@ -180,7 +154,6 @@
     }
 
     .topbar-right { display: flex; align-items: center; gap: 16px; }
-
     .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); }
     .live-dot::before {
       content: ''; width: 7px; height: 7px; border-radius: 50%;
@@ -188,11 +161,10 @@
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .5; transform: scale(.7); }
+      50% { opacity: .5; transform: scale(.7); }
     }
 
     .topbar-clock { font-size: 12px; color: var(--ink3); }
-
     .main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
 
     .stats-row {
@@ -203,13 +175,23 @@
     .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; }
     .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
     .stat-value { font-family: var(--font-serif); font-size: 40px; line-height: 1; }
-    .stat-value.green { color: var(--green); }
-    .stat-value.red   { color: var(--red); }
 
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .section-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; }
 
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .control-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+      margin-bottom: 28px;
+    }
+    .btn-toggle {
+      width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border); border-radius: 4px; cursor: pointer; text-align: center;
+    }
+
+    .filter-bar {
+      display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+      align-items: center;
+    }
     .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
 
     .status-grid {
@@ -217,56 +199,44 @@
       gap: 12px; margin-bottom: 32px;
     }
 
-    .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; position: relative; transition: box-shadow .15s; }
-    .animator-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
-    .animator-card.inside  { border-left: 3px solid var(--green); }
+    .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+    .animator-card.inside { border-left: 3px solid var(--green); }
     .animator-card.outside { border-left: 3px solid var(--border2); }
-
     .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
-    .anim-name span { font-size: 13px; color: var(--ink3); font-family: var(--font-mono); margin-left: 6px; }
+    .anim-name span { font-size: 13px; color: var(--ink3); margin-left: 6px; }
 
     .anim-status {
-      display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; letter-spacing: .5px;
+      display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500;
       padding: 3px 9px; border-radius: 20px; margin-bottom: 12px;
     }
-    .anim-status.in  { background: var(--green-lt); color: var(--green); }
+    .anim-status.in { background: var(--green-lt); color: var(--green); }
     .anim-status.out { background: var(--bg2); color: var(--ink3); }
     .anim-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-    .anim-status.in::before  { background: var(--green); }
+    .anim-status.in::before { background: var(--green); }
     .anim-status.out::before { background: var(--ink3); }
 
     .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
     .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 
-    .table-wrap { 
-      background: var(--surface); 
-      border: 1px solid var(--border); 
-      border-radius: 4px; 
-      overflow-x: auto; 
-      -webkit-overflow-scrolling: touch;
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow-x: auto;
       margin-bottom: 20px;
     }
-    
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      min-width: 750px;
-    }
-
-    thead th {
-      background: var(--bg2); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--ink3); font-weight: 500; padding: 12px 14px; text-align: left;
+    table { width: 100%; border-collapse: collapse; min-width: 750px; }
+    th {
+      background: var(--bg2); padding: 12px 14px; text-align: left;
+      font-size: 10px; text-transform: uppercase; color: var(--ink3);
       border-bottom: 1px solid var(--border);
     }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
+    tr:hover { background: var(--bg); }
 
-    tbody tr { border-bottom: 1px solid var(--bg2); transition: background .1s; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--bg); }
-    tbody td { padding: 12px 14px; font-size: 12px; vertical-align: middle; white-space: nowrap; }
-
-    .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: .5px; padding: 2px 8px; border-radius: 20px; }
+    .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
     .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
-    .tipo-badge.uscita   { background: var(--red-lt);   color: var(--red);   }
+    .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
 
     .modal-overlay {
       position: fixed; inset: 0; z-index: 200; background: rgba(26,23,20,.45);
@@ -274,42 +244,30 @@
       opacity: 0; pointer-events: none; transition: opacity .2s;
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
-
     .modal {
       background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-      padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: 0 8px 40px rgba(0,0,0,.15);
-      transform: translateY(16px) scale(.98); transition: transform .2s cubic-bezier(.23,1,.32,1);
+      padding: 36px 32px; width: 100%; max-width: 400px;
     }
-    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
     .modal-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 20px; }
     .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
     .toast {
       position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg);
       border-radius: 4px; padding: 12px 18px; font-size: 12px;
-      transform: translateY(20px); opacity: 0; transition: all .3s cubic-bezier(.23,1,.32,1);
-      z-index: 300; max-width: 320px;
+      transform: translateY(20px); opacity: 0; transition: all .3s;
+      z-index: 300;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { background: var(--green); }
-    .toast.error   { background: var(--red); }
+    .toast.error { background: var(--red); }
 
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
-    .empty-icon { font-size: 32px; margin-bottom: 12px; }
-
     .pagination {
-      display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
-      border-top: 1px solid var(--border); font-size: 11px; color: var(--ink3);
-      background: var(--surface);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--ink3); background: var(--surface);
     }
     .pagination-btns { display: flex; gap: 6px; }
-
-    @media (max-width: 700px) {
-      .topbar { padding: 0 16px; }
-      .main { padding: 20px 16px; }
-      .filter-bar { flex-direction: column; }
-      .filter-bar input, .filter-bar select { width: 100%; }
-    }
   </style>
 </head>
 <body>
@@ -319,8 +277,8 @@
     <div class="login-eyebrow">Pannello di controllo</div>
     <div class="login-title">Accesso <em>Admin</em></div>
     <label for="admin-pass">Password</label>
-    <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') window.doLogin()" />
-    <button class="btn btn-primary" onclick="window.doLogin()">Entra →</button>
+    <input type="password" id="admin-pass" placeholder="••••••••" />
+    <button class="btn btn-primary" id="loginBtn">Entra →</button>
     <div class="login-err" id="login-err">Password errata. Riprova.</div>
   </div>
 </div>
@@ -334,100 +292,67 @@
     <div class="topbar-right">
       <span class="live-dot">Live</span>
       <span class="topbar-clock" id="top-clock">—</span>
-      <button class="btn btn-ghost btn-sm" onclick="window.doLogout()">Esci</button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">Esci</button>
     </div>
   </div>
 
   <div class="main">
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Totale animatori</div>
-        <div class="stat-value" id="stat-total">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Dentro ora</div>
-        <div class="stat-value green" id="stat-in">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Fuori ora</div>
-        <div class="stat-value red" id="stat-out">—</div>
-      </div>
+      <div class="stat-card"><div class="stat-label">Totale animatori</div><div class="stat-value" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value green" id="stat-in">—</div></div>
+      <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value red" id="stat-out">—</div></div>
     </div>
 
     <div class="section-header">
-      <div class="section-title">Controllo accessi in tempo reale (Locks)</div>
+      <div class="section-title">Controllo accessi (Locks)</div>
     </div>
     <div class="control-row">
-      <button id="toggle-in-btn" class="btn-toggle" onclick="window.toggleStato('ingresso_aperto')">Ingressi: Caricamento...</button>
-      <button id="toggle-out-btn" class="btn-toggle" onclick="window.toggleStato('uscita_aperta')">Uscite: Caricamento...</button>
+      <button id="toggle-in-btn" class="btn-toggle">Ingressi: Caricamento...</button>
+      <button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button>
     </div>
 
     <div class="section-header">
       <div class="section-title">Stato animatori</div>
-      <button class="btn btn-sm btn-ghost" onclick="window.loadAll()">↻ Aggiorna</button>
+      <button class="btn btn-sm btn-ghost" id="refreshBtn">↻ Aggiorna</button>
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="filter-name" placeholder="Cerca nome o anno…" oninput="window.renderAnimators()" style="max-width:220px;">
-      <select id="filter-status" onchange="window.renderAnimators()">
+      <input type="text" id="filter-name" placeholder="Cerca nome o anno…">
+      <select id="filter-status">
         <option value="">Tutti gli stati</option>
         <option value="inside">Dentro</option>
         <option value="outside">Fuori</option>
       </select>
-      <select id="filter-sort" onchange="window.renderAnimators()">
-        <option value="status">Ordina per: Stato (Dentro/Fuori)</option>
-        <option value="alpha">Ordina per: Alfabetico (A-Z)</option>
-        <option value="anno">Ordina per: Anno di Nascita</option>
+      <select id="filter-sort">
+        <option value="status">Ordina per: Stato</option>
+        <option value="alpha">Ordina per: Alfabetico</option>
+        <option value="anno">Ordina per: Anno</option>
       </select>
     </div>
 
     <div class="status-grid" id="animators-grid">
-      <div class="empty"><div class="empty-icon">⏳</div>Caricamento…</div>
+      <div class="empty">⏳ Caricamento…</div>
     </div>
 
-    <div class="section-header" style="margin-top:8px;">
+    <div class="section-header">
       <div class="section-title">Log timbrature</div>
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="log-search" placeholder="Cerca nome o anno…" oninput="window.renderLog()" style="max-width:200px;">
-      <input type="date" id="log-date" oninput="window.renderLog()">
-      <select id="log-tipo" onchange="window.renderLog()">
-        <option value="">Tutti i tipi</option>
+      <input type="text" id="log-search" placeholder="Cerca nome…">
+      <input type="date" id="log-date">
+      <select id="log-tipo">
+        <option value="">Tutti</option>
         <option value="Ingresso">Ingresso</option>
         <option value="Uscita">Uscita</option>
-      </select>
-      <select id="log-sort" onchange="window.renderLog()">
-        <option value="ora-desc">Ordina per: Ora (Più recenti)</option>
-        <option value="ora-asc">Ordina per: Ora (Più vecchi)</option>
-        <option value="alpha">Ordina per: Alfabetico (A-Z)</option>
-        <option value="anno">Ordina per: Anno di Nascita</option>
       </select>
     </div>
 
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Anno Nascita</th>
-            <th>Data</th>
-            <th>Ora</th>
-            <th>Tipo</th>
-            <th style="width:180px;">Azioni</th>
-          </tr>
-        </thead>
-        <tbody id="log-tbody">
-          <tr><td colspan="6" class="empty"><div class="empty-icon">⏳</div>Caricamento…</td></tr>
-        </tbody>
+        <thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr></thead>
+        <tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody>
       </table>
-      <div class="pagination">
-        <span id="pag-info">—</span>
-        <div class="pagination-btns">
-          <button class="btn btn-ghost btn-sm" id="pag-prev" onclick="window.changePage(-1)">← Prec</button>
-          <button class="btn btn-ghost btn-sm" id="pag-next" onclick="window.changePage(1)">Succ →</button>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -435,21 +360,13 @@
 <div class="modal-overlay" id="modal-manual">
   <div class="modal">
     <div class="modal-title">Timbratura manuale</div>
-    <p style="font-size:12px;color:var(--ink3);margin-bottom:20px;">
-      Registra un ingresso o un'uscita per <strong id="manual-name-label">—</strong>.
-    </p>
-    <label>Tipo</label>
-    <select id="manual-tipo">
-      <option value="Ingresso">⬆ Perfeziona Ingresso</option>
-      <option value="Uscita">⬇ Perfeziona Uscita</option>
-    </select>
-    <label>Data</label>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:20px;">Registra per <strong id="manual-name-label">—</strong></p>
+    <select id="manual-tipo"><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
     <input type="date" id="manual-data" />
-    <label>Ora</label>
-    <input type="time" id="manual-ora" step="60" />
+    <input type="time" id="manual-ora" />
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="window.closeModal('modal-manual')">Annulla</button>
-      <button class="btn btn-primary" style="width:auto;padding:10px 20px;" onclick="window.saveManual()">Salva</button>
+      <button class="btn btn-ghost" id="closeManualBtn">Annulla</button>
+      <button class="btn btn-primary" id="saveManualBtn">Salva</button>
     </div>
   </div>
 </div>
@@ -457,43 +374,13 @@
 <div class="modal-overlay" id="modal-edit-profile">
   <div class="modal">
     <div class="modal-title">Modifica Anagrafica</div>
-    <p style="font-size:11px; color:var(--ink3); margin-bottom:15px;">Le modifiche aggiorneranno i dati su tutti i record esistenti.</p>
     <input type="hidden" id="profile-old-nome" />
     <input type="hidden" id="profile-old-anno" />
-    
-    <label>Nome e Cognome</label>
-    <input type="text" id="profile-new-nome" />
-    
-    <label>Anno di Nascita</label>
-    <input type="number" id="profile-new-anno" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
-    
+    <input type="text" id="profile-new-nome" placeholder="Nuovo nome" />
+    <input type="number" id="profile-new-anno" placeholder="Nuovo anno" />
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="window.closeModal('modal-edit-profile')">Annulla</button>
-      <button class="btn btn-amber" onclick="window.saveProfileEdit()">Salva modifiche</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-edit">
-  <div class="modal">
-    <div class="modal-title">Modifica timbratura</div>
-    <input type="hidden" id="edit-id" />
-    <label>Nome</label>
-    <input type="text" id="edit-nome" />
-    <label>Anno di nascita</label>
-    <input type="number" id="edit-anno" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
-    <label>Data</label>
-    <input type="date" id="edit-data" />
-    <label>Ora</label>
-    <input type="time" id="edit-ora" step="60" />
-    <label>Tipo</label>
-    <select id="edit-tipo">
-      <option value="Ingresso">⬆ Ingresso</option>
-      <option value="Uscita">⬇ Uscita</option>
-    </select>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="window.closeModal('modal-edit')">Annulla</button>
-      <button class="btn btn-amber" onclick="window.saveEdit()">Salva modifiche</button>
+      <button class="btn btn-ghost" id="closeProfileBtn">Annulla</button>
+      <button class="btn btn-amber" id="saveProfileBtn">Salva</button>
     </div>
   </div>
 </div>
@@ -503,172 +390,294 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // ============================================================
-  // CONFIGURAZIONE
-  // ============================================================
-  const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  
-  // ✅ PASSWORD ADMIN (usa questa per fare login)
-  const ADMIN_PASSWORD    = 'admin123';
+  (function() {
+    // CONFIGURAZIONE
+    const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+    const ADMIN_PASSWORD = 'admin123';
 
-  const TABLE = 'timbrature';
-  const PAGE_SIZE = 20;
+    let supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentUser = null;
+    let allAnimators = [];
+    let allLog = [];
+    let ingressoAperto = true;
+    let uscitaAperta = true;
+    let manualTarget = null;
 
-  let supabaseClient = null; 
-  let allAnimators = [];   
-  let allLog = [];         
-  let filteredLog = [];
-  let currentPage = 0;
-  let manualUserNome = null;
-  let manualUserAnno = null;
-  let refreshInterval = null;
-
-  let ingressoAperto = true;
-  let uscitaAperta = true;
-
-  // ==================== FUNZIONI GLOBALI ====================
-  
-  window.doLogin = function() {
-    const pw = document.getElementById('admin-pass').value;
-    if (pw !== ADMIN_PASSWORD) {
-      document.getElementById('login-err').style.display = 'block';
-      document.getElementById('admin-pass').value = '';
-      return;
+    function toast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `toast ${type} show`;
+      setTimeout(() => el.classList.remove('show'), 3000);
     }
-    
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    sessionStorage.setItem('admin_auth', '1');
-    
-    try {
-      initAdmin();
-    } catch(e) {
-      console.error(e);
-      toast("Errore durante l'inizializzazione del database", "error");
+
+    function closeAllModals() {
+      document.getElementById('modal-manual').classList.remove('open');
+      document.getElementById('modal-edit-profile').classList.remove('open');
     }
-  }
 
-  window.doLogout = function() {
-    sessionStorage.removeItem('admin_auth');
-    location.reload();
-  }
-
-  window.loadAll = async function() {
-    await scaricaStatoBlocchi();
-    await loadLog();
-    await loadAnimators();
-  }
-
-  window.toggleStato = async function(chiave) {
-    const statoCorrente = (chiave === 'ingresso_aperto') ? ingressoAperto : uscitaAperta;
-    const nuovoStato = !statoCorrente;
-
-    const { error } = await supabaseClient
-      .from('impostazioni')
-      .update({ valore: nuovoStato })
-      .eq('chiave', chiave);
-    
-    if (error) {
-      toast('Errore salvataggio blocco: ' + error.message, 'error');
-    } else {
-      toast('Configurazione sincronizzata!', 'success');
-      await scaricaStatoBlocchi();
-    }
-  }
-
-  window.renderLog = function() {
-    const search = (document.getElementById('log-search').value || '').toLowerCase();
-    const date   = document.getElementById('log-date').value;     
-    const tipo   = document.getElementById('log-tipo').value;
-    const sortVal = document.getElementById('log-sort').value;
-
-    filteredLog = allLog.filter(r => {
-      const matchSearch = r.nome.toLowerCase().includes(search) || (r.anno && r.anno.toString().includes(search));
-      if (search && !matchSearch) return false;
-      if (tipo && r.tipo !== tipo) return false;
-      if (date) {
-        const parts = r.data.split('/');
-        const rowDate = parts.length === 3
-          ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
-          : r.data;
-        if (rowDate !== date) return false;
+    // LOGIN
+    document.getElementById('loginBtn').onclick = async () => {
+      const pw = document.getElementById('admin-pass').value;
+      if (pw !== ADMIN_PASSWORD) {
+        document.getElementById('login-err').style.display = 'block';
+        return;
       }
-      return true;
-    });
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      sessionStorage.setItem('admin_auth', '1');
+      await loadAllData();
+      startClock();
+    };
 
-    if (sortVal === 'ora-desc') {
-      filteredLog.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    } else if (sortVal === 'ora-asc') {
-      filteredLog.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    } else if (sortVal === 'alpha') {
-      filteredLog.sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
-    } else if (sortVal === 'anno') {
-      filteredLog.sort((a, b) => (a.anno || 0) - (b.anno || 0));
+    document.getElementById('admin-pass').onkeypress = (e) => {
+      if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    };
+
+    document.getElementById('logoutBtn').onclick = () => {
+      sessionStorage.removeItem('admin_auth');
+      location.reload();
+    };
+
+    async function loadAllData() {
+      await loadSettings();
+      await loadUsers();
+      await loadTimbrature();
+      renderAnimators();
+      renderLog();
+      updateStats();
     }
 
-    _renderLogPage();
-  }
-
-  window.changePage = function(dir) {
-    const pages = Math.ceil(filteredLog.length / PAGE_SIZE) || 1;
-    currentPage = Math.max(0, Math.min(pages - 1, currentPage + dir));
-    _renderLogPage();
-  }
-
-  window.renderAnimators = function() {
-    const search = (document.getElementById('filter-name').value || '').toLowerCase();
-    const statusF = document.getElementById('filter-status').value;
-    const sortVal = document.getElementById('filter-sort').value;
-
-    let list = allAnimators.filter(a => {
-      const matchSearch = a.nome.toLowerCase().includes(search) || a.anno.toString().includes(search);
-      if (search && !matchSearch) return false;
-      if (statusF === 'inside'  && !a.isInside) return false;
-      if (statusF === 'outside' &&  a.isInside) return false;
-      return true;
-    });
-
-    if (sortVal === 'status') {
-      list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
-    } else if (sortVal === 'alpha') {
-      list.sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
-    } else if (sortVal === 'anno') {
-      list.sort((a, b) => (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0));
+    async function loadSettings() {
+      const { data } = await supabase.from('impostazioni').select('*');
+      if (data) {
+        data.forEach(row => {
+          if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+          if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+        });
+      }
+      const btnIn = document.getElementById('toggle-in-btn');
+      const btnOut = document.getElementById('toggle-out-btn');
+      btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
+      btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
     }
 
-    const grid = document.getElementById('animators-grid');
-
-    if (list.length === 0) {
-      grid.innerHTML = `<div class="empty"><div class="empty-icon">👤</div>Nessun animatore trovato.</div>`;
-      return;
+    async function loadUsers() {
+      const { data } = await supabase.from('utenti').select('nome, anno');
+      allAnimators = data || [];
     }
 
-    grid.innerHTML = list.map(a => {
-      const ls = a.lastStamp;
-      const statusClass = a.isInside ? 'in' : 'out';
-      const cardClass   = a.isInside ? 'inside' : 'outside';
-      const statusText  = a.isInside ? 'Dentro' : 'Fuori';
-      const lastTxt = ls ? `${ls.tipo} — ${ls.data} ${ls.ora}` : 'Nessuna timbratura';
+    async function loadTimbrature() {
+      const { data } = await supabase.from('timbrature').select('*').order('created_at', { ascending: false });
+      allLog = data || [];
+    }
 
-      return `
-        <div class="animator-card ${cardClass}">
-          <div class="anim-name">${esc(a.nome)} <span>(${esc(a.anno)})</span></div>
-          <div class="anim-status ${statusClass}">${statusText}</div>
-          <div class="anim-last">${esc(lastTxt)}</div>
+    function renderAnimators() {
+      const search = document.getElementById('filter-name').value.toLowerCase();
+      const statusFilter = document.getElementById('filter-status').value;
+      const sortBy = document.getElementById('filter-sort').value;
+
+      // Calcola ultima timbratura per ogni animatore
+      const lastStampMap = {};
+      for (const log of allLog) {
+        const key = log.nome;
+        if (!lastStampMap[key]) lastStampMap[key] = log;
+      }
+
+      let list = allAnimators.map(a => ({
+        nome: a.nome,
+        anno: a.anno,
+        lastStamp: lastStampMap[a.nome] || null,
+        isInside: lastStampMap[a.nome]?.tipo === 'Ingresso' || false
+      }));
+
+      if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || String(a.anno).includes(search));
+      if (statusFilter === 'inside') list = list.filter(a => a.isInside);
+      if (statusFilter === 'outside') list = list.filter(a => !a.isInside);
+
+      if (sortBy === 'status') list.sort((a, b) => (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0));
+      else if (sortBy === 'alpha') list.sort((a, b) => a.nome.localeCompare(b.nome));
+      else if (sortBy === 'anno') list.sort((a, b) => (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0));
+
+      const grid = document.getElementById('animators-grid');
+      if (list.length === 0) {
+        grid.innerHTML = '<div class="empty">👤 Nessun animatore trovato</div>';
+        return;
+      }
+
+      grid.innerHTML = list.map(a => `
+        <div class="animator-card ${a.isInside ? 'inside' : 'outside'}">
+          <div class="anim-name">${escapeHtml(a.nome)} <span>(${a.anno || '—'})</span></div>
+          <div class="anim-status ${a.isInside ? 'in' : 'out'}">${a.isInside ? 'Dentro' : 'Fuori'}</div>
+          <div class="anim-last">${a.lastStamp ? `${a.lastStamp.tipo} — ${a.lastStamp.data} ${a.lastStamp.ora}` : 'Nessuna timbratura'}</div>
           <div class="anim-actions">
-            <button class="btn btn-green btn-sm" onclick="window.openManual('${esc(a.nome)}','${esc(a.anno)}','Ingresso')">⬆ In</button>
-            <button class="btn btn-red btn-sm"   onclick="window.openManual('${esc(a.nome)}','${esc(a.anno)}','Uscita')">⬇ Out</button>
-            <button class="btn btn-amber btn-sm" onclick="window.openProfileEdit('${esc(a.nome)}','${esc(a.anno)}')">✎ Anagrafica</button>
+            <button class="btn btn-green btn-sm" onclick="window.manualTimbratura('${escapeHtml(a.nome)}', '${a.anno || ''}', 'Ingresso')">⬆ In</button>
+            <button class="btn btn-red btn-sm" onclick="window.manualTimbratura('${escapeHtml(a.nome)}', '${a.anno || ''}', 'Uscita')">⬇ Out</button>
+            <button class="btn btn-amber btn-sm" onclick="window.editAnagrafica('${escapeHtml(a.nome)}', '${a.anno || ''}')">✎ Modifica</button>
           </div>
-        </div>`;
-    }).join('');
-  }
+        </div>
+      `).join('');
+    }
 
-  window.openManual = function(nome, anno, tipoDefault) {
-    manualUserNome = nome;
-    manualUserAnno = anno;
-    document.getElementById('manual-name-label').textContent = nome + ' (' + (anno || '—') + ')';
-    document.getElementById('manual-tipo').value = tipoDefault;
-    const now = new Date();
-    document.getElementById('manual-data').value = now.toISOString().slice(0,
+    function renderLog() {
+      const search = document.getElementById('log-search').value.toLowerCase();
+      const date = document.getElementById('log-date').value;
+      const tipo = document.getElementById('log-tipo').value;
+
+      let filtered = allLog.filter(l => {
+        if (search && !l.nome.toLowerCase().includes(search)) return false;
+        if (tipo && l.tipo !== tipo) return false;
+        if (date) {
+          const parts = l.data.split('/');
+          const logDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          if (logDate !== date) return false;
+        }
+        return true;
+      });
+
+      const tbody = document.getElementById('log-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">📋 Nessuna timbratura</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(l => `
+        <tr>
+          <td><strong>${escapeHtml(l.nome)}</strong></td>
+          <td>${l.anno || '—'}</td>
+          <td>${l.data}</td>
+          <td>${l.ora}</td>
+          <td><span class="tipo-badge ${l.tipo === 'Ingresso' ? 'ingresso' : 'uscita'}">${l.tipo}</span></td>
+          <td><button class="btn btn-red btn-sm" onclick="window.eliminaTimbratura(${l.id})">🗑️ Elimina</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function updateStats() {
+      const lastStampMap = {};
+      for (const log of allLog) {
+        const key = log.nome;
+        if (!lastStampMap[key]) lastStampMap[key] = log;
+      }
+      const inside = allAnimators.filter(a => lastStampMap[a.nome]?.tipo === 'Ingresso').length;
+      document.getElementById('stat-total').textContent = allAnimators.length;
+      document.getElementById('stat-in').textContent = inside;
+      document.getElementById('stat-out').textContent = allAnimators.length - inside;
+    }
+
+    function startClock() {
+      setInterval(() => {
+        document.getElementById('top-clock').textContent = new Date().toLocaleTimeString('it-IT');
+      }, 1000);
+    }
+
+    // FUNZIONI GLOBALI
+    window.manualTimbratura = (nome, anno, tipo) => {
+      manualTarget = { nome, anno };
+      document.getElementById('manual-name-label').textContent = `${nome} (${anno || '—'})`;
+      document.getElementById('manual-tipo').value = tipo;
+      const now = new Date();
+      document.getElementById('manual-data').value = now.toISOString().slice(0, 10);
+      document.getElementById('manual-ora').value = now.toTimeString().slice(0, 5);
+      document.getElementById('modal-manual').classList.add('open');
+    };
+
+    window.editAnagrafica = (nome, anno) => {
+      document.getElementById('profile-old-nome').value = nome;
+      document.getElementById('profile-old-anno').value = anno;
+      document.getElementById('profile-new-nome').value = nome;
+      document.getElementById('profile-new-anno').value = anno;
+      document.getElementById('modal-edit-profile').classList.add('open');
+    };
+
+    window.eliminaTimbratura = async (id) => {
+      if (!confirm('Eliminare questa timbratura?')) return;
+      const { error } = await supabase.from('timbrature').delete().eq('id', id);
+      if (error) toast('Errore: ' + error.message, 'error');
+      else {
+        toast('Timbratura eliminata!', 'success');
+        await loadTimbrature();
+        renderLog();
+        renderAnimators();
+        updateStats();
+      }
+    };
+
+    // Bottoni modali
+    document.getElementById('saveManualBtn').onclick = async () => {
+      const tipo = document.getElementById('manual-tipo').value;
+      const dataRaw = document.getElementById('manual-data').value;
+      const ora = document.getElementById('manual-ora').value;
+      if (!dataRaw || !ora) { toast('Compila tutti i campi', 'error'); return; }
+      const parts = dataRaw.split('-');
+      const data = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      const { error } = await supabase.from('timbrature').insert({
+        nome: manualTarget.nome,
+        anno: manualTarget.anno ? parseInt(manualTarget.anno) : null,
+        data, ora, tipo
+      });
+      if (error) toast('Errore: ' + error.message, 'error');
+      else {
+        toast('Timbratura registrata!', 'success');
+        closeAllModals();
+        await loadTimbrature();
+        renderLog();
+        renderAnimators();
+        updateStats();
+      }
+    };
+
+    document.getElementById('saveProfileBtn').onclick = async () => {
+      const oldNome = document.getElementById('profile-old-nome').value;
+      const newNome = document.getElementById('profile-new-nome').value.trim();
+      const newAnno = document.getElementById('profile-new-anno').value;
+      if (!newNome) { toast('Inserisci un nome', 'error'); return; }
+      await supabase.from('timbrature').update({ nome: newNome, anno: newAnno || null }).eq('nome', oldNome);
+      await supabase.from('utenti').update({ nome: newNome, anno: newAnno || null }).eq('nome', oldNome);
+      toast('Anagrafica aggiornata!', 'success');
+      closeAllModals();
+      await loadAllData();
+    };
+
+    document.getElementById('toggle-in-btn').onclick = async () => {
+      const { data } = await supabase.from('impostazioni').select('valore').eq('chiave', 'ingresso_aperto').single();
+      await supabase.from('impostazioni').update({ valore: !data?.valore }).eq('chiave', 'ingresso_aperto');
+      await loadSettings();
+      toast('Stato ingressi aggiornato!', 'success');
+    };
+
+    document.getElementById('toggle-out-btn').onclick = async () => {
+      const { data } = await supabase.from('impostazioni').select('valore').eq('chiave', 'uscita_aperta').single();
+      await supabase.from('impostazioni').update({ valore: !data?.valore }).eq('chiave', 'uscita_aperta');
+      await loadSettings();
+      toast('Stato uscite aggiornato!', 'success');
+    };
+
+    document.getElementById('refreshBtn').onclick = async () => {
+      await loadTimbrature();
+      renderAnimators();
+      renderLog();
+      updateStats();
+      toast('Dati aggiornati!', 'success');
+    };
+
+    // Filtri
+    document.getElementById('filter-name').oninput = () => renderAnimators();
+    document.getElementById('filter-status').onchange = () => renderAnimators();
+    document.getElementById('filter-sort').onchange = () => renderAnimators();
+    document.getElementById('log-search').oninput = () => renderLog();
+    document.getElementById('log-date').oninput = () => renderLog();
+    document.getElementById('log-tipo').onchange = () => renderLog();
+
+    // Chiudi modali
+    document.getElementById('closeManualBtn').onclick = closeAllModals;
+    document.getElementById('closeProfileBtn').onclick = closeAllModals;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+
+    // Check sessione
+    if (sessionStorage.getItem('admin_auth') === '1') {
+      document.getElementById('login-screen').style.display = 'none
