@@ -269,13 +269,7 @@
     .toast.error { background: var(--red); }
 
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
-    .pagination {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; border-top: 1px solid var(--border);
-      font-size: 11px; color: var(--ink3); background: var(--surface);
-    }
-    .pagination-btns { display: flex; gap: 6px; }
-
+    
     .geo-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
       padding: 22px 24px; margin-bottom: 28px;
@@ -511,8 +505,6 @@
     function closeAllModals() {
       document.getElementById('modal-manual').classList.remove('open');
       document.getElementById('modal-edit-profile').classList.remove('open');
-      var ms = document.getElementById('modal-sett');
-      if (ms) ms.classList.remove('open');
     }
 
     function escapeHtml(str) {
@@ -571,22 +563,21 @@
           if (row.chiave === 'max_distanza') geoRadius = row.valore;
         });
       }
-      // Pulsanti lock
       var btnIn = document.getElementById('toggle-in-btn');
       var btnOut = document.getElementById('toggle-out-btn');
       btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
       btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
       btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
       btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
-      // Pulsante GPS toggle
+      
       var btnGeo = document.getElementById('toggle-geo-btn');
       btnGeo.textContent = geoAbilitata ? '🛰️ GPS: ATTIVO' : '🚫 GPS: DISABILITATO';
       btnGeo.className = 'btn-toggle ' + (geoAbilitata ? 'open' : 'locked');
-      // Campi coordinate
+      
       if (geoLat) document.getElementById('geo-lat').value = geoLat;
       if (geoLon) document.getElementById('geo-lon').value = geoLon;
       if (geoRadius) document.getElementById('geo-radius').value = geoRadius;
-      // Preview coordinate attuali
+      
       if (geoLat && geoLon) {
         var preview = document.getElementById('geo-current-preview');
         preview.style.display = 'block';
@@ -595,7 +586,6 @@
     }
 
     async function upsertImpostazione(chiave, valore) {
-      // Prova update, se non esiste fa insert
       var { data: existing } = await supabase.from('impostazioni').select('chiave').eq('chiave', chiave).maybeSingle();
       if (existing) {
         return supabase.from('impostazioni').update({ valore: valore }).eq('chiave', chiave);
@@ -730,7 +720,7 @@
     document.getElementById('log-date').addEventListener('change', renderLog);
     document.getElementById('log-tipo').addEventListener('change', renderLog);
 
-    // LOCKS
+    // LOCKS & GPS
     document.getElementById('toggle-in-btn').addEventListener('click', async function() {
       ingressoAperto = !ingressoAperto;
       await upsertImpostazione('ingresso_aperto', ingressoAperto);
@@ -743,15 +733,12 @@
       toast(uscitaAperta ? 'Uscite sbloccate' : 'Uscite bloccate', uscitaAperta ? 'success' : 'error');
       loadSettings();
     });
-
-    // GPS CONTROLS
     document.getElementById('toggle-geo-btn').addEventListener('click', async function() {
       var isAttivo = this.classList.contains('open');
       await upsertImpostazione('geo_abilitata', !isAttivo);
       toast(!isAttivo ? 'Controllo GPS attivato' : 'Controllo GPS disabilitato', !isAttivo ? 'success' : 'error');
       loadSettings();
     });
-
     document.getElementById('geo-save-btn').addEventListener('click', async function() {
       var lat = document.getElementById('geo-lat').value;
       var lon = document.getElementById('geo-lon').value;
@@ -763,7 +750,6 @@
       toast('Coordinate salvate con successo', 'success');
       loadSettings();
     });
-
     document.getElementById('geo-use-current').addEventListener('click', function() {
       if ("geolocation" in navigator) {
         toast('Acquisizione posizione...');
@@ -787,7 +773,6 @@
       document.getElementById('manual-tipo').value = tipo;
       
       var now = new Date();
-      // Adjust date offset so timezone isn't a problem
       var tzOffset = now.getTimezoneOffset() * 60000;
       var localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, -1);
       
@@ -817,6 +802,7 @@
 
       const { error } = await supabase.from('timbrature').insert([payload]);
       if (error) {
+        alert("ERRORE SALVATAGGIO:\n" + error.message);
         toast('Errore salvataggio', 'error');
       } else {
         toast('Timbratura manuale salvata', 'success');
@@ -832,8 +818,10 @@
     window._deleteLog = async function(id) {
       if(!confirm('Vuoi davvero eliminare questa timbratura?')) return;
       const { error } = await supabase.from('timbrature').delete().eq('id', id);
-      if(error) toast('Errore eliminazione', 'error');
-      else {
+      if(error) {
+        alert("ERRORE ELIMINAZIONE:\n" + error.message);
+        toast('Errore eliminazione', 'error');
+      } else {
         toast('Eliminata', 'success');
         await loadTimbrature();
         renderAnimators();
@@ -860,8 +848,12 @@
       if(!newNome) return toast('Il nome non può essere vuoto', 'error');
 
       const { error: err1 } = await supabase.from('utenti').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
-      if(!err1 && newNome !== oldNome) {
-        // Update log history to keep consistency
+      if(err1) {
+        alert("ERRORE MODIFICA UTENTE:\n" + err1.message);
+        return;
+      }
+
+      if(newNome !== oldNome) {
         await supabase.from('timbrature').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
       }
 
@@ -873,10 +865,16 @@
       renderLog();
     });
 
-    // SETTIMANE E DISPONIBILITÀ
+    // SETTIMANE E DISPONIBILITÀ (MODIFICATO CON GESTIONE ERRORI RIGOROSA)
     async function loadSettimane() {
-      const { data } = await supabase.from('settimane').select('*').order('id', { ascending: true });
+      const { data, error } = await supabase.from('settimane').select('*').order('id', { ascending: true });
       var container = document.getElementById('settimane-list');
+      
+      if (error) {
+        container.innerHTML = '<div class="empty" style="color:var(--red);">Errore lettura database: ' + error.message + '</div>';
+        return;
+      }
+      
       if (!data || data.length === 0) {
         container.innerHTML = '<div class="empty">Nessuna settimana configurata.</div>';
         return;
@@ -898,19 +896,35 @@
       var nome = prompt('Nome settimana (es. Settimana 1):');
       if(!nome) return;
       var dateInfo = prompt('Date (es. 10 Giu - 14 Giu):');
-      await supabase.from('settimane').insert([{ nome: nome, date_info: dateInfo }]);
+      
+      // Controllo esplicito degli errori in inserimento
+      const { error } = await supabase.from('settimane').insert([{ nome: nome, date_info: dateInfo }]);
+      
+      if (error) {
+        alert("ATTENZIONE: Salvataggio fallito!\n\nMessaggio di errore: " + error.message + "\n\nSe l'errore riguarda la 'Row Level Security', devi andare su Supabase e abilitare le policy di INSERT per la tabella 'settimane'.");
+        toast('Errore di salvataggio', 'error');
+        return;
+      }
+      
       toast('Settimana aggiunta', 'success');
-      loadSettimane();
-      loadDispRiepilogo();
+      await loadSettimane();
+      await loadDispRiepilogo();
     });
 
     window._deleteSettimana = async function(id) {
       if(!confirm('Eliminare questa settimana e tutte le relative disponibilità?')) return;
-      await supabase.from('settimane').delete().eq('id', id);
+      
+      const { error } = await supabase.from('settimane').delete().eq('id', id);
+      
+      if (error) {
+        alert("ATTENZIONE: Eliminazione fallita!\n\nMessaggio di errore: " + error.message);
+        return;
+      }
+      
       await supabase.from('disponibilita').delete().eq('settimana_id', id);
       toast('Settimana eliminata', 'success');
-      loadSettimane();
-      loadDispRiepilogo();
+      await loadSettimane();
+      await loadDispRiepilogo();
     };
 
     document.getElementById('refresh-disp-btn').addEventListener('click', async function() {
