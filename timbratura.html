@@ -317,13 +317,26 @@
     var res = await sb.from('impostazioni').select('*');
     if (res.error || !res.data) return;
     res.data.forEach(function(r) {
-      if (r.chiave === 'ingresso_aperto') ingressoAperto = (r.valore === true || r.valore === 'true');
-      if (r.chiave === 'uscita_aperta')   uscitaAperta   = (r.valore === true || r.valore === 'true');
-      if (r.chiave === 'geo_abilitata')   GEO_ON         = (r.valore === true || r.valore === 'true');
-      if (r.chiave === 'oratorio_lat' && r.valore !== null && r.valore !== '') GEO_LAT    = parseFloat(r.valore);
-      if (r.chiave === 'oratorio_lon' && r.valore !== null && r.valore !== '') GEO_LON    = parseFloat(r.valore);
-      if (r.chiave === 'max_distanza'  && r.valore !== null && r.valore !== '') GEO_RAGGIO = parseInt(r.valore);
+      var v = r.valore;
+      // jsonb: booleani arrivano come true/false JS, numeri come number, stringhe come string
+      if (r.chiave === 'ingresso_aperto') ingressoAperto = (v === true || v === 'true');
+      if (r.chiave === 'uscita_aperta')   uscitaAperta   = (v === true || v === 'true');
+      if (r.chiave === 'geo_abilitata')   GEO_ON         = (v === true || v === 'true');
+      if (r.chiave === 'oratorio_lat') {
+        var parsed = parseFloat(v);
+        if (!isNaN(parsed) && parsed !== 0) GEO_LAT = parsed;
+      }
+      if (r.chiave === 'oratorio_lon') {
+        var parsed = parseFloat(v);
+        if (!isNaN(parsed) && parsed !== 0) GEO_LON = parsed;
+      }
+      if (r.chiave === 'max_distanza') {
+        var parsed = parseInt(v);
+        if (!isNaN(parsed) && parsed > 0) GEO_RAGGIO = parsed;
+      }
     });
+    // Log per debug (visibile in console)
+    console.log('[GPS] LAT='+GEO_LAT+' LON='+GEO_LON+' RAGGIO='+GEO_RAGGIO+'m GEO_ON='+GEO_ON);
   }
 
   function aggiornaBottoni() {
@@ -375,9 +388,20 @@
     }).join('');
   };
 
-  // ── TIMBRATURA (FIX iOS: getCurrentPosition subito, senza await prima) ──
+  // ── TIMBRATURA ──────────────────────────────────────────────────────────
+  //
+  // FLUSSO CORRETTO per iOS:
+  //   1. Al tap: chiedi subito getCurrentPosition (richiede gesto utente)
+  //   2. In parallelo: aggiorna impostazioni da Supabase (incluse coordinate)
+  //   3. Quando ENTRAMBI sono pronti: usa le coordinate FRESCHE di Supabase
+  //      per calcolare la distanza
+  //
+  // IMPORTANTE: GEO_ON viene controllato DOPO caricaImpostazioni(), non prima,
+  // perché altrimenti si usano i valori stale della sessione precedente.
+  //
   function doStamp(tipo) {
     if (!currentUser || stampBusy) { if(stampBusy) toast('⏳ Attendi...','info'); return; }
+    // Check veloce con valori locali (solo per feedback immediato)
     if (tipo==='Ingresso' && !ingressoAperto) { toast('🔒 Ingresso bloccato!','error'); return; }
     if (tipo==='Uscita'   && !uscitaAperta)   { toast('🔒 Uscite bloccate!','error');  return; }
 
@@ -385,52 +409,70 @@
     document.getElementById('btn-in').disabled  = true;
     document.getElementById('btn-out').disabled = true;
     document.getElementById('geo-banner').style.display = 'none';
-
-    // Aggiorna locks in parallelo
-    var locksPromise = caricaImpostazioni();
-
-    if (!GEO_ON || !navigator.geolocation) {
-      // GPS disabilitato → timbratura diretta
-      toast('⏳ Registrazione...','info');
-      locksPromise.then(function() {
-        if (tipo==='Ingresso'&&!ingressoAperto){ toast('🔒 Ingresso bloccato!','error'); stampBusy=false; aggiornaBottoni(); return; }
-        if (tipo==='Uscita'&&!uscitaAperta)   { toast('🔒 Uscite bloccate!','error');   stampBusy=false; aggiornaBottoni(); return; }
-        salvaTimbratura(tipo);
-      });
-      return;
-    }
+    document.getElementById('gps-debug').style.display = 'none';
 
     toast('📍 Verifica posizione...','info');
 
-    // *** getCurrentPosition DEVE essere chiamato QUI, senza await prima — richiesto da iOS ***
-    var geoPromise = new Promise(function(resolve, reject) {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
-    });
+    // STEP 1 — chiedi posizione SUBITO (iOS richiede gesto utente diretto, no await prima)
+    var geoPromise = navigator.geolocation
+      ? new Promise(function(resolve, reject) {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true, timeout: 15000, maximumAge: 0
+          });
+        })
+      : Promise.resolve(null); // GPS non supportato → null
 
-    Promise.all([geoPromise, locksPromise]).then(function(res) {
-      var pos = res[0];
-      if (tipo==='Ingresso'&&!ingressoAperto){ toast('🔒 Ingresso bloccato!','error'); stampBusy=false; aggiornaBottoni(); return; }
-      if (tipo==='Uscita'&&!uscitaAperta)   { toast('🔒 Uscite bloccate!','error');   stampBusy=false; aggiornaBottoni(); return; }
-      var dist = distanza(pos.coords.latitude, pos.coords.longitude, GEO_LAT, GEO_LON);
-      var dbg  = document.getElementById('gps-debug');
-      document.getElementById('debug-pos').textContent  = '📍 '+pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+' ±'+Math.round(pos.coords.accuracy)+'m';
-      document.getElementById('debug-dist').textContent = '📏 '+Math.round(dist)+'m (limite '+GEO_RAGGIO+'m)';
+    // STEP 2 — aggiorna impostazioni da Supabase (coordinate fresche)
+    var settPromise = caricaImpostazioni();
+
+    // STEP 3 — aspetta entrambi, poi usa i valori AGGIORNATI
+    Promise.all([geoPromise, settPromise]).then(function(results) {
+      var pos = results[0]; // null se GPS non supportato
+
+      // Ricontrolla locks con dati freschi
+      if (tipo==='Ingresso' && !ingressoAperto) { toast('🔒 Ingresso bloccato!','error'); stampBusy=false; aggiornaBottoni(); return; }
+      if (tipo==='Uscita'   && !uscitaAperta)   { toast('🔒 Uscite bloccate!','error');   stampBusy=false; aggiornaBottoni(); return; }
+
+      // Se GPS disabilitato dall'admin O non supportato → timbratura diretta
+      if (!GEO_ON || !pos) {
+        salvaTimbratura(tipo);
+        return;
+      }
+
+      // Calcola distanza con coordinate AGGIORNATE da Supabase
+      var lat  = pos.coords.latitude;
+      var lon  = pos.coords.longitude;
+      var acc  = pos.coords.accuracy;
+      var dist = distanza(lat, lon, GEO_LAT, GEO_LON);
+
+      // Mostra debug sempre (utile per capire se le coordinate sono giuste)
+      var dbg = document.getElementById('gps-debug');
+      dbg.style.display = 'block';
+      document.getElementById('debug-pos').innerHTML =
+        '📍 Tu: <strong>'+lat.toFixed(6)+'</strong>, <strong>'+lon.toFixed(6)+'</strong> ±'+Math.round(acc)+'m<br>' +
+        '🎯 Oratorio: '+GEO_LAT.toFixed(6)+', '+GEO_LON.toFixed(6)+'<br>' +
+        '📏 Distanza: <strong>'+Math.round(dist)+'m</strong> (limite: '+GEO_RAGGIO+'m)';
+      document.getElementById('debug-dist').innerHTML = '';
+
       if (dist > GEO_RAGGIO) {
-        dbg.style.display = 'block';
-        toast('❌ Sei fuori dall\'oratorio ('+Math.round(dist)+'m)','error');
+        toast('❌ Sei a '+Math.round(dist)+'m dall\'oratorio (limite '+GEO_RAGGIO+'m)','error');
         stampBusy=false; aggiornaBottoni(); return;
       }
-      dbg.style.display = 'none';
+
+      // Sei dentro → salva
       salvaTimbratura(tipo);
+
     }).catch(function(e) {
       stampBusy=false; aggiornaBottoni();
       var msg;
-      if (e&&e.code===1) msg='❌ Permesso GPS negato. Vai in Impostazioni → Privacy → Servizi localizzazione → Safari → "Mentre uso l\'app"';
-      else if (e&&e.code===2) msg='❌ GPS non disponibile. Attiva la posizione.';
-      else if (e&&e.code===3) msg='⏰ Timeout GPS. Riprova.';
-      else msg='❌ Errore GPS. Riprova.';
-      toast(msg,'error');
-      if (/iPhone|iPad|iPod/.test(navigator.userAgent) && e&&e.code===1) document.getElementById('geo-banner').style.display='block';
+      if (e && e.code === 1)      msg = '❌ Permesso GPS negato.\n\niOS: Impostazioni → Privacy → Servizi di localizzazione → Safari → "Mentre uso l\'app"';
+      else if (e && e.code === 2) msg = '❌ GPS non disponibile. Attiva la posizione e riprova.';
+      else if (e && e.code === 3) msg = '⏰ Timeout GPS. Riprova.';
+      else msg = '❌ Errore: ' + (e && e.message ? e.message : 'sconosciuto');
+      toast(msg, 'error');
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent) && e && e.code===1) {
+        document.getElementById('geo-banner').style.display = 'block';
+      }
     });
   }
 
