@@ -473,15 +473,13 @@
       </table>
     </div>
 
-    <div class="section-header">
+    <div class="section-header" style="margin-top:10px;">
       <div class="section-title">Settimane oratorio estivo</div>
+      <button class="btn btn-sm btn-primary" id="add-sett-btn" style="width:auto;">+ Aggiungi settimana</button>
     </div>
-    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px;line-height:1.6;">Le 5 settimane sono fisse. Inserisci la data di inizio per ognuna (lun–ven vengono calcolati automaticamente).</p>
-
     <div id="settimane-list" style="margin-bottom:28px;">
-      <!-- Generato da JS -->
+      <div class="empty">⏳ Caricamento…</div>
     </div>
-    <button class="btn btn-primary" id="salva-settimane-btn" style="width:auto;padding:10px 24px;margin-bottom:28px;">💾 Salva tutte le settimane</button>
 
     <div class="section-header">
       <div class="section-title">Riepilogo disponibilità</div>
@@ -910,7 +908,6 @@
     document.getElementById('closeProfileBtn').addEventListener('click', closeAllModals);
 
     // ======== SETTIMANE 5 FISSE ========
-    var settimaneAll = [];
     var NOMI_SETT = ['1ª Settimana', '2ª Settimana', '3ª Settimana', '4ª Settimana', '5ª Settimana'];
 
     function addDaysISO(iso, n) {
@@ -921,62 +918,89 @@
       if (!iso) return ''; var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
     }
 
+    // ── SETTIMANE ──
+    var settimaneAdmin = [];
+    const GIORNI_ADM = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì'];
+    function fmtDate(iso) { if(!iso) return ''; var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+    function addDaysISO(iso, n) { var d=new Date(iso); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+
     async function loadSettimane() {
-      var res = await supabase.from('settimane').select('*').order('ordine', { ascending: true });
-      settimaneAll = res.data || [];
+      var res = await supabase.from('settimane').select('*').order('ordine',{ascending:true});
+      settimaneAdmin = res.data || [];
       renderSettimane();
     }
 
     function renderSettimane() {
-      var container = document.getElementById('settimane-list');
-      container.innerHTML = '<div class="sett-grid" id="sett-cards-grid"></div>';
-      var grid = document.getElementById('sett-cards-grid');
-
-      for (var i = 0; i < 5; i++) {
-        var existing = settimaneAll.find(function(s){ return s.ordine === (i+1); }) || null;
-        var card = document.createElement('div');
-        card.className = 'sett-input-card' + (existing && existing.data_inizio ? ' configured' : '');
-        card.dataset.ordine = i + 1;
-
-        var nomeVal  = existing ? existing.nome        : NOMI_SETT[i];
-        var inizioVal = existing ? (existing.data_inizio || '') : '';
-        var fineCalc  = inizioVal ? formatDateIT(addDaysISO(inizioVal, 4)) : '';
-        var preview   = inizioVal ? (formatDateIT(inizioVal) + ' – ' + fineCalc) : 'Nessuna data impostata';
-
-        card.innerHTML =
-          '<div class="sett-num">Settimana ' + (i+1) + '</div>' +
-          '<input class="sett-name-in" type="text" value="' + escapeHtml(nomeVal) + '" placeholder="Nome settimana" />' +
-          '<div class="date-row">' +
-            '<label style="width:80px;margin-bottom:0;">Inizio (lun)</label>' +
-            '<input type="date" class="sett-inizio-in" value="' + escapeHtml(inizioVal) + '" />' +
-          '</div>' +
-          '<div class="date-preview" id="preview-sett-'+(i+1)+'">📆 ' + preview + '</div>';
-
-        // Aggiorna preview al cambio data
-        (function(c, idx) {
-          var dateIn = c.querySelector('.sett-inizio-in');
-          dateIn.addEventListener('change', function() {
-            var v = dateIn.value;
-            var preview2 = v ? (formatDateIT(v) + ' – ' + formatDateIT(addDaysISO(v, 4))) : 'Nessuna data impostata';
-            document.getElementById('preview-sett-'+(idx+1)).textContent = '📆 ' + preview2;
-            c.className = 'sett-input-card' + (v ? ' configured' : '');
-          });
-        })(card, i);
-
-        grid.appendChild(card);
+      var el = document.getElementById('settimane-list');
+      if (settimaneAdmin.length === 0) {
+        el.innerHTML = '<div class="empty">📭 Nessuna settimana. Usa "+ Aggiungi settimana".</div>'; return;
       }
+      el.innerHTML = settimaneAdmin.map(function(s) {
+        var date = (s.data_inizio && s.data_fine) ? fmtDate(s.data_inizio)+' – '+fmtDate(s.data_fine) : 'Date non impostate';
+        return '<div class="sett-card">' +
+          '<div class="sett-info">' +
+            '<div class="sett-nome-admin">'+escapeHtml(s.nome)+'</div>' +
+            '<div class="sett-date-admin">📆 '+escapeHtml(date)+'</div>' +
+          '</div>' +
+          '<div class="sett-actions">' +
+            '<button class="btn btn-amber btn-sm" onclick="window._editSett('+s.id+')">✎ Modifica</button>' +
+            '<button class="btn btn-red btn-sm" onclick="window._delSett('+s.id+')">🗑️</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
     }
 
-    document.getElementById('salva-settimane-btn').addEventListener('click', async function() {
-      var cards = document.querySelectorAll('.sett-input-card');
-      var ok = true;
-      for (var i = 0; i < cards.length; i++) {
-        var card    = cards[i];
-        var ordine  = parseInt(card.dataset.ordine);
-        var nome    = card.querySelector('.sett-name-in').value.trim() || NOMI_SETT[i];
-        var inizio  = card.querySelector('.sett-inizio-in').value;
-        var fine    = inizio ? addDaysISO(inizio, 4) : null;
-        var existing = settimaneAll.find(function(s){ return s.ordine === ordine; });
+    window._editSett = function(id) {
+      var s = settimaneAdmin.find(function(x){ return x.id===id; });
+      if (!s) return;
+      document.getElementById('sett-edit-id').value = s.id;
+      document.getElementById('sett-nome').value    = s.nome || '';
+      document.getElementById('sett-inizio').value  = s.data_inizio || '';
+      document.getElementById('sett-fine').value    = s.data_fine   || '';
+      document.getElementById('sett-ordine').value  = s.ordine || '';
+      document.getElementById('modal-sett').classList.add('open');
+    };
+
+    window._delSett = async function(id) {
+      if (!confirm('Eliminare questa settimana? Verranno eliminate anche le disponibilità collegate.')) return;
+      await supabase.from('disponibilita').delete().eq('settimana_id', id);
+      await supabase.from('settimane').delete().eq('id', id);
+      toast('Settimana eliminata', 'success');
+      await loadSettimane();
+      await loadDispRiepilogo();
+    };
+
+    document.getElementById('add-sett-btn').addEventListener('click', function() {
+      document.getElementById('sett-edit-id').value = '';
+      document.getElementById('sett-nome').value    = '';
+      document.getElementById('sett-inizio').value  = '';
+      document.getElementById('sett-fine').value    = '';
+      document.getElementById('sett-ordine').value  = settimaneAdmin.length + 1;
+      document.getElementById('modal-sett').classList.add('open');
+    });
+
+    document.getElementById('close-sett-btn').addEventListener('click', function() {
+      document.getElementById('modal-sett').classList.remove('open');
+    });
+
+    document.getElementById('save-sett-btn').addEventListener('click', async function() {
+      var id     = document.getElementById('sett-edit-id').value;
+      var nome   = document.getElementById('sett-nome').value.trim();
+      var inizio = document.getElementById('sett-inizio').value;
+      var fine   = document.getElementById('sett-fine').value || (inizio ? addDaysISO(inizio, 4) : '');
+      var ordine = parseInt(document.getElementById('sett-ordine').value) || (settimaneAdmin.length + 1);
+      if (!nome) { toast('Inserisci un nome', 'error'); return; }
+      var payload = { nome:nome, data_inizio:inizio||null, data_fine:fine||null, ordine:ordine };
+      var res = id
+        ? await supabase.from('settimane').update(payload).eq('id', parseInt(id))
+        : await supabase.from('settimane').insert(payload);
+      if (res.error) { toast('Errore: '+res.error.message, 'error'); return; }
+      toast('Settimana salvata!', 'success');
+      document.getElementById('modal-sett').classList.remove('open');
+      await loadSettimane();
+      await loadDispRiepilogo();
+    });
+
         var payload = { nome: nome, ordine: ordine, data_inizio: inizio || null, data_fine: fine || null, date_desc: inizio ? (formatDateIT(inizio) + ' – ' + formatDateIT(fine)) : null };
         var res;
         if (existing) {
@@ -1059,94 +1083,6 @@
     //  SETTIMANE
     // ════════════════════════════════════════════
     const GIORNI = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì'];
-    var settimaneAdmin = [];
-
-    function fmtDate(iso) {
-      if (!iso) return '';
-      var p = iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
-    }
-    function addDays(iso, n) {
-      var d = new Date(iso); d.setDate(d.getDate()+n);
-      return d.toISOString().slice(0,10);
-    }
-
-    async function loadSettimane() {
-      var res = await supabase.from('settimane').select('*').order('ordine',{ascending:true});
-      settimaneAdmin = res.data || [];
-      renderSettimane();
-    }
-
-    function renderSettimane() {
-      var el = document.getElementById('settimane-list');
-      if (settimaneAdmin.length === 0) {
-        el.innerHTML = '<div class="empty">📭 Nessuna settimana. Usa "+ Aggiungi settimana".</div>';
-        return;
-      }
-      el.innerHTML = settimaneAdmin.map(function(s) {
-        var date = (s.data_inizio && s.data_fine) ? fmtDate(s.data_inizio)+' – '+fmtDate(s.data_fine) : '';
-        return '<div class="sett-card">' +
-          '<div class="sett-info">' +
-            '<div class="sett-nome-admin">'+escapeHtml(s.nome)+'</div>' +
-            (date ? '<div class="sett-date-admin">📆 '+escapeHtml(date)+'</div>' : '') +
-          '</div>' +
-          '<div class="sett-actions">' +
-            '<button class="btn btn-amber btn-sm" onclick="window._editSett('+s.id+')">✎ Modifica</button>' +
-            '<button class="btn btn-red btn-sm"   onclick="window._delSett('+s.id+')">🗑️</button>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }
-
-    window._editSett = function(id) {
-      var s = settimaneAdmin.find(function(x){ return x.id===id; });
-      if (!s) return;
-      document.getElementById('sett-edit-id').value = s.id;
-      document.getElementById('sett-nome').value    = s.nome || '';
-      document.getElementById('sett-inizio').value  = s.data_inizio || '';
-      document.getElementById('sett-fine').value    = s.data_fine   || '';
-      document.getElementById('sett-ordine').value  = s.ordine || '';
-      document.getElementById('modal-sett').classList.add('open');
-    };
-
-    window._delSett = async function(id) {
-      if (!confirm('Eliminare questa settimana? Verranno eliminate anche le disponibilità collegate.')) return;
-      await supabase.from('disponibilita').delete().eq('settimana_id', id);
-      await supabase.from('settimane').delete().eq('id', id);
-      toast('Settimana eliminata', 'success');
-      await loadSettimane();
-      await loadDispRiepilogo();
-    };
-
-    document.getElementById('add-sett-btn').addEventListener('click', function() {
-      document.getElementById('sett-edit-id').value = '';
-      document.getElementById('sett-nome').value    = '';
-      document.getElementById('sett-inizio').value  = '';
-      document.getElementById('sett-fine').value    = '';
-      document.getElementById('sett-ordine').value  = settimaneAdmin.length + 1;
-      document.getElementById('modal-sett').classList.add('open');
-    });
-
-    document.getElementById('close-sett-btn').addEventListener('click', function() {
-      document.getElementById('modal-sett').classList.remove('open');
-    });
-
-    document.getElementById('save-sett-btn').addEventListener('click', async function() {
-      var id     = document.getElementById('sett-edit-id').value;
-      var nome   = document.getElementById('sett-nome').value.trim();
-      var inizio = document.getElementById('sett-inizio').value;
-      var fine   = document.getElementById('sett-fine').value;
-      var ordine = parseInt(document.getElementById('sett-ordine').value) || (settimaneAdmin.length + 1);
-      if (!nome) { toast('Inserisci un nome', 'error'); return; }
-      var payload = { nome: nome, data_inizio: inizio||null, data_fine: fine||null, ordine: ordine };
-      var res = id
-        ? await supabase.from('settimane').update(payload).eq('id', parseInt(id))
-        : await supabase.from('settimane').insert(payload);
-      if (res.error) { toast('Errore: '+res.error.message, 'error'); return; }
-      toast('Settimana salvata!', 'success');
-      document.getElementById('modal-sett').classList.remove('open');
-      await loadSettimane();
-      await loadDispRiepilogo();
-    });
 
     // ════════════════════════════════════════════
     //  RIEPILOGO DISPONIBILITÀ (admin) — giorno per giorno
