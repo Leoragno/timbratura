@@ -275,6 +275,78 @@
       font-size: 11px; color: var(--ink3); background: var(--surface);
     }
     .pagination-btns { display: flex; gap: 6px; }
+
+    .geo-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 22px 24px; margin-bottom: 28px;
+    }
+    .geo-row {
+      display: grid; grid-template-columns: 1fr 2fr; gap: 28px;
+    }
+    @media (max-width: 640px) { .geo-row { grid-template-columns: 1fr; } }
+    .geo-fields {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;
+    }
+    @media (max-width: 640px) { .geo-fields { grid-template-columns: 1fr; } }
+    .geo-fields input { margin-bottom: 0; }
+    .geo-toggle-col { display: flex; flex-direction: column; }
+
+    /* SETTIMANE */
+    .sett-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .sett-info { flex: 1; }
+    .sett-nome { font-family: var(--font-serif); font-size: 17px; margin-bottom: 2px; }
+    .sett-date { font-size: 11px; color: var(--ink3); }
+    .sett-actions { display: flex; gap: 6px; }
+
+    /* DISP RIEPILOGO ADMIN */
+    .disp-riepilogo-block { margin-bottom: 28px; }
+    .disp-riepilogo-block h4 { font-family: var(--font-serif); font-size: 18px; font-style: italic; margin-bottom: 4px; }
+    .disp-riepilogo-block .disp-date { font-size: 11px; color: var(--ink3); margin-bottom: 10px; }
+    .disp-counter-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .disp-chip { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .disp-chip-p { background: var(--green-lt); color: var(--green); }
+    .disp-chip-f { background: var(--amber-lt); color: var(--amber); }
+    .disp-chip-a { background: var(--red-lt); color: var(--red); }
+    .disp-chip-n { background: var(--bg2); color: var(--ink3); }
+
+    /* SETTIMANE 5 FISSE */
+    .sett-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 14px; margin-bottom: 6px; }
+    .sett-input-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+    .sett-input-card .sett-num { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 4px; }
+    .sett-input-card .sett-name-in { font-family: var(--font-serif); font-size: 16px; margin-bottom: 10px; border: none; background: transparent; width: 100%; color: var(--ink); outline: none; border-bottom: 1px dashed var(--border); padding-bottom: 4px; }
+    .sett-input-card .date-row { display: flex; gap: 10px; align-items: center; font-size: 11px; }
+    .sett-input-card .date-row input[type=date] { flex: 1; margin-bottom: 0; font-size: 12px; }
+    .sett-input-card .date-preview { font-size: 10px; color: var(--ink3); margin-top: 6px; }
+    .sett-input-card.configured { border-left: 3px solid var(--green); }
+
+    /* DISP RIEPILOGO */
+    .disp-riepilogo-sett { margin-bottom: 32px; }
+    .disp-sett-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 4px; }
+    .disp-sett-date { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
+    .disp-counters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .disp-chip { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .dc-si  { background: var(--green-lt); color: var(--green); }
+    .dc-fo  { background: var(--amber-lt); color: var(--amber); }
+    .dc-no  { background: var(--red-lt);   color: var(--red);   }
+    .dc-nd  { background: var(--bg2);      color: var(--ink3);  }
+
+    /* SETTIMANE */
+    .sett-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .sett-info { flex: 1; }
+    .sett-nome-admin { font-family: var(--font-serif); font-size: 17px; margin-bottom: 2px; }
+    .sett-date-admin { font-size: 11px; color: var(--ink3); }
+    .sett-actions { display: flex; gap: 6px; }
+
+    /* DISP RIEPILOGO */
+    .disp-block { margin-bottom: 32px; }
+    .disp-block-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 3px; }
+    .disp-block-date  { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
+    .disp-counters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .dcnt { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .dcnt-si  { background: var(--green-lt); color: var(--green); }
+    .dcnt-for { background: var(--amber-lt); color: var(--amber); }
+    .dcnt-no  { background: var(--red-lt);   color: var(--red); }
+    .dcnt-nd  { background: var(--bg2);      color: var(--ink3); }
   </style>
 </head>
 <body>
@@ -318,10 +390,49 @@
       <button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button>
     </div>
 
+
+    <div class="section-header">
+      <div class="section-title">Geolocalizzazione</div>
+    </div>
+    <div class="geo-card">
+      <div class="geo-row">
+        <div class="geo-toggle-col">
+          <div class="stat-label" style="margin-bottom:10px;">Controllo GPS</div>
+          <button id="toggle-geo-btn" class="btn-toggle">Caricamento...</button>
+          <div style="font-size:11px; color:var(--ink3); margin-top:8px; line-height:1.5;">
+            Se disabilitato, gli animatori possono timbrare da qualsiasi luogo senza verifica posizione.
+          </div>
+        </div>
+        <div class="geo-coords-col">
+          <div class="stat-label" style="margin-bottom:10px;">Coordinate Oratorio</div>
+          <div class="geo-fields">
+            <div>
+              <label>Latitudine</label>
+              <input type="text" id="geo-lat" placeholder="45.706869" />
+            </div>
+            <div>
+              <label>Longitudine</label>
+              <input type="text" id="geo-lon" placeholder="8.800464" />
+            </div>
+            <div>
+              <label>Raggio massimo (metri)</label>
+              <input type="number" id="geo-radius" placeholder="150" />
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+            <button class="btn btn-ghost btn-sm" id="geo-use-current">📍 Usa posizione attuale</button>
+            <button class="btn btn-primary btn-sm" id="geo-save-btn" style="width:auto; margin-bottom:0;">💾 Salva</button>
+          </div>
+          <div id="geo-current-preview" style="font-size:11px; color:var(--ink3); margin-top:10px; display:none;"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-header">
       <div class="section-title">Stato animatori</div>
-      <button class="btn btn-sm btn-ghost" id="refreshBtn">↻ Aggiorna</button>
+      <button class="btn btn-sm btn-ghost" id="refreshBtn">&#8635; Aggiorna</button>
     </div>
+
 
     <div class="filter-bar">
       <input type="text" id="filter-name" placeholder="Cerca nome o anno…">
@@ -361,6 +472,25 @@
         <tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody>
       </table>
     </div>
+
+    <div class="section-header">
+      <div class="section-title">Settimane oratorio estivo</div>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px;line-height:1.6;">Le 5 settimane sono fisse. Inserisci la data di inizio per ognuna (lun–ven vengono calcolati automaticamente).</p>
+
+    <div id="settimane-list" style="margin-bottom:28px;">
+      <!-- Generato da JS -->
+    </div>
+    <button class="btn btn-primary" id="salva-settimane-btn" style="width:auto;padding:10px 24px;margin-bottom:28px;">💾 Salva tutte le settimane</button>
+
+    <div class="section-header">
+      <div class="section-title">Riepilogo disponibilità</div>
+      <button class="btn btn-sm btn-ghost" id="refresh-disp-btn">↻ Aggiorna</button>
+    </div>
+    <div id="admin-disp-container" style="margin-bottom:32px;">
+      <div class="empty">⏳ Caricamento…</div>
+    </div>
+
   </div>
 </div>
 
@@ -424,6 +554,8 @@
     function closeAllModals() {
       document.getElementById('modal-manual').classList.remove('open');
       document.getElementById('modal-edit-profile').classList.remove('open');
+      var ms = document.getElementById('modal-sett');
+      if (ms) ms.classList.remove('open');
     }
 
     function escapeHtml(str) {
@@ -464,22 +596,55 @@
       renderAnimators();
       renderLog();
       updateStats();
+      await loadSettimane();
+      await loadDispRiepilogo();
     }
 
     async function loadSettings() {
       const { data } = await supabase.from('impostazioni').select('*');
+      var geoAbilitata = true;
+      var geoLat = '', geoLon = '', geoRadius = '';
       if (data) {
         data.forEach(function(row) {
           if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
           if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+          if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore;
+          if (row.chiave === 'oratorio_lat') geoLat = row.valore;
+          if (row.chiave === 'oratorio_lon') geoLon = row.valore;
+          if (row.chiave === 'max_distanza') geoRadius = row.valore;
         });
       }
+      // Pulsanti lock
       var btnIn = document.getElementById('toggle-in-btn');
       var btnOut = document.getElementById('toggle-out-btn');
       btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
       btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
       btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
       btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
+      // Pulsante GPS toggle
+      var btnGeo = document.getElementById('toggle-geo-btn');
+      btnGeo.textContent = geoAbilitata ? '🛰️ GPS: ATTIVO' : '🚫 GPS: DISABILITATO';
+      btnGeo.className = 'btn-toggle ' + (geoAbilitata ? 'open' : 'locked');
+      // Campi coordinate
+      if (geoLat) document.getElementById('geo-lat').value = geoLat;
+      if (geoLon) document.getElementById('geo-lon').value = geoLon;
+      if (geoRadius) document.getElementById('geo-radius').value = geoRadius;
+      // Preview coordinate attuali
+      if (geoLat && geoLon) {
+        var preview = document.getElementById('geo-current-preview');
+        preview.style.display = 'block';
+        preview.innerHTML = '📌 Attuali: <strong>' + geoLat + '</strong>, <strong>' + geoLon + '</strong> · raggio <strong>' + (geoRadius || '150') + 'm</strong>';
+      }
+    }
+
+    async function upsertImpostazione(chiave, valore) {
+      // Prova update, se non esiste fa insert
+      var { data: existing } = await supabase.from('impostazioni').select('chiave').eq('chiave', chiave).maybeSingle();
+      if (existing) {
+        return supabase.from('impostazioni').update({ valore: valore }).eq('chiave', chiave);
+      } else {
+        return supabase.from('impostazioni').insert({ chiave: chiave, valore: valore });
+      }
     }
 
     async function loadUsers() {
@@ -681,6 +846,46 @@
       toast('Stato uscite aggiornato!', 'success');
     });
 
+    // Toggle GPS
+    document.getElementById('toggle-geo-btn').addEventListener('click', async function() {
+      var res = await supabase.from('impostazioni').select('valore').eq('chiave', 'geo_abilitata').maybeSingle();
+      var currentVal = res.data ? res.data.valore : true;
+      await upsertImpostazione('geo_abilitata', !currentVal);
+      await loadSettings();
+      toast('Stato GPS aggiornato!', 'success');
+    });
+
+    // Usa posizione attuale
+    document.getElementById('geo-use-current').addEventListener('click', function() {
+      if (!navigator.geolocation) { toast('GPS non disponibile su questo browser', 'error'); return; }
+      toast('📍 Rilevamento posizione...', 'info');
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(8);
+        document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(8);
+        toast('✅ Coordinate rilevate! Premi Salva per confermare.', 'success');
+      }, function() {
+        toast('❌ Impossibile rilevare la posizione', 'error');
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+
+    // Salva coordinate
+    document.getElementById('geo-save-btn').addEventListener('click', async function() {
+      var lat    = document.getElementById('geo-lat').value.trim();
+      var lon    = document.getElementById('geo-lon').value.trim();
+      var radius = document.getElementById('geo-radius').value.trim();
+
+      if (!lat || !lon) { toast('Inserisci latitudine e longitudine', 'error'); return; }
+      if (isNaN(parseFloat(lat)) || isNaN(parseFloat(lon))) { toast('Coordinate non valide', 'error'); return; }
+      if (radius && isNaN(parseInt(radius))) { toast('Raggio non valido', 'error'); return; }
+
+      await upsertImpostazione('oratorio_lat', lat);
+      await upsertImpostazione('oratorio_lon', lon);
+      if (radius) await upsertImpostazione('max_distanza', parseInt(radius));
+
+      await loadSettings();
+      toast('✅ Coordinate salvate!', 'success');
+    });
+
     // Aggiorna
     document.getElementById('refreshBtn').addEventListener('click', async function() {
       await loadTimbrature();
@@ -704,6 +909,325 @@
     document.getElementById('closeManualBtn').addEventListener('click', closeAllModals);
     document.getElementById('closeProfileBtn').addEventListener('click', closeAllModals);
 
+    // ======== SETTIMANE 5 FISSE ========
+    var settimaneAll = [];
+    var NOMI_SETT = ['1ª Settimana', '2ª Settimana', '3ª Settimana', '4ª Settimana', '5ª Settimana'];
+
+    function addDaysISO(iso, n) {
+      var d = new Date(iso); d.setDate(d.getDate()+n);
+      return d.toISOString().slice(0,10);
+    }
+    function formatDateIT(iso) {
+      if (!iso) return ''; var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
+    }
+
+    async function loadSettimane() {
+      var res = await supabase.from('settimane').select('*').order('ordine', { ascending: true });
+      settimaneAll = res.data || [];
+      renderSettimane();
+    }
+
+    function renderSettimane() {
+      var container = document.getElementById('settimane-list');
+      container.innerHTML = '<div class="sett-grid" id="sett-cards-grid"></div>';
+      var grid = document.getElementById('sett-cards-grid');
+
+      for (var i = 0; i < 5; i++) {
+        var existing = settimaneAll.find(function(s){ return s.ordine === (i+1); }) || null;
+        var card = document.createElement('div');
+        card.className = 'sett-input-card' + (existing && existing.data_inizio ? ' configured' : '');
+        card.dataset.ordine = i + 1;
+
+        var nomeVal  = existing ? existing.nome        : NOMI_SETT[i];
+        var inizioVal = existing ? (existing.data_inizio || '') : '';
+        var fineCalc  = inizioVal ? formatDateIT(addDaysISO(inizioVal, 4)) : '';
+        var preview   = inizioVal ? (formatDateIT(inizioVal) + ' – ' + fineCalc) : 'Nessuna data impostata';
+
+        card.innerHTML =
+          '<div class="sett-num">Settimana ' + (i+1) + '</div>' +
+          '<input class="sett-name-in" type="text" value="' + escapeHtml(nomeVal) + '" placeholder="Nome settimana" />' +
+          '<div class="date-row">' +
+            '<label style="width:80px;margin-bottom:0;">Inizio (lun)</label>' +
+            '<input type="date" class="sett-inizio-in" value="' + escapeHtml(inizioVal) + '" />' +
+          '</div>' +
+          '<div class="date-preview" id="preview-sett-'+(i+1)+'">📆 ' + preview + '</div>';
+
+        // Aggiorna preview al cambio data
+        (function(c, idx) {
+          var dateIn = c.querySelector('.sett-inizio-in');
+          dateIn.addEventListener('change', function() {
+            var v = dateIn.value;
+            var preview2 = v ? (formatDateIT(v) + ' – ' + formatDateIT(addDaysISO(v, 4))) : 'Nessuna data impostata';
+            document.getElementById('preview-sett-'+(idx+1)).textContent = '📆 ' + preview2;
+            c.className = 'sett-input-card' + (v ? ' configured' : '');
+          });
+        })(card, i);
+
+        grid.appendChild(card);
+      }
+    }
+
+    document.getElementById('salva-settimane-btn').addEventListener('click', async function() {
+      var cards = document.querySelectorAll('.sett-input-card');
+      var ok = true;
+      for (var i = 0; i < cards.length; i++) {
+        var card    = cards[i];
+        var ordine  = parseInt(card.dataset.ordine);
+        var nome    = card.querySelector('.sett-name-in').value.trim() || NOMI_SETT[i];
+        var inizio  = card.querySelector('.sett-inizio-in').value;
+        var fine    = inizio ? addDaysISO(inizio, 4) : null;
+        var existing = settimaneAll.find(function(s){ return s.ordine === ordine; });
+        var payload = { nome: nome, ordine: ordine, data_inizio: inizio || null, data_fine: fine || null, date_desc: inizio ? (formatDateIT(inizio) + ' – ' + formatDateIT(fine)) : null };
+        var res;
+        if (existing) {
+          res = await supabase.from('settimane').update(payload).eq('id', existing.id);
+        } else {
+          res = await supabase.from('settimane').insert(payload);
+        }
+        if (res.error) { toast('Errore settimana ' + ordine + ': ' + res.error.message, 'error'); ok=false; break; }
+      }
+      if (ok) {
+        toast('✅ Settimane salvate!', 'success');
+        await loadSettimane();
+        await loadDispRiepilogo();
+      }
+    });
+
+    // ======== RIEPILOGO DISPONIBILITÀ (ADMIN) ========
+    async function loadDispRiepilogo() {
+      var container = document.getElementById('admin-disp-container');
+      if (settimaneAll.length === 0) {
+        container.innerHTML = '<div class="empty">Nessuna settimana configurata.</div>'; return;
+      }
+      var dispRes   = await supabase.from('disponibilita').select('*');
+      var utentiRes = await supabase.from('utenti').select('id, nome, anno').order('nome', { ascending: true });
+      var allDisp   = dispRes.data  || [];
+      var allUtenti = (utentiRes.data || []).filter(function(u){ return !['admin','direttore','capocentro'].includes(u.nome.toLowerCase()); });
+
+      var dispMap = {};
+      allDisp.forEach(function(d) {
+        if (!dispMap[d.user_id]) dispMap[d.user_id] = {};
+        dispMap[d.user_id][d.settimana_id] = { stato: d.stato, nota: d.nota };
+      });
+
+      var html = '';
+      settimaneAll.forEach(function(s) {
+        var nP=0, nF=0, nA=0, nN=0;
+        allUtenti.forEach(function(u) {
+          var entry = dispMap[u.id] && dispMap[u.id][s.id];
+          var st = entry ? entry.stato : null;
+          if (st==='disponibile') nP++;
+          else if (st==='forse') nF++;
+          else if (st==='non_disponibile') nA++;
+          else nN++;
+        });
+
+        html += '<div class="disp-riepilogo-block">';
+        html += '<h4>' + escapeHtml(s.nome) + '</h4>';
+        if (s.date_desc) html += '<div class="disp-date">📆 ' + escapeHtml(s.date_desc) + '</div>';
+        html += '<div class="disp-counter-row">';
+        html += '<span class="disp-chip disp-chip-p">✅ ' + nP + ' presenti</span>';
+        html += '<span class="disp-chip disp-chip-f">🤔 ' + nF + ' forse</span>';
+        html += '<span class="disp-chip disp-chip-a">❌ ' + nA + ' assenti</span>';
+        if (nN > 0) html += '<span class="disp-chip disp-chip-n">— ' + nN + ' n.d.</span>';
+        html += '</div>';
+        html += '<div class="table-wrap"><table style="min-width:400px;"><thead><tr><th>Animatore</th><th>Anno</th><th>Disponibilità</th><th>Note</th></tr></thead><tbody>';
+        allUtenti.forEach(function(u) {
+          var entry = dispMap[u.id] && dispMap[u.id][s.id];
+          var st   = entry ? entry.stato : null;
+          var nota = entry ? (entry.nota || '—') : '—';
+          var badge = '';
+          if (st==='disponibile') badge = '<span class="tipo-badge ingresso">✅ Disponibile</span>';
+          else if (st==='forse') badge = '<span style="background:var(--amber-lt);color:var(--amber);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;">🤔 Forse</span>';
+          else if (st==='non_disponibile') badge = '<span class="tipo-badge uscita">❌ Non disp.</span>';
+          else badge = '<span style="color:var(--ink3);font-size:11px;">—</span>';
+          html += '<tr><td><strong>' + escapeHtml(u.nome) + '</strong></td><td>' + (u.anno||'—') + '</td><td>' + badge + '</td><td style="font-size:11px;color:var(--ink3);">' + escapeHtml(nota) + '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+      });
+
+      container.innerHTML = html || '<div class="empty">Nessun dato.</div>';
+    }
+
+    document.getElementById('refresh-disp-btn').addEventListener('click', async function() {
+      await loadSettimane();
+      await loadDispRiepilogo();
+    });
+
+
+    // ════════════════════════════════════════════
+    //  SETTIMANE
+    // ════════════════════════════════════════════
+    const GIORNI = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì'];
+    var settimaneAdmin = [];
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      var p = iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
+    }
+    function addDays(iso, n) {
+      var d = new Date(iso); d.setDate(d.getDate()+n);
+      return d.toISOString().slice(0,10);
+    }
+
+    async function loadSettimane() {
+      var res = await supabase.from('settimane').select('*').order('ordine',{ascending:true});
+      settimaneAdmin = res.data || [];
+      renderSettimane();
+    }
+
+    function renderSettimane() {
+      var el = document.getElementById('settimane-list');
+      if (settimaneAdmin.length === 0) {
+        el.innerHTML = '<div class="empty">📭 Nessuna settimana. Usa "+ Aggiungi settimana".</div>';
+        return;
+      }
+      el.innerHTML = settimaneAdmin.map(function(s) {
+        var date = (s.data_inizio && s.data_fine) ? fmtDate(s.data_inizio)+' – '+fmtDate(s.data_fine) : '';
+        return '<div class="sett-card">' +
+          '<div class="sett-info">' +
+            '<div class="sett-nome-admin">'+escapeHtml(s.nome)+'</div>' +
+            (date ? '<div class="sett-date-admin">📆 '+escapeHtml(date)+'</div>' : '') +
+          '</div>' +
+          '<div class="sett-actions">' +
+            '<button class="btn btn-amber btn-sm" onclick="window._editSett('+s.id+')">✎ Modifica</button>' +
+            '<button class="btn btn-red btn-sm"   onclick="window._delSett('+s.id+')">🗑️</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    window._editSett = function(id) {
+      var s = settimaneAdmin.find(function(x){ return x.id===id; });
+      if (!s) return;
+      document.getElementById('sett-edit-id').value = s.id;
+      document.getElementById('sett-nome').value    = s.nome || '';
+      document.getElementById('sett-inizio').value  = s.data_inizio || '';
+      document.getElementById('sett-fine').value    = s.data_fine   || '';
+      document.getElementById('sett-ordine').value  = s.ordine || '';
+      document.getElementById('modal-sett').classList.add('open');
+    };
+
+    window._delSett = async function(id) {
+      if (!confirm('Eliminare questa settimana? Verranno eliminate anche le disponibilità collegate.')) return;
+      await supabase.from('disponibilita').delete().eq('settimana_id', id);
+      await supabase.from('settimane').delete().eq('id', id);
+      toast('Settimana eliminata', 'success');
+      await loadSettimane();
+      await loadDispRiepilogo();
+    };
+
+    document.getElementById('add-sett-btn').addEventListener('click', function() {
+      document.getElementById('sett-edit-id').value = '';
+      document.getElementById('sett-nome').value    = '';
+      document.getElementById('sett-inizio').value  = '';
+      document.getElementById('sett-fine').value    = '';
+      document.getElementById('sett-ordine').value  = settimaneAdmin.length + 1;
+      document.getElementById('modal-sett').classList.add('open');
+    });
+
+    document.getElementById('close-sett-btn').addEventListener('click', function() {
+      document.getElementById('modal-sett').classList.remove('open');
+    });
+
+    document.getElementById('save-sett-btn').addEventListener('click', async function() {
+      var id     = document.getElementById('sett-edit-id').value;
+      var nome   = document.getElementById('sett-nome').value.trim();
+      var inizio = document.getElementById('sett-inizio').value;
+      var fine   = document.getElementById('sett-fine').value;
+      var ordine = parseInt(document.getElementById('sett-ordine').value) || (settimaneAdmin.length + 1);
+      if (!nome) { toast('Inserisci un nome', 'error'); return; }
+      var payload = { nome: nome, data_inizio: inizio||null, data_fine: fine||null, ordine: ordine };
+      var res = id
+        ? await supabase.from('settimane').update(payload).eq('id', parseInt(id))
+        : await supabase.from('settimane').insert(payload);
+      if (res.error) { toast('Errore: '+res.error.message, 'error'); return; }
+      toast('Settimana salvata!', 'success');
+      document.getElementById('modal-sett').classList.remove('open');
+      await loadSettimane();
+      await loadDispRiepilogo();
+    });
+
+    // ════════════════════════════════════════════
+    //  RIEPILOGO DISPONIBILITÀ (admin) — giorno per giorno
+    // ════════════════════════════════════════════
+    async function loadDispRiepilogo() {
+      var el = document.getElementById('admin-disp-container');
+      if (settimaneAdmin.length === 0) {
+        el.innerHTML = '<div class="empty">Nessuna settimana configurata.</div>'; return;
+      }
+      var dispRes    = await supabase.from('disponibilita').select('*');
+      var utentiRes  = await supabase.from('utenti').select('id,nome,anno').order('nome',{ascending:true});
+      var allDisp    = dispRes.data  || [];
+      var allUtenti  = (utentiRes.data || []).filter(function(u){ return !['admin','direttore','capocentro'].includes(u.nome.toLowerCase()); });
+
+      // map: userId → settimana_id → giorno_index → stato
+      var dMap = {};
+      allDisp.forEach(function(d) {
+        if (!dMap[d.user_id]) dMap[d.user_id] = {};
+        if (!dMap[d.user_id][d.settimana_id]) dMap[d.user_id][d.settimana_id] = {};
+        dMap[d.user_id][d.settimana_id][d.giorno_index] = d.stato;
+      });
+
+      function chip(stato) {
+        if (stato==='disponibile')    return '<span class="tipo-badge ingresso">✅</span>';
+        if (stato==='forse')          return '<span style="background:var(--amber-lt);color:var(--amber);padding:2px 6px;border-radius:20px;font-size:10px;font-weight:500;">🤔</span>';
+        if (stato==='non_disponibile')return '<span class="tipo-badge uscita">❌</span>';
+        return '<span style="color:#ccc;font-size:11px;">—</span>';
+      }
+
+      var html = '';
+      settimaneAdmin.forEach(function(s) {
+        var dateStr = (s.data_inizio && s.data_fine) ? fmtDate(s.data_inizio)+' – '+fmtDate(s.data_fine) : '';
+
+        // Intestazioni colonne giorni con data reale
+        var thGiorni = GIORNI.map(function(g, i) {
+          var dataG = s.data_inizio ? fmtDate(addDays(s.data_inizio, i)) : '';
+          return '<th style="text-align:center;">'+g+(dataG?'<br><span style="font-weight:400;text-transform:none;font-size:9px;color:var(--ink3);">'+dataG+'</span>':'')+'</th>';
+        }).join('');
+
+        // Contatori per settimana (per giorno)
+        var totSi=0, totFor=0, totNo=0, totNd=0;
+        allUtenti.forEach(function(u) {
+          for (var i=0;i<5;i++) {
+            var st = dMap[u.id]&&dMap[u.id][s.id]?dMap[u.id][s.id][i]:null;
+            if (st==='disponibile') totSi++;
+            else if (st==='forse') totFor++;
+            else if (st==='non_disponibile') totNo++;
+            else totNd++;
+          }
+        });
+
+        html += '<div class="disp-block">';
+        html += '<div class="disp-block-title">'+escapeHtml(s.nome)+'</div>';
+        if (dateStr) html += '<div class="disp-block-date">📆 '+escapeHtml(dateStr)+'</div>';
+        html += '<div class="disp-counters">';
+        html += '<span class="dcnt dcnt-si">✅ '+totSi+' disponibili</span>';
+        html += '<span class="dcnt dcnt-for">🤔 '+totFor+' forse</span>';
+        html += '<span class="dcnt dcnt-no">❌ '+totNo+' non disp.</span>';
+        if (totNd>0) html += '<span class="dcnt dcnt-nd">— '+totNd+' n.d.</span>';
+        html += '</div>';
+
+        html += '<div class="table-wrap"><table style="min-width:600px;"><thead><tr><th>Animatore</th><th>Anno</th>'+thGiorni+'</tr></thead><tbody>';
+        allUtenti.forEach(function(u) {
+          var cells = '';
+          for (var i=0;i<5;i++) {
+            var st = dMap[u.id]&&dMap[u.id][s.id]?dMap[u.id][s.id][i]:null;
+            cells += '<td style="text-align:center;">'+chip(st)+'</td>';
+          }
+          html += '<tr><td><strong>'+escapeHtml(u.nome)+'</strong></td><td>'+( u.anno||'—')+'</td>'+cells+'</tr>';
+        });
+        html += '</tbody></table></div></div>';
+      });
+
+      el.innerHTML = html || '<div class="empty">Nessun dato.</div>';
+    }
+
+    document.getElementById('refresh-disp-btn').addEventListener('click', async function() {
+      await loadSettimane();
+      await loadDispRiepilogo();
+    });
+
     // Controlla sessione esistente all'avvio
     if (sessionStorage.getItem('admin_auth') === '1') {
       showApp();
@@ -712,5 +1236,43 @@
 
   })();
 </script>
+
+<div class="modal-overlay" id="modal-settimana">
+  <div class="modal">
+    <div class="modal-title">Settimana</div>
+    <input type="hidden" id="sett-id" />
+    <label>Nome settimana</label>
+    <input type="text" id="sett-nome" placeholder="Es. 1ª Settimana" />
+    <label>Date (descrizione libera)</label>
+    <input type="text" id="sett-date" placeholder="Es. 16 giu – 20 giu 2025" />
+    <label>Ordine di visualizzazione</label>
+    <input type="number" id="sett-ordine" placeholder="1" />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="closeSettBtn">Annulla</button>
+      <button class="btn btn-primary" id="saveSettBtn">Salva</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-sett">
+  <div class="modal">
+    <div class="modal-title">Settimana</div>
+    <input type="hidden" id="sett-edit-id" />
+    <label>Nome settimana</label>
+    <input type="text" id="sett-nome" placeholder="Es. 1ª Settimana" />
+    <label>Data inizio (lunedì)</label>
+    <input type="date" id="sett-inizio" />
+    <label>Data fine (venerdì)</label>
+    <input type="date" id="sett-fine" />
+    <label>Ordine</label>
+    <input type="number" id="sett-ordine" placeholder="1" />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="close-sett-btn">Annulla</button>
+      <button class="btn btn-primary" id="save-sett-btn">Salva</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
