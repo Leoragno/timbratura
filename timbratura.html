@@ -4,37 +4,711 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Oratorio Timbratura | Animatori</title>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f5f2eb; --surface: #ffffff; --border: #d8d2c4;
-      --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
-      --accent: #2d4a3e; --accent-lt: #e8f0ec;
-      --red: #8b2e2e; --red-lt: #f5e8e8;
-      --amber: #7a5c1e; --amber-lt: #fdf3dc;
-      --green: #2d5a3d; --green-lt: #e5f2ea;
-      --font-serif: 'Instrument Serif', Georgia, serif;
-      --font-mono: 'Geist Mono', 'Courier New', monospace;
-    }
-    html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
-    body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%); }
 
-    #auth-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
-    .auth-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
-    .auth-title { font-family: var(--font-serif); font-size: 32px; line-height: 1.1; color: var(--ink); margin-bottom: 24px; text-align: center; }
+    :root {
+      --bg:        #f5f2eb;
+      --surface:   #ffffff;
+      --border:    #d8d2c4;
+      --ink:       #1a1714;
+      --ink2:      #5a5148;
+      --ink3:      #8a7f72;
+      --accent:    #2d4a3e;
+      --accent-lt: #e8f0ec;
+      --red:       #8b2e2e;
+      --red-lt:    #f5e8e8;
+      --green:     #2d5a3d;
+      --green-lt:  #e5f2ea;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono:  'Geist Mono', 'Courier New', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(180,160,100,.08) 0%, transparent 60%);
+    }
+
+    #auth-screen {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; overflow-y: auto;
+    }
+
+    .auth-card {
+      width: 100%; max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    }
+
+    .auth-title {
+      font-family: var(--font-serif); font-size: 32px;
+      line-height: 1.1; color: var(--ink); margin-bottom: 24px;
+      text-align: center;
+    }
     .auth-title em { font-style: italic; color: var(--accent); }
-    label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
-    input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px; }
+
+    label {
+      display: block; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--ink3); margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono);
+      font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px;
+    }
     input:focus { border-color: var(--accent); }
     input[type=number] { -moz-appearance: textfield; }
     input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; margin-bottom: 12px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px;
+      font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all .15s; margin-bottom: 12px;
+    }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #1f3329; }
+    .btn-primary:hover { background: #1f3329; }
+    
     .btn-green { background: var(--green); color: white; font-size: 16px; padding: 20px; }
+    .btn-green:hover:not(:disabled) { background: #1f3f2a; }
+    .btn-red { background: var(--red); color: white; font-size: 16px; padding: 20px; }
+    .btn-red:hover:not(:disabled) { background: #662121; }
+
+    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; margin-top: 8px; }
+    .auth-toggle span { text-decoration: underline; color: var(--accent); }
+    
+    .error-msg { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+    .success-msg { color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+
+    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
+
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px;
+    }
+    .topbar-title { font-family: var(--font-serif); font-size: 20px; }
+    .topbar-title em { font-style: italic; color: var(--accent); }
+    
+    .main-panel { max-width: 550px; margin: 40px auto; padding: 0 24px; text-align: center; }
+    
+    .welcome-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 32px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.04); margin-bottom: 24px;
+      text-align: center;
+    }
+    .welcome-name { font-family: var(--font-serif); font-size: 28px; margin-bottom: 4px; }
+    .welcome-meta { font-size: 12px; color: var(--ink3); margin-bottom: 24px; }
+
+    .stamp-box { display: flex; flex-direction: column; gap: 14px; }
+
+    .qr-alert {
+      background: var(--accent-lt); color: var(--accent); border: 1px solid #b2ccbc;
+      padding: 12px; border-radius: 4px; font-size: 12px; margin-bottom: 16px; font-weight: 500;
+      animation: pulseAlert 1.5s infinite alternate; display: none;
+    }
+    @keyframes pulseAlert {
+      from { opacity: 0.7; } to { opacity: 1; }
+    }
+
+    /* Banner permesso GPS — mostrato prima del tap su iOS */
+    #geo-permission-banner {
+      display: none;
+      background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px;
+      padding: 14px 16px; margin-bottom: 16px; font-size: 12px;
+      color: var(--amber, #7a5c1e); text-align: left; line-height: 1.6;
+    }
+    #geo-permission-banner strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+    .admin-card { text-align: left; background: #faf9f5; border: 2px dashed var(--accent); }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .admin-title { font-family: var(--font-serif); font-size: 22px; color: var(--accent); font-weight: bold; }
+    
+    .admin-toggle-wrapper { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn-toggle { flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; text-align: center; }
+
+    .admin-table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
+    .admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+    .admin-table th, .admin-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+    .admin-table th { background: var(--accent-lt); color: var(--accent); text-transform: uppercase; font-size: 9px; letter-spacing: 1px; }
+    
+    .badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; }
+    .badge-in { background: var(--green-lt); color: var(--green); }
+    .badge-out { background: var(--red-lt); color: var(--red); }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 24px;
+      font-size: 12px; opacity: 0; transition: all .3s cubic-bezier(.23,1,.32,1); z-index: 300;
+      white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div id="auth-screen">
+  
+  <div class="auth-card" id="login-card">
+    <div class="auth-title">Accedi all'<em>Oratorio</em></div>
+    <div class="qr-alert" id="qr-alert-login">📱 QR Code rilevato! Accedi per timbrare.</div>
+    
+    <label>👤 Nome e Cognome</label>
+    <input type="text" id="login-nome" placeholder="Mario Rossi" autocomplete="off" />
+    
+    <label>🔐 Password</label>
+    <input type="password" id="login-password" placeholder="••••••••" />
+    
+    <div class="error-msg" id="login-error"></div>
+    
+    <button class="btn btn-primary" id="login-btn">Entra →</button>
+    <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo animatore? <span>Registrati qui</span></div>
+  </div>
+
+  <div class="auth-card" id="register-card" style="display:none;">
+    <div class="auth-title">Nuovo <em>Animatore</em></div>
+    <div class="qr-alert" id="qr-alert-reg">📱 QR Code rilevato! Registrati per timbrare.</div>
+    
+    <label>📛 Nome e Cognome</label>
+    <input type="text" id="reg-nome" placeholder="Mario Rossi" />
+    
+    <label>🎂 Anno di Nascita</label>
+    <input type="number" id="reg-anno" placeholder="2008" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" />
+
+    <label>🔐 Password (minimo 4 caratteri)</label>
+    <input type="password" id="reg-password" placeholder="••••••••" />
+    
+    <div class="error-msg" id="reg-error"></div>
+    <div class="success-msg" id="reg-success"></div>
+    
+    <button class="btn btn-primary" id="register-btn">Registrati e Accedi</button>
+    <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi ora</span></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-title">tim<em>bratura</em></div>
+    <button style="background:transparent; border:1px solid var(--border); padding:5px 10px; border-radius:3px; font-family:var(--font-mono); font-size:11px; cursor:pointer;" id="logout-btn">Esci</button>
+  </div>
+
+  <div class="main-panel">
+    <div class="welcome-card">
+      <div class="welcome-name" id="user-display-name">—</div>
+      <div class="welcome-meta" id="user-display-meta">—</div>
+      
+      <div class="qr-alert" id="qr-alert-processing" style="margin-bottom:20px;">⏳ Elaborazione presenza da QR Code in corso...</div>
+
+      <!-- Banner visibile su iOS prima del primo tap -->
+      <div id="geo-permission-banner">
+        <strong>📍 Posizione richiesta</strong>
+        Quando premi il pulsante, Safari ti chiederà di condividere la posizione. Premi <strong>"Consenti"</strong> per poter timbrare.
+        <br><br>
+        Se non vedi il popup: vai su <em>Impostazioni → Privacy → Servizi di localizzazione → Safari</em> e impostalo su <strong>"Mentre uso l'app"</strong>.
+      </div>
+
+      <div class="stamp-box">
+        <button class="btn btn-green" id="btn-in">⬆ REGISTRA INGRESSO</button>
+        <button class="btn btn-red" id="btn-out">⬇REGISTRA USCITA</button>
+      </div>
+      
+      <div id="gps-debug" style="margin-top: 20px; font-size: 10px; color: var(--ink3); display: none; border-top: 1px solid var(--border); padding-top: 15px;">
+        <div id="debug-position"></div>
+        <div id="debug-distance"></div>
+      </div>
+    </div>
+
+    <div class="welcome-card admin-card" id="admin-panel" style="display: none;">
+      <div class="admin-header">
+        <div class="admin-title">Pannello Admin 🛠️</div>
+        <button id="aggiorna-registro">Aggiorna Registro 🔄</button>
+      </div>
+      
+      <p style="font-size:11px; color:var(--ink2); margin-bottom:8px; font-weight:600;">🔒 Blocco pulsanti di timbratura:</p>
+      <div class="admin-toggle-wrapper">
+        <button id="toggle-in-btn" class="btn-toggle">Ingressi: ...</button>
+        <button id="toggle-out-btn" class="btn-toggle">Uscite: ...</button>
+      </div>
+
+      <p style="font-size:11px; color:var(--ink2); margin-bottom:10px; border-top:1px solid var(--border); padding-top:10px;">📋 Elenco ultime timbrature effettuate:</p>
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Animatore</th><th>Anno</th><th>Data</th><th>Ora</th><th>Azione</th></tr>
+          </thead>
+          <tbody id="admin-table-body">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink3);">Caricamento dati...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  (function() {
+    const SUPABASE_URL      = 'https://bbwozrlingsbjcawtval.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+    
+    const TABLE_TIMBRATURE  = 'timbrature';
+    const TABLE_UTENTI      = 'utenti';
+    const TABLE_IMPOSTAZIONI= 'impostazioni';
+    
+    const ORATORIO_LAT = 45.706699;
+    const ORATORIO_LON = 8.800432;
+    const MAX_DISTANZA = 150;
+    
+    const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
+    
+    let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentUser    = null;
+    let ingressoAperto = true;
+    let uscitaAperta   = true;
+    let stampInProgress = false;
+
+    // ==================== UTILITY ====================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+      });
+    }
+
+    function toast(msg, type) {
+      type = type || 'info';
+      var el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + type + ' show';
+      setTimeout(function() { el.classList.remove('show'); }, 4000);
+    }
+
+    function calcolaDistanza(lat1, lon1, lat2, lon2) {
+      var R = 6371000;
+      var dLat = (lat2 - lat1) * Math.PI / 180;
+      var dLon = (lon2 - lon1) * Math.PI / 180;
+      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function setButtonsDisabled(disabled) {
+      document.getElementById('btn-in').disabled = disabled || !ingressoAperto;
+      document.getElementById('btn-out').disabled = disabled || !uscitaAperta;
+    }
+
+    // ==================== GESTIONE SCHERMATE ====================
+    window.toggleAuth = function(showRegister) {
+      document.getElementById('login-card').style.display = showRegister ? 'none' : 'block';
+      document.getElementById('register-card').style.display = showRegister ? 'block' : 'none';
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('reg-error').style.display = 'none';
+      document.getElementById('reg-success').style.display = 'none';
+    };
+
+    // ==================== REGISTRAZIONE ====================
+    window.handleRegister = async function() {
+      var nome     = document.getElementById('reg-nome').value.trim();
+      var anno     = document.getElementById('reg-anno').value.trim();
+      var password = document.getElementById('reg-password').value;
+
+      function showRegError(msg) {
+        var d = document.getElementById('reg-error');
+        d.textContent = msg; d.style.display = 'block';
+        setTimeout(function(){ d.style.display = 'none'; }, 3000);
+      }
+      function showRegSuccess(msg) {
+        var d = document.getElementById('reg-success');
+        d.textContent = msg; d.style.display = 'block';
+        setTimeout(function(){ d.style.display = 'none'; }, 3000);
+      }
+
+      if (!nome || !anno || !password) { showRegError('❌ Tutti i campi sono obbligatori'); return; }
+      if (password.length < 4) { showRegError('❌ Password di almeno 4 caratteri'); return; }
+      if (anno.length !== 4 || isNaN(parseInt(anno))) { showRegError('❌ Anno non valido (es. 2008)'); return; }
+
+      var check = await supabaseClient.from(TABLE_UTENTI).select('nome').eq('nome', nome).maybeSingle();
+      if (check.data) { showRegError('❌ Nome già registrato!'); return; }
+
+      var ins = await supabaseClient.from(TABLE_UTENTI).insert([{
+        nome: nome, password: password, anno: parseInt(anno), created_at: new Date()
+      }]);
+      if (ins.error) { showRegError('❌ Errore: ' + ins.error.message); return; }
+
+      showRegSuccess('✅ Registrazione riuscita! Ora puoi accedere.');
+      document.getElementById('reg-nome').value = '';
+      document.getElementById('reg-anno').value = '';
+      document.getElementById('reg-password').value = '';
+      setTimeout(function() { window.toggleAuth(false); }, 2000);
+    };
+
+    // ==================== LOGIN ====================
+    window.handleLogin = async function() {
+      var nome     = document.getElementById('login-nome').value.trim();
+      var password = document.getElementById('login-password').value;
+
+      function showLoginError(msg) {
+        var d = document.getElementById('login-error');
+        d.textContent = msg; d.style.display = 'block';
+        setTimeout(function(){ d.style.display = 'none'; }, 3000);
+      }
+
+      if (!nome || !password) { showLoginError('❌ Inserisci nome e password'); return; }
+
+      var res = await supabaseClient
+        .from(TABLE_UTENTI).select('*')
+        .eq('nome', nome).eq('password', password).maybeSingle();
+
+      if (res.error || !res.data) { showLoginError('❌ Nome o password errati'); return; }
+
+      currentUser = { id: res.data.id, nome: res.data.nome, anno: res.data.anno };
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showApp();
+
+      var pendingAction = sessionStorage.getItem('pending_qr_action');
+      if (pendingAction) {
+        sessionStorage.removeItem('pending_qr_action');
+        document.getElementById('qr-alert-processing').style.display = 'block';
+        await window.doStamp(pendingAction);
+        document.getElementById('qr-alert-processing').style.display = 'none';
+      }
+    };
+
+    // ==================== MOSTRA APP ====================
+    async function showApp() {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      document.getElementById('user-display-name').textContent = currentUser.nome;
+      document.getElementById('user-display-meta').textContent = '📅 Anno: ' + (currentUser.anno || '—');
+
+      await scaricaStatoBlocchi();
+      aggiornaInterfacciaBottoni();
+
+      // Mostra il banner GPS su mobile (specialmente iOS)
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      var isMobile = /Mobi|Android/i.test(navigator.userAgent) || isIOS;
+      if (isMobile) {
+        document.getElementById('geo-permission-banner').style.display = 'block';
+      }
+
+      if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+        document.getElementById('admin-panel').style.display = 'block';
+        await caricaRegistroAdmin();
+      } else {
+        document.getElementById('admin-panel').style.display = 'none';
+      }
+    }
+
+    // ==================== STATO BLOCCHI ====================
+    async function scaricaStatoBlocchi() {
+      var res = await supabaseClient.from(TABLE_IMPOSTAZIONI).select('*');
+      if (!res.error && res.data) {
+        res.data.forEach(function(row) {
+          if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+          if (row.chiave === 'uscita_aperta')   uscitaAperta   = row.valore;
+        });
+      }
+    }
+
+    function aggiornaInterfacciaBottoni() {
+      var btnIn  = document.getElementById('btn-in');
+      var btnOut = document.getElementById('btn-out');
+
+      btnIn.disabled  = !ingressoAperto;
+      btnIn.textContent  = ingressoAperto  ? '⬆ REGISTRA INGRESSO' : '🔒 INGRESSO BLOCCATO';
+      btnOut.disabled = !uscitaAperta;
+      btnOut.textContent = uscitaAperta ? '⬇ REGISTRA USCITA'  : '🔒 USCITA BLOCCATA';
+
+      var tIn  = document.getElementById('toggle-in-btn');
+      var tOut = document.getElementById('toggle-out-btn');
+      if (tIn && tOut) {
+        tIn.textContent = ingressoAperto ? '✅ Ingressi: APERTI' : '🔒 Ingressi: BLOCCATI';
+        tIn.style.background = ingressoAperto ? 'var(--green-lt)' : 'var(--red-lt)';
+        tIn.style.color      = ingressoAperto ? 'var(--green)'    : 'var(--red)';
+        tOut.textContent = uscitaAperta ? '✅ Uscite: APERTE' : '🔒 Uscite: BLOCCATE';
+        tOut.style.background = uscitaAperta ? 'var(--green-lt)' : 'var(--red-lt)';
+        tOut.style.color      = uscitaAperta ? 'var(--green)'    : 'var(--red)';
+      }
+    }
+
+    window.toggleStatoSistema = async function(chiave) {
+      if (!ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+        toast("Solo l'admin può modificare questa impostazione", 'error'); return;
+      }
+      var statoCorrente = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
+      var res = await supabaseClient.from(TABLE_IMPOSTAZIONI)
+        .update({ valore: !statoCorrente }).eq('chiave', chiave);
+      if (res.error) { toast('Errore: ' + res.error.message, 'error'); return; }
+      toast('Stato aggiornato!', 'success');
+      await scaricaStatoBlocchi();
+      aggiornaInterfacciaBottoni();
+    };
+
+    // ==================== ADMIN REGISTRO ====================
+    window.caricaRegistroAdmin = async function() {
+      if (!ADMIN_NAMES.includes(currentUser && currentUser.nome.toLowerCase())) return;
+      var tbody = document.getElementById('admin-table-body');
+      var res = await supabaseClient.from(TABLE_TIMBRATURE)
+        .select('*').order('id', { ascending: false }).limit(60);
+      if (res.error) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--red); text-align:center;">❌ ' + escapeHtml(res.error.message) + '</td></tr>';
+        return;
+      }
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3);">📭 Nessuna timbratura.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      res.data.forEach(function(row) {
+        var tr = document.createElement('tr');
+        var bc = row.tipo === 'Ingresso' ? 'badge-in' : 'badge-out';
+        tr.innerHTML = '<td style="font-weight:600;">' + escapeHtml(row.nome) + '</td>' +
+          '<td style="color:var(--ink2);">' + (row.anno || '—') + '</td>' +
+          '<td>' + escapeHtml(row.data) + '</td>' +
+          '<td style="font-weight:500;">' + escapeHtml(row.ora) + '</td>' +
+          '<td><span class="badge ' + bc + '">' + escapeHtml(row.tipo) + '</span></td>';
+        tbody.appendChild(tr);
+      });
+    };
+
+    // ==================== LOGOUT ====================
+    window.handleLogout = function() {
+      sessionStorage.removeItem('currentUser');
+      currentUser = null;
+      location.reload();
+    };
+
+    // ==================== TIMBRATURA (FIX iOS) ====================
+    //
+    // PROBLEMA: su Safari iOS, navigator.geolocation.getCurrentPosition()
+    // deve essere chiamato DIRETTAMENTE dentro l'handler del tap utente,
+    // senza nessun await prima — altrimenti iOS non mostra il popup
+    // di permesso e restituisce PERMISSION_DENIED silenziosamente.
+    //
+    // SOLUZIONE: avviamo subito getCurrentPosition() al tap, poi in
+    // parallelo facciamo i controlli sui blocchi via fetch normale.
+    // I due rami (posizione + stato blocchi) si incontrano quando
+    // entrambi sono pronti, e solo allora scriviamo la timbratura.
+    //
+    window.doStamp = function(tipo) {
+      if (!currentUser) return;
+      if (stampInProgress) { toast('⏳ Attendi la timbratura in corso...', 'info'); return; }
+
+      // Controlla subito lo stato locale (già scaricato)
+      if (tipo === 'Ingresso' && !ingressoAperto) {
+        toast('🔒 Ingresso bloccato dal coordinatore!', 'error'); return;
+      }
+      if (tipo === 'Uscita' && !uscitaAperta) {
+        toast('🔒 Uscite bloccate dal coordinatore!', 'error'); return;
+      }
+
+      if (!navigator.geolocation) {
+        toast('❌ Il tuo browser non supporta la geolocalizzazione', 'error'); return;
+      }
+
+      stampInProgress = true;
+      setButtonsDisabled(true);
+      document.getElementById('geo-permission-banner').style.display = 'none';
+      toast('📍 Verifica posizione in corso...', 'info');
+
+      // ─── PASSO 1: chiediamo la posizione IMMEDIATAMENTE (richiesto da iOS)
+      //     Non c'è nessun await prima di questa riga.
+      var geoPromise = new Promise(function(resolve, reject) {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        });
+      });
+
+      // ─── PASSO 2: in parallelo aggiorniamo lo stato blocchi dal server
+      var blocchiPromise = scaricaStatoBlocchi();
+
+      // ─── PASSO 3: aspettiamo entrambi
+      Promise.all([geoPromise, blocchiPromise]).then(function(results) {
+        var position = results[0];
+
+        // Ricontrolliamo i blocchi con dati freschi dal server
+        if (tipo === 'Ingresso' && !ingressoAperto) {
+          toast('🔒 Ingresso bloccato dal coordinatore!', 'error');
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          return;
+        }
+        if (tipo === 'Uscita' && !uscitaAperta) {
+          toast('🔒 Uscite bloccate dal coordinatore!', 'error');
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          return;
+        }
+
+        var userLat   = position.coords.latitude;
+        var userLon   = position.coords.longitude;
+        var precisione = position.coords.accuracy;
+        var distanza  = calcolaDistanza(userLat, userLon, ORATORIO_LAT, ORATORIO_LON);
+
+        var debugDiv = document.getElementById('gps-debug');
+        document.getElementById('debug-position').innerHTML =
+          '📍 Posizione: ' + userLat.toFixed(6) + ', ' + userLon.toFixed(6) +
+          '<br>🎯 Oratorio: ' + ORATORIO_LAT + ', ' + ORATORIO_LON +
+          '<br>📡 Precisione: ±' + Math.round(precisione) + 'm';
+        document.getElementById('debug-distance').innerHTML =
+          '📏 Distanza: ' + Math.round(distanza) + 'm (limite: ' + MAX_DISTANZA + 'm)';
+
+        if (distanza > MAX_DISTANZA) {
+          debugDiv.style.display = 'block';
+          toast('❌ Sei fuori dall\'oratorio! Distanza: ' + Math.round(distanza) + 'm', 'error');
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          return;
+        }
+
+        debugDiv.style.display = 'none';
+
+        var now  = new Date();
+        var data = String(now.getDate()).padStart(2,'0') + '/' +
+                   String(now.getMonth()+1).padStart(2,'0') + '/' +
+                   now.getFullYear();
+        var ora  = now.toTimeString().slice(0,5);
+
+        supabaseClient.from(TABLE_TIMBRATURE).insert({
+          user_id: currentUser.id,
+          nome:    currentUser.nome,
+          anno:    currentUser.anno ? parseInt(currentUser.anno) : null,
+          data:    data,
+          ora:     ora,
+          tipo:    tipo
+        }).then(function(res) {
+          stampInProgress = false;
+          aggiornaInterfacciaBottoni();
+          if (res.error) {
+            toast('❌ Errore: ' + res.error.message, 'error');
+          } else {
+            toast('✅ ' + tipo + ' registrato alle ' + ora, 'success');
+            if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+              caricaRegistroAdmin();
+            }
+          }
+        });
+
+      }).catch(function(err) {
+        stampInProgress = false;
+        aggiornaInterfacciaBottoni();
+
+        // Gestione errori geolocalizzazione
+        var msg;
+        if (err && err.code) {
+          switch(err.code) {
+            case 1: // PERMISSION_DENIED
+              msg = '❌ Permesso posizione negato. Vai su Impostazioni → Privacy → Servizi di localizzazione → Safari → "Mentre uso l\'app"';
+              break;
+            case 2: // POSITION_UNAVAILABLE
+              msg = '❌ Posizione non disponibile. Attiva il GPS e riprova.';
+              break;
+            case 3: // TIMEOUT
+              msg = '⏰ Tempo scaduto. Assicurati di avere il GPS attivo e riprova.';
+              break;
+            default:
+              msg = '❌ Errore GPS: ' + (err.message || err.code);
+          }
+        } else {
+          msg = '❌ Errore sconosciuto. Riprova.';
+        }
+        toast(msg, 'error');
+
+        // Su iOS mostriamo di nuovo il banner con istruzioni
+        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS && err && err.code === 1) {
+          document.getElementById('geo-permission-banner').style.display = 'block';
+        }
+      });
+    };
+
+    // ==================== ATTACCA EVENTI ====================
+    function attachEvents() {
+      document.getElementById('login-btn').addEventListener('click', window.handleLogin);
+      document.getElementById('register-btn').addEventListener('click', window.handleRegister);
+      document.getElementById('logout-btn').addEventListener('click', window.handleLogout);
+
+      // I pulsanti di timbratura usano addEventListener per garantire
+      // che il contesto "user gesture" sia preservato su iOS
+      document.getElementById('btn-in').addEventListener('click', function() { window.doStamp('Ingresso'); });
+      document.getElementById('btn-out').addEventListener('click', function() { window.doStamp('Uscita'); });
+
+      document.getElementById('aggiorna-registro').addEventListener('click', window.caricaRegistroAdmin);
+      document.getElementById('toggle-in-btn').addEventListener('click', function() { window.toggleStatoSistema('ingresso_aperto'); });
+      document.getElementById('toggle-out-btn').addEventListener('click', function() { window.toggleStatoSistema('uscita_aperta'); });
+
+      // Enter sui campi login
+      document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') window.handleLogin();
+      });
+      document.getElementById('reg-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') window.handleRegister();
+      });
+    }
+
+    // ==================== INIT ====================
+    window.addEventListener('DOMContentLoaded', async function() {
+      attachEvents();
+      await scaricaStatoBlocchi();
+
+      var savedUser = sessionStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        await showApp();
+      }
+
+      var urlParams = new URLSearchParams(window.location.search);
+      var action    = urlParams.get('action');
+
+      if (action === 'Ingresso' || action === 'Uscita') {
+        if (currentUser) {
+          document.getElementById('qr-alert-processing').style.display = 'block';
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(async function() {
+            await window.doStamp(action);
+            document.getElementById('qr-alert-processing').style.display = 'none';
+          }, 1000);
+        } else {
+          sessionStorage.setItem('pending_qr_action', action);
+          document.getElementById('qr-alert-login').style.display = 'block';
+          document.getElementById('qr-alert-reg').style.display = 'block';
+        }
+      }
+    });
+
+  })();
+</script>
+</body>
+</html>    .btn-green { background: var(--green); color: white; font-size: 16px; padding: 20px; }
     .btn-green:hover:not(:disabled) { background: #1f3f2a; }
     .btn-red { background: var(--red); color: white; font-size: 16px; padding: 20px; }
     .btn-red:hover:not(:disabled) { background: #662121; }
