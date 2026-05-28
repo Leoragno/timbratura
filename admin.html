@@ -103,6 +103,11 @@
     .sett-info { flex: 1; }
     .sett-nome-admin { font-family: var(--font-serif); font-size: 17px; margin-bottom: 2px; }
     .sett-date-admin { font-size: 11px; color: var(--ink3); }
+    /* Badge stato disponibilità */
+    .disp-lock-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; margin-top: 5px; }
+    .disp-lock-badge.open  { background: var(--green-lt); color: var(--green); border: 1px solid #b2d4bc; }
+    .disp-lock-badge.locked { background: var(--red-lt);   color: var(--red);   border: 1px solid #dbb2b2; }
+    .sett-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .disp-block { margin-bottom: 40px; }
     .disp-block-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 5px; }
     .disp-block-date { font-size: 12px; color: var(--ink3); margin-bottom: 16px; }
@@ -178,6 +183,8 @@
   const GIORNI_TUTTI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
   let allAnimators = [], allLog = [], ingressoAperto = true, uscitaAperta = true, manualTarget = null;
+  // Cache locale delle disponibilità chiuse: { settimana_id: true/false }
+  let dispChiuse = {};
 
   function toast(msg, type) { const el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast ' + (type || '') + ' show'; setTimeout(() => el.classList.remove('show'), 3000); }
   function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"']/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]; }); }
@@ -194,7 +201,20 @@
   async function loadSettings() {
     const { data } = await sb.from('impostazioni').select('*');
     let geoAbilitata = true, geoLat = '', geoLon = '', geoRadius = '';
-    if (data) data.forEach(row => { if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore; if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore; if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore; if (row.chiave === 'oratorio_lat') geoLat = row.valore; if (row.chiave === 'oratorio_lon') geoLon = row.valore; if (row.chiave === 'max_distanza') geoRadius = row.valore; });
+    dispChiuse = {};
+    if (data) data.forEach(row => {
+      if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+      if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
+      if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore;
+      if (row.chiave === 'oratorio_lat') geoLat = row.valore;
+      if (row.chiave === 'oratorio_lon') geoLon = row.valore;
+      if (row.chiave === 'max_distanza') geoRadius = row.valore;
+      // Legge le chiavi disp_chiusa_<id>
+      if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
+        const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
+        if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
+      }
+    });
     const btnIn = document.getElementById('toggle-in-btn'), btnOut = document.getElementById('toggle-out-btn');
     btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI'; btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
     btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE'; btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
@@ -246,8 +266,29 @@
   document.getElementById('geo-save-btn').onclick = async () => { const lat = document.getElementById('geo-lat').value, lon = document.getElementById('geo-lon').value, rad = document.getElementById('geo-radius').value; if (!lat||!lon||!rad) return toast('Compila tutti i campi GPS','error'); await upsertImpostazione('oratorio_lat', lat); await upsertImpostazione('oratorio_lon', lon); await upsertImpostazione('max_distanza', rad); toast('Coordinate salvate','success'); loadSettings(); };
   document.getElementById('geo-use-current').onclick = () => { if ("geolocation" in navigator) { toast('Acquisizione posizione...'); navigator.geolocation.getCurrentPosition(pos => { document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(6); document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(6); if(!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value="150"; toast('Posizione acquisita. Salva!','success'); }, err => toast('Errore GPS: '+err.message,'error'), { enableHighAccuracy: true }); } else toast('Geolocalizzazione non supportata','error'); };
 
+  // ─── TOGGLE DISPONIBILITÀ PER SETTIMANA ──────────────────────────────────
+  window.toggleDispSettimana = async (settId) => {
+    const chiave = 'disp_chiusa_' + settId;
+    const eraChiusa = !!dispChiuse[settId];
+    const nuovoStato = !eraChiusa; // true = chiusa
+    await upsertImpostazione(chiave, nuovoStato);
+    dispChiuse[settId] = nuovoStato;
+    toast(nuovoStato ? '🔒 Disponibilità chiuse' : '🔓 Disponibilità aperte', nuovoStato ? 'error' : 'success');
+    await loadSettimane(); // ri-renderizza con il nuovo stato
+  };
+
   // SETTIMANE
   async function loadSettimane() {
+    // Assicurati di avere dispChiuse aggiornato
+    const { data: impoData } = await sb.from('impostazioni').select('*');
+    dispChiuse = {};
+    if (impoData) impoData.forEach(row => {
+      if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
+        const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
+        if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
+      }
+    });
+
     const { data } = await sb.from('settimane').select('*').order('id');
     const container = document.getElementById('settimane-list');
     if (!data || data.length === 0) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
@@ -256,7 +297,25 @@
       if (s.giorni_attivi && typeof s.giorni_attivi === 'string' && s.giorni_attivi.trim()) {
         giorniMostrati = s.giorni_attivi.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
       }
-      return `<div class="sett-card"><div class="sett-info"><div class="sett-nome-admin">${escapeHtml(s.nome)}</div><div class="sett-date-admin">${escapeHtml(s.date_info||'')}</div><div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorniMostrati.join(', ')}</div></div><div class="sett-actions"><button class="btn btn-amber btn-sm" onclick="window.editSettimana(${s.id}, '${escapeHtml(s.nome)}', '${escapeHtml(s.date_info||'')}', '${escapeHtml(s.giorni_attivi||'')}')">✏️ Modifica</button><button class="btn btn-red btn-sm" onclick="window.deleteSettimana(${s.id})">🗑️</button></div></div>`;
+      const chiusa = !!dispChiuse[s.id];
+      const badgeClass = chiusa ? 'locked' : 'open';
+      const badgeLabel = chiusa ? '🔒 Disponibilità chiuse' : '🔓 Disponibilità aperte';
+      const btnLabel = chiusa ? '🔓 Apri disponibilità' : '🔒 Chiudi disponibilità';
+      const btnClass = chiusa ? 'btn btn-green btn-sm' : 'btn btn-red btn-sm';
+
+      return `<div class="sett-card">
+        <div class="sett-info">
+          <div class="sett-nome-admin">${escapeHtml(s.nome)}</div>
+          <div class="sett-date-admin">${escapeHtml(s.date_info||'')}</div>
+          <div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorniMostrati.join(', ')}</div>
+          <div class="disp-lock-badge ${badgeClass}">${badgeLabel}</div>
+        </div>
+        <div class="sett-actions">
+          <button class="${btnClass}" onclick="window.toggleDispSettimana(${s.id})">${btnLabel}</button>
+          <button class="btn btn-amber btn-sm" onclick="window.editSettimana(${s.id}, '${escapeHtml(s.nome)}', '${escapeHtml(s.date_info||'')}', '${escapeHtml(s.giorni_attivi||'')}')">✏️ Modifica</button>
+          <button class="btn btn-red btn-sm" onclick="window.deleteSettimana(${s.id})">🗑️</button>
+        </div>
+      </div>`;
     }).join('');
   }
 
@@ -273,7 +332,6 @@
   document.getElementById('closeSettBtn').onclick = () => document.getElementById('modal-settimana').classList.remove('open');
 
   document.getElementById('add-sett-btn').onclick = () => {
-    // Per una nuova settimana, preseleziona tutti i giorni di default
     document.getElementById('sett-id').value = '';
     document.getElementById('sett-nome').value = '';
     document.getElementById('sett-date-info').value = '';
@@ -289,38 +347,19 @@
       const dateInfo = document.getElementById('sett-date-info').value.trim();
       const checkboxes = document.querySelectorAll('#giorni-checkboxes input[type="checkbox"]:checked');
       const giorniAttivi = Array.from(checkboxes).map(cb => cb.value).join(',');
-
-      if (!nome) {
-        toast('Il nome è obbligatorio', 'error');
-        return;
-      }
-
+      if (!nome) { toast('Il nome è obbligatorio', 'error'); return; }
       const payload = { nome, date_info: dateInfo, giorni_attivi: giorniAttivi };
       const numericId = parseInt(idRaw);
       const isUpdate = !isNaN(numericId) && numericId > 0;
-
       let result;
-      if (isUpdate) {
-        result = await sb.from('settimane').update(payload).eq('id', numericId).select();
-      } else {
-        // INSERT: non passare mai l'id, lascia che Supabase lo generi automaticamente
-        result = await sb.from('settimane').insert(payload).select();
-      }
-
-      if (result.error) {
-        console.error('Errore Supabase settimane:', result.error);
-        toast('Errore: ' + (result.error.message || result.error.code || 'Errore sconosciuto'), 'error');
-        return;
-      }
-
+      if (isUpdate) { result = await sb.from('settimane').update(payload).eq('id', numericId).select(); }
+      else { result = await sb.from('settimane').insert(payload).select(); }
+      if (result.error) { toast('Errore: ' + (result.error.message || result.error.code || 'Errore sconosciuto'), 'error'); return; }
       toast('Settimana salvata con successo', 'success');
       document.getElementById('modal-settimana').classList.remove('open');
       await loadSettimane();
       await loadDispRiepilogo();
-    } catch (err) {
-      console.error('Eccezione saveSettBtn:', err);
-      toast('Errore imprevisto: ' + err.message, 'error');
-    }
+    } catch (err) { toast('Errore imprevisto: ' + err.message, 'error'); }
   };
 
   window.deleteSettimana = async (id) => {
@@ -328,6 +367,8 @@
     const { error } = await sb.from('settimane').delete().eq('id', id);
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
     await sb.from('disponibilita').delete().eq('settimana_id', id);
+    // Pulisce anche la chiave impostazione del lock
+    await sb.from('impostazioni').delete().eq('chiave', 'disp_chiusa_' + id);
     toast('Settimana eliminata', 'success');
     await loadSettimane();
     await loadDispRiepilogo();
@@ -335,10 +376,7 @@
 
   function parseGiorniAttivi(giorni) {
     if (!giorni) return GIORNI_TUTTI;
-    if (typeof giorni === 'string') {
-      if (!giorni.trim()) return GIORNI_TUTTI;
-      return giorni.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g));
-    }
+    if (typeof giorni === 'string') { if (!giorni.trim()) return GIORNI_TUTTI; return giorni.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g)); }
     return GIORNI_TUTTI;
   }
 
@@ -351,6 +389,10 @@
     let html = '';
     for (const s of settimane) {
       const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
+      const chiusa = !!dispChiuse[s.id];
+      const lockInfo = chiusa
+        ? '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--red-lt);color:var(--red);border:1px solid #dbb2b2;padding:3px 10px;border-radius:20px;margin-left:12px;">🔒 Chiuse</span>'
+        : '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--green-lt);color:var(--green);border:1px solid #b2d4bc;padding:3px 10px;border-radius:20px;margin-left:12px;">🔓 Aperte</span>';
       const map = new Map();
       if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
         const giornoNome = GIORNI_TUTTI[d.giorno_index];
@@ -363,7 +405,7 @@
         else if (d.stato === 'non_disponibile') simbolo = '<span class="disp-no">❌ No</span>';
         arr[idx] = simbolo;
       });
-      html += `<div class="disp-block"><div class="disp-block-title">📅 ${escapeHtml(s.nome)}</div><div class="disp-block-date">${escapeHtml(s.date_info||'')}</div><div style="overflow-x:auto;"><table class="disp-table"><thead><tr><th>Animatore</th>${giorniAttivi.map(g=>`<th>${g}</th>`).join('')}</tr></thead><tbody>`;
+      html += `<div class="disp-block"><div class="disp-block-title">📅 ${escapeHtml(s.nome)}${lockInfo}</div><div class="disp-block-date">${escapeHtml(s.date_info||'')}</div><div style="overflow-x:auto;"><table class="disp-table"><thead><tr><th>Animatore</th>${giorniAttivi.map(g=>`<th>${g}</th>`).join('')}</tr></thead><tbody>`;
       if (utenti) {
         for (const u of utenti) {
           const scelte = map.get(u.id) || Array(giorniAttivi.length).fill('');
