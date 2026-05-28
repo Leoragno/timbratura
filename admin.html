@@ -333,8 +333,8 @@
   <div class="main">
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Totale animatori</div><div class="stat-value" id="stat-total">—</div></div>
-      <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value green" id="stat-in">—</div></div>
-      <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value red" id="stat-out">—</div></div>
+      <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value" id="stat-in">—</div></div>
+      <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value" id="stat-out">—</div></div>
     </div>
 
     <div class="section-header">
@@ -425,7 +425,8 @@
           <tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr>
         </thead>
         <tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody>
-      </div>
+      </table>
+    </div>
 
     <div class="section-header" style="margin-top:10px;">
       <div class="section-title">Settimane oratorio estivo</div>
@@ -637,4 +638,295 @@
         '<div class="anim-actions">' +
           '<button class="btn btn-green btn-sm" onclick="window._manualTimbratura(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\',\'Ingresso\')">⬆ In</button>' +
           '<button class="btn btn-red btn-sm" onclick="window._manualTimbratura(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\',\'Uscita\')">⬇ Out</button>' +
-          '<button class="btn btn-amber btn-sm" onclick="window._editAnagrafica(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\
+          '<button class="btn btn-amber btn-sm" onclick="window._editAnagrafica(\'' + nomeEsc.replace(/'/g, "\\'") + '\',\'' + annoEsc + '\')">✎ Modifica</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderLog() {
+    const search = document.getElementById('log-search').value.toLowerCase();
+    const date = document.getElementById('log-date').value;
+    const tipo = document.getElementById('log-tipo').value;
+
+    let filtered = allLog.filter(function(l) {
+      if (search && !l.nome.toLowerCase().includes(search)) return false;
+      if (tipo && l.tipo !== tipo) return false;
+      if (date) {
+        var parts = l.data.split('/');
+        var logDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+        if (logDate !== date) return false;
+      }
+      return true;
+    });
+
+    var tbody = document.getElementById('log-tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">📋 Nessuna timbratura</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(function(l) {
+      return '<tr>' +
+        '<td><strong>' + escapeHtml(l.nome) + '</strong></td>' +
+        '<td>' + (l.anno || '—') + '</td>' +
+        '<td>' + escapeHtml(l.data) + '</td>' +
+        '<td>' + escapeHtml(l.ora) + '</td>' +
+        '<td><span class="tipo-badge ' + (l.tipo.toLowerCase() === 'ingresso' ? 'ingresso' : 'uscita') + '">' + escapeHtml(l.tipo) + '</span></td>' +
+        '<td><button class="btn btn-ghost btn-sm" onclick="window._deleteLog(' + l.id + ')">🗑️</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = allAnimators.length;
+    var lastStampMap = {};
+    allLog.forEach(function(l) { if (!lastStampMap[l.nome]) lastStampMap[l.nome] = l; });
+    var inCount = 0;
+    for (var nome in lastStampMap) if (lastStampMap[nome].tipo === 'Ingresso') inCount++;
+    document.getElementById('stat-in').textContent = inCount;
+    document.getElementById('stat-out').textContent = allAnimators.length - inCount;
+  }
+
+  // TIMBRATURA MANUALE
+  window._manualTimbratura = function(nome, anno, tipo) {
+    manualTarget = { nome: nome, anno: anno };
+    document.getElementById('manual-name-label').textContent = nome;
+    document.getElementById('manual-tipo').value = tipo;
+    var now = new Date();
+    var tzOffset = now.getTimezoneOffset() * 60000;
+    var localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, -1);
+    document.getElementById('manual-data').value = localISOTime.split('T')[0];
+    document.getElementById('manual-ora').value = now.toTimeString().substring(0,5);
+    document.getElementById('modal-manual').classList.add('open');
+  };
+
+  document.getElementById('closeManualBtn').addEventListener('click', closeAllModals);
+  document.getElementById('saveManualBtn').addEventListener('click', async function() {
+    var tipo = document.getElementById('manual-tipo').value;
+    var dRaw = document.getElementById('manual-data').value;
+    var oRaw = document.getElementById('manual-ora').value;
+    if (!dRaw || !oRaw) return toast('Completa data e ora', 'error');
+    var dp = dRaw.split('-');
+    var dFormatted = dp[2] + '/' + dp[1] + '/' + dp[0];
+    var payload = { nome: manualTarget.nome, anno: manualTarget.anno, tipo: tipo, data: dFormatted, ora: oRaw };
+    const { error } = await sb.from('timbrature').insert([payload]);
+    if (error) toast('Errore salvataggio', 'error');
+    else {
+      toast('Timbratura manuale salvata', 'success');
+      closeAllModals();
+      await loadTimbrature();
+      renderAnimators();
+      renderLog();
+      updateStats();
+    }
+  });
+
+  // ELIMINA LOG
+  window._deleteLog = async function(id) {
+    if (!confirm('Vuoi davvero eliminare questa timbratura?')) return;
+    const { error } = await sb.from('timbrature').delete().eq('id', id);
+    if (error) toast('Errore eliminazione', 'error');
+    else {
+      toast('Eliminata', 'success');
+      await loadTimbrature();
+      renderAnimators();
+      renderLog();
+      updateStats();
+    }
+  };
+
+  // MODIFICA ANAGRAFICA
+  window._editAnagrafica = function(nome, anno) {
+    document.getElementById('profile-old-nome').value = nome;
+    document.getElementById('profile-old-anno').value = anno;
+    document.getElementById('profile-new-nome').value = nome;
+    document.getElementById('profile-new-anno').value = anno;
+    document.getElementById('modal-edit-profile').classList.add('open');
+  };
+
+  document.getElementById('closeProfileBtn').addEventListener('click', closeAllModals);
+  document.getElementById('saveProfileBtn').addEventListener('click', async function() {
+    var oldNome = document.getElementById('profile-old-nome').value;
+    var newNome = document.getElementById('profile-new-nome').value;
+    var newAnno = document.getElementById('profile-new-anno').value;
+    if (!newNome) return toast('Il nome non può essere vuoto', 'error');
+    const { error: err1 } = await sb.from('utenti').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
+    if (err1) return toast('Errore modifica utente', 'error');
+    if (newNome !== oldNome) await sb.from('timbrature').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
+    toast('Profilo aggiornato', 'success');
+    closeAllModals();
+    await loadUsers();
+    await loadTimbrature();
+    renderAnimators();
+    renderLog();
+    updateStats();
+  });
+
+  // GESTIONE GEOLOCALIZZAZIONE
+  async function upsertImpostazione(chiave, valore) {
+    var { data: existing } = await sb.from('impostazioni').select('chiave').eq('chiave', chiave).maybeSingle();
+    if (existing) return sb.from('impostazioni').update({ valore: valore }).eq('chiave', chiave);
+    else return sb.from('impostazioni').insert({ chiave: chiave, valore: valore });
+  }
+
+  document.getElementById('toggle-in-btn').addEventListener('click', async function() {
+    ingressoAperto = !ingressoAperto;
+    await upsertImpostazione('ingresso_aperto', ingressoAperto);
+    toast(ingressoAperto ? 'Ingressi sbloccati' : 'Ingressi bloccati', ingressoAperto ? 'success' : 'error');
+    loadSettings();
+  });
+  document.getElementById('toggle-out-btn').addEventListener('click', async function() {
+    uscitaAperta = !uscitaAperta;
+    await upsertImpostazione('uscita_aperta', uscitaAperta);
+    toast(uscitaAperta ? 'Uscite sbloccate' : 'Uscite bloccate', uscitaAperta ? 'success' : 'error');
+    loadSettings();
+  });
+  document.getElementById('toggle-geo-btn').addEventListener('click', async function() {
+    var isAttivo = this.classList.contains('open');
+    await upsertImpostazione('geo_abilitata', !isAttivo);
+    toast(!isAttivo ? 'Controllo GPS attivato' : 'Controllo GPS disabilitato', !isAttivo ? 'success' : 'error');
+    loadSettings();
+  });
+  document.getElementById('geo-save-btn').addEventListener('click', async function() {
+    var lat = document.getElementById('geo-lat').value;
+    var lon = document.getElementById('geo-lon').value;
+    var rad = document.getElementById('geo-radius').value;
+    if (!lat || !lon || !rad) { toast('Compila tutti i campi GPS', 'error'); return; }
+    await upsertImpostazione('oratorio_lat', lat);
+    await upsertImpostazione('oratorio_lon', lon);
+    await upsertImpostazione('max_distanza', rad);
+    toast('Coordinate salvate', 'success');
+    loadSettings();
+  });
+  document.getElementById('geo-use-current').addEventListener('click', function() {
+    if ("geolocation" in navigator) {
+      toast('Acquisizione posizione...');
+      navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('geo-lat').value = position.coords.latitude.toFixed(6);
+        document.getElementById('geo-lon').value = position.coords.longitude.toFixed(6);
+        if (!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value = "150";
+        toast('Posizione acquisita. Salva!', 'success');
+      }, function(err) { toast('Errore GPS: ' + err.message, 'error'); }, { enableHighAccuracy: true });
+    } else toast('Geolocalizzazione non supportata', 'error');
+  });
+
+  // SETTIMANE E RIEPILOGO DISPONIBILITÀ
+  async function loadSettimane() {
+    const { data } = await sb.from('settimane').select('*').order('id', { ascending: true });
+    const container = document.getElementById('settimane-list');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty">Nessuna settimana configurata.</div>';
+      return;
+    }
+    container.innerHTML = data.map(function(s) {
+      return '<div class="sett-card">' +
+        '<div class="sett-info">' +
+          '<div class="sett-nome-admin">' + escapeHtml(s.nome) + '</div>' +
+          '<div class="sett-date-admin">' + escapeHtml(s.date_info || '') + '</div>' +
+        '</div>' +
+        '<div class="sett-actions">' +
+          '<button class="btn btn-red btn-sm" onclick="window._deleteSettimana(' + s.id + ')">🗑️</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  window._deleteSettimana = async function(id) {
+    if (!confirm('Eliminare questa settimana e tutte le relative disponibilità?')) return;
+    await sb.from('settimane').delete().eq('id', id);
+    await sb.from('disponibilita').delete().eq('settimana_id', id);
+    toast('Settimana eliminata', 'success');
+    await loadSettimane();
+    await loadDispRiepilogo();
+  };
+
+  document.getElementById('add-sett-btn').addEventListener('click', async function() {
+    var nome = prompt('Nome settimana (es. Settimana 1):');
+    if (!nome) return;
+    var dateInfo = prompt('Date (es. 10-14 Giugno):');
+    const { error } = await sb.from('settimane').insert([{ nome: nome, date_info: dateInfo }]);
+    if (error) toast('Errore: ' + error.message, 'error');
+    else { toast('Settimana aggiunta', 'success'); await loadSettimane(); await loadDispRiepilogo(); }
+  });
+
+  async function loadDispRiepilogo() {
+    const { data: settimane } = await sb.from('settimane').select('*').order('id');
+    const { data: dispo } = await sb.from('disponibilita').select('*');
+    const { data: utenti } = await sb.from('utenti').select('id');
+    const container = document.getElementById('admin-disp-container');
+    if (!settimane || settimane.length === 0) {
+      container.innerHTML = '<div class="empty">Nessuna settimana configurata.</div>';
+      return;
+    }
+    let html = '';
+    for (const s of settimane) {
+      const dispoSett = dispo ? dispo.filter(d => d.settimana_id === s.id) : [];
+      let disponibili = 0, forse = 0, nonDisponibili = 0;
+      dispoSett.forEach(d => {
+        if (d.stato === 'disponibile') disponibili++;
+        else if (d.stato === 'forse') forse++;
+        else if (d.stato === 'non_disponibile') nonDisponibili++;
+      });
+      const utentiCheHannoCompilato = new Set(dispoSett.map(d => d.user_id)).size;
+      const totaleUtenti = utenti ? utenti.length : 0;
+      const nonCompilato = totaleUtenti - utentiCheHannoCompilato;
+      html += `
+        <div class="disp-block">
+          <div class="disp-block-title">📅 ${escapeHtml(s.nome)}</div>
+          <div class="disp-block-date">${escapeHtml(s.date_info || '')}</div>
+          <div class="disp-counters">
+            <span class="dcnt dcnt-si">✅ ${disponibili} disponibilità</span>
+            <span class="dcnt dcnt-for">🤔 ${forse} forse</span>
+            <span class="dcnt dcnt-no">❌ ${nonDisponibili} non disponibili</span>
+            <span class="dcnt dcnt-nd">📝 ${nonCompilato} senza dati</span>
+          </div>
+          <div style="font-size:11px; color:var(--ink3);">👥 ${utentiCheHannoCompilato}/${totaleUtenti} animatori hanno compilato</div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+
+  // FILTRI E REFRESH
+  document.getElementById('filter-name').addEventListener('input', renderAnimators);
+  document.getElementById('filter-status').addEventListener('change', renderAnimators);
+  document.getElementById('filter-sort').addEventListener('change', renderAnimators);
+  document.getElementById('refreshBtn').addEventListener('click', async function() {
+    toast('Aggiornamento...');
+    await loadTimbrature();
+    await loadUsers();
+    renderAnimators();
+    renderLog();
+    updateStats();
+  });
+  document.getElementById('log-search').addEventListener('input', renderLog);
+  document.getElementById('log-date').addEventListener('change', renderLog);
+  document.getElementById('log-tipo').addEventListener('change', renderLog);
+  document.getElementById('refresh-disp-btn').addEventListener('click', async function() {
+    toast('Aggiornamento disponibilità...');
+    await loadDispRiepilogo();
+  });
+
+  // OROLOGIO
+  function startClock() {
+    setInterval(function() {
+      var now = new Date();
+      var hours = String(now.getHours()).padStart(2, '0');
+      var minutes = String(now.getMinutes()).padStart(2, '0');
+      var clockEl = document.getElementById('top-clock');
+      if (clockEl) clockEl.textContent = hours + ':' + minutes;
+    }, 1000);
+  }
+
+  // VERIFICA SESSIONE
+  if (sessionStorage.getItem('admin_auth') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAllData();
+    startClock();
+  }
+})();
+</script>
+</body>
+</html>
