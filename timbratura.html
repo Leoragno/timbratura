@@ -13,6 +13,7 @@
       --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
       --accent: #2d4a3e; --accent-lt: #e8f0ec;
       --red: #8b2e2e; --red-lt: #f5e8e8;
+      --amber: #7a5c1e; --amber-lt: #fdf3dc;
       --green: #2d5a3d; --green-lt: #e5f2ea;
       --font-serif: 'Instrument Serif', Georgia, serif;
       --font-mono: 'Geist Mono', 'Courier New', monospace;
@@ -71,13 +72,23 @@
     .giorno-label { width: 100px; font-size: 11px; }
     .disp-btns { display: flex; gap: 5px; flex: 1; }
     .disp-btn { flex: 1; padding: 7px 4px; border: 1px solid var(--border); border-radius: 3px; font-size: 10px; font-family: var(--font-mono); cursor: pointer; background: var(--bg); color: var(--ink3); transition: all .12s; text-align: center; }
-    .disp-btn:hover { border-color: var(--ink3); }
+    .disp-btn:hover:not(:disabled) { border-color: var(--ink3); }
+    .disp-btn:disabled { opacity: .5; cursor: not-allowed; }
     .disp-btn.sel-disp { background: var(--green-lt); border-color: #b2d4bc; color: var(--green); }
     .disp-btn.sel-no { background: var(--red-lt); border-color: #dbb2b2; color: var(--red); }
     .sett-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .btn-salva-sett { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 8px 18px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; cursor: pointer; }
-    .btn-salva-sett:hover { background: #1f3329; }
+    .btn-salva-sett:hover:not(:disabled) { background: #1f3329; }
+    .btn-salva-sett:disabled { opacity: .4; cursor: not-allowed; }
     .sett-saved { font-size: 10px; color: var(--green); display: none; }
+
+    /* Banner disponibilità chiuse */
+    .disp-locked-banner {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--red-lt); border: 1px solid #dbb2b2; border-radius: 3px;
+      padding: 10px 14px; margin: 8px 14px 4px;
+      font-size: 11px; color: var(--red); font-weight: 500; line-height: 1.5;
+    }
 
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); border-radius: 4px; padding: 11px 22px; font-size: 12px; opacity: 0; transition: all .3s; z-index: 400; pointer-events: none; max-width: 88vw; text-align: center; white-space: normal; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -165,7 +176,7 @@
 <script>
 (function() {
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsZ4Tq4pM6AhmNxkpcN-Y';
   const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
   let currentUser = null;
@@ -179,6 +190,8 @@
   let oratorioLon = 8.800464;
   let maxDistanza = 150;
   let stampBusy = false;
+  // Mappa settimana_id → true (chiusa) / false (aperta)
+  let dispChiuse = {};
 
   function toast(m, t) {
     const el = document.getElementById('toast');
@@ -207,6 +220,7 @@
 
   async function caricaImpostazioni() {
     const { data } = await sb.from('impostazioni').select('*');
+    dispChiuse = {};
     if (data) {
       data.forEach(row => {
         if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore === true || row.valore === 'true';
@@ -215,6 +229,11 @@
         if (row.chiave === 'oratorio_lat') oratorioLat = parseFloat(row.valore) || oratorioLat;
         if (row.chiave === 'oratorio_lon') oratorioLon = parseFloat(row.valore) || oratorioLon;
         if (row.chiave === 'max_distanza') maxDistanza = parseInt(row.valore) || maxDistanza;
+        // Legge le chiavi disp_chiusa_<id>
+        if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
+          const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
+          if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
+        }
       });
     }
     const btnIn = document.getElementById('btn-in');
@@ -259,9 +278,7 @@
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
       const dist = distance(lat, lon, oratorioLat, oratorioLon);
-      if (debugDiv) {
-        debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
-      }
+      if (debugDiv) debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
       if (dist > maxDistanza) {
         toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m)`, 'error');
         stampBusy = false;
@@ -345,7 +362,7 @@
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
   }
 
-  // DISPONIBILITÀ (con giorni attivi da stringa)
+  // DISPONIBILITÀ
   function parseGiorniAttivi(giorni) {
     if (!giorni) return GIORNI_TUTTI;
     if (typeof giorni === 'string') {
@@ -364,11 +381,16 @@
   async function caricaDisponibilita() {
     const container = document.getElementById('disp-container');
     container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
+
+    // Ricarica impostazioni per avere dispChiuse aggiornato
+    await caricaImpostazioni();
     await caricaSettimane();
+
     if (settimane.length === 0) {
       container.innerHTML = '<div class="empty-state">Nessuna settimana trovata.</div>';
       return;
     }
+
     const { data: scelte } = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
     const dispMap = {};
     if (scelte) scelte.forEach(d => dispMap[d.settimana_id + '_' + d.giorno_index] = d);
@@ -376,21 +398,47 @@
     container.innerHTML = '';
     for (const s of settimane) {
       const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
+      const chiusa = !!dispChiuse[s.id];
+
       const block = document.createElement('div');
       block.className = 'sett-block';
+
+      // Header della settimana — se chiusa usa un colore leggermente diverso
+      const headerStyle = chiusa ? 'background: #5a3030;' : '';
       block.innerHTML = `
-        <div class="sett-header">
-          <div class="sett-header-nome">${esc(s.nome)}</div>
+        <div class="sett-header" style="${headerStyle}">
+          <div class="sett-header-nome">${esc(s.nome)}${chiusa ? ' 🔒' : ''}</div>
           <div class="sett-header-date">${esc(s.date_info || '')}</div>
         </div>
-        <div class="giorni-grid" id="grid-${s.id}"></div>
-        <div class="sett-footer">
-          <div class="sett-saved" id="saved-${s.id}">✓ Salvato</div>
-          <button class="btn-salva-sett" onclick="salvaSettimana(${s.id})">Salva Settimana</button>
-        </div>
       `;
+
+      if (chiusa) {
+        // Banner di blocco
+        const banner = document.createElement('div');
+        banner.className = 'disp-locked-banner';
+        banner.innerHTML = '🔒 Le disponibilità per questa settimana sono state chiuse dall\'admin. Non è possibile modificarle.';
+        block.appendChild(banner);
+      }
+
+      // Griglia giorni
+      const grid = document.createElement('div');
+      grid.className = 'giorni-grid';
+      grid.id = `grid-${s.id}`;
+      block.appendChild(grid);
+
+      // Footer con pulsante salva
+      const footer = document.createElement('div');
+      footer.className = 'sett-footer';
+      footer.innerHTML = `
+        <div class="sett-saved" id="saved-${s.id}">✓ Salvato</div>
+        <button class="btn-salva-sett" id="salva-btn-${s.id}" onclick="salvaSettimana(${s.id})" ${chiusa ? 'disabled title="Disponibilità chiuse"' : ''}>
+          ${chiusa ? '🔒 Chiuse' : 'Salva Settimana'}
+        </button>
+      `;
+      block.appendChild(footer);
       container.appendChild(block);
-      const grid = document.getElementById(`grid-${s.id}`);
+
+      // Popola i giorni
       for (let idx = 0; idx < giorniAttivi.length; idx++) {
         const giornoNome = giorniAttivi[idx];
         const giornoIndex = GIORNI_TUTTI.indexOf(giornoNome);
@@ -398,11 +446,12 @@
         const stato = dispMap[key] ? dispMap[key].stato : '';
         const row = document.createElement('div');
         row.className = 'giorno-row';
+        const disabledAttr = chiusa ? 'disabled' : '';
         row.innerHTML = `
           <div class="giorno-label">${giornoNome}</div>
           <div class="disp-btns" data-sett="${s.id}" data-idx="${giornoIndex}">
-            <button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')">Sì</button>
-            <button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')">No</button>
+            <button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')" ${disabledAttr}>Sì</button>
+            <button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')" ${disabledAttr}>No</button>
           </div>
         `;
         grid.appendChild(row);
@@ -411,6 +460,7 @@
   }
 
   window.setStato = (btn, val) => {
+    if (btn.disabled) return;
     const parent = btn.parentElement;
     parent.querySelectorAll('.disp-btn').forEach(b => b.classList.remove('sel-disp', 'sel-no'));
     const cls = val === 'disponibile' ? 'sel-disp' : 'sel-no';
@@ -419,6 +469,11 @@
   };
 
   window.salvaSettimana = async (settId) => {
+    // Controllo di sicurezza lato client
+    if (dispChiuse[settId]) {
+      toast('❌ Disponibilità chiuse per questa settimana', 'error');
+      return;
+    }
     const rows = document.querySelectorAll(`.disp-btns[data-sett="${settId}"]`);
     for (const r of rows) {
       const stato = r.dataset.val;
