@@ -114,8 +114,8 @@
     .disp-table td:first-child { text-align: left; font-weight: 600; background: var(--bg2); position: sticky; left: 0; }
     .disp-si { color: var(--green); font-weight: 600; }
     .disp-no { color: var(--red); font-weight: 600; }
-    .giorni-checkboxes { display: flex; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
-    .giorni-checkboxes label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; text-transform: none; color: var(--ink2); }
+    .giorni-checkboxes { display: flex; gap: 12px; margin: 10px 0 20px; flex-wrap: wrap; }
+    .giorni-checkboxes label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; text-transform: none; color: var(--ink2); cursor: pointer; }
   </style>
 </head>
 <body>
@@ -167,7 +167,7 @@
 
 <div class="modal-overlay" id="modal-manual"><div class="modal"><div class="modal-title">Timbratura manuale</div><p style="font-size:12px;margin-bottom:20px;">Registra per <strong id="manual-name-label">—</strong></p><select id="manual-tipo"><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select><input type="date" id="manual-data" /><input type="time" id="manual-ora" /><div class="modal-actions"><button class="btn btn-ghost" id="closeManualBtn">Annulla</button><button class="btn btn-primary" id="saveManualBtn">Salva</button></div></div></div>
 <div class="modal-overlay" id="modal-edit-profile"><div class="modal"><div class="modal-title">Modifica Anagrafica</div><input type="hidden" id="profile-old-nome" /><input type="hidden" id="profile-old-anno" /><input type="text" id="profile-new-nome" placeholder="Nuovo nome" /><input type="number" id="profile-new-anno" placeholder="Nuovo anno" /><div class="modal-actions"><button class="btn btn-ghost" id="closeProfileBtn">Annulla</button><button class="btn btn-amber" id="saveProfileBtn">Salva</button></div></div></div>
-<div class="modal-overlay" id="modal-settimana"><div class="modal"><div class="modal-title">Modifica settimana</div><input type="hidden" id="sett-id" /><label>Nome settimana</label><input type="text" id="sett-nome" /><label>Info date (opzionale)</label><input type="text" id="sett-date-info" /><label>Giorni attivi (separati da virgola, es. Lunedì,Martedì,Mercoledì)</label><input type="text" id="sett-giorni" placeholder="Lunedì,Martedì,Mercoledì,Giovedì,Venerdì" /><div class="modal-actions"><button class="btn btn-ghost" id="closeSettBtn">Annulla</button><button class="btn btn-primary" id="saveSettBtn">Salva</button></div></div></div>
+<div class="modal-overlay" id="modal-settimana"><div class="modal"><div class="modal-title">Modifica settimana</div><input type="hidden" id="sett-id" /><label>Nome settimana</label><input type="text" id="sett-nome" /><label>Info date (opzionale)</label><input type="text" id="sett-date-info" /><label>Giorni attivi (spunta quelli da mostrare)</label><div class="giorni-checkboxes" id="giorni-checkboxes"></div><div class="modal-actions"><button class="btn btn-ghost" id="closeSettBtn">Annulla</button><button class="btn btn-primary" id="saveSettBtn">Salva</button></div></div></div>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -248,39 +248,27 @@
   document.getElementById('geo-save-btn').onclick = async () => { const lat = document.getElementById('geo-lat').value, lon = document.getElementById('geo-lon').value, rad = document.getElementById('geo-radius').value; if (!lat||!lon||!rad) return toast('Compila tutti i campi GPS','error'); await upsertImpostazione('oratorio_lat', lat); await upsertImpostazione('oratorio_lon', lon); await upsertImpostazione('max_distanza', rad); toast('Coordinate salvate','success'); loadSettings(); };
   document.getElementById('geo-use-current').onclick = () => { if ("geolocation" in navigator) { toast('Acquisizione posizione...'); navigator.geolocation.getCurrentPosition(pos => { document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(6); document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(6); if(!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value="150"; toast('Posizione acquisita. Salva!','success'); }, err => toast('Errore GPS: '+err.message,'error'), { enableHighAccuracy: true }); } else toast('Geolocalizzazione non supportata','error'); };
 
-  // SETTIMANE E DISPONIBILITÀ (gestione array/stringa)
-  function parseGiorniAttivi(giorni) {
-    if (!giorni) return GIORNI_TUTTI;
-    let giorniStr = '';
-    if (Array.isArray(giorni)) giorniStr = giorni.join(',');
-    else giorniStr = String(giorni);
-    if (!giorniStr.trim()) return GIORNI_TUTTI;
-    return giorniStr.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
-  }
-
+  // SETTIMANE E DISPONIBILITÀ (con checkbox e stringa TEXT)
   async function loadSettimane() {
     const { data } = await sb.from('settimane').select('*').order('id');
     const container = document.getElementById('settimane-list');
     if (!data || data.length === 0) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
     container.innerHTML = data.map(s => {
-      let giorniAttiviStr = '';
-      if (Array.isArray(s.giorni_attivi)) {
-        giorniAttiviStr = s.giorni_attivi.join(', ');
-      } else if (typeof s.giorni_attivi === 'string') {
-        giorniAttiviStr = s.giorni_attivi;
-      } else if (s.giorni_attivi !== null && s.giorni_attivi !== undefined) {
-        giorniAttiviStr = String(s.giorni_attivi);
+      let giorniMostrati = GIORNI_TUTTI;
+      if (s.giorni_attivi && typeof s.giorni_attivi === 'string' && s.giorni_attivi.trim()) {
+        giorniMostrati = s.giorni_attivi.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
       }
-      const giorniMostrati = parseGiorniAttivi(giorniAttiviStr);
-      return `<div class="sett-card"><div class="sett-info"><div class="sett-nome-admin">${escapeHtml(s.nome)}</div><div class="sett-date-admin">${escapeHtml(s.date_info||'')}</div><div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorniMostrati.join(', ')}</div></div><div class="sett-actions"><button class="btn btn-amber btn-sm" onclick="editSettimana(${s.id}, '${escapeHtml(s.nome)}', '${escapeHtml(s.date_info||'')}', '${escapeHtml(giorniAttiviStr)}')">✏️ Modifica</button><button class="btn btn-red btn-sm" onclick="deleteSettimana(${s.id})">🗑️</button></div></div>`;
+      return `<div class="sett-card"><div class="sett-info"><div class="sett-nome-admin">${escapeHtml(s.nome)}</div><div class="sett-date-admin">${escapeHtml(s.date_info||'')}</div><div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorniMostrati.join(', ')}</div></div><div class="sett-actions"><button class="btn btn-amber btn-sm" onclick="editSettimana(${s.id}, '${escapeHtml(s.nome)}', '${escapeHtml(s.date_info||'')}', '${escapeHtml(s.giorni_attivi||'')}')">✏️ Modifica</button><button class="btn btn-red btn-sm" onclick="deleteSettimana(${s.id})">🗑️</button></div></div>`;
     }).join('');
   }
 
-  window.editSettimana = (id, nome, dateInfo, giorniAttivi) => {
+  window.editSettimana = (id, nome, dateInfo, giorniAttiviStr) => {
     document.getElementById('sett-id').value = id;
     document.getElementById('sett-nome').value = nome;
     document.getElementById('sett-date-info').value = dateInfo;
-    document.getElementById('sett-giorni').value = giorniAttivi;
+    const container = document.getElementById('giorni-checkboxes');
+    const selezionati = giorniAttiviStr ? giorniAttiviStr.split(',').map(g=>g.trim()) : [];
+    container.innerHTML = GIORNI_TUTTI.map(g => `<label><input type="checkbox" value="${g}" ${selezionati.includes(g) ? 'checked' : ''}> ${g}</label>`).join('');
     document.getElementById('modal-settimana').classList.add('open');
   };
   document.getElementById('closeSettBtn').onclick = () => document.getElementById('modal-settimana').classList.remove('open');
@@ -288,9 +276,10 @@
     const id = document.getElementById('sett-id').value;
     const nome = document.getElementById('sett-nome').value.trim();
     const dateInfo = document.getElementById('sett-date-info').value.trim();
-    const giorniAttivi = document.getElementById('sett-giorni').value.trim();
+    const checkboxes = document.querySelectorAll('#giorni-checkboxes input:checked');
+    const giorniAttivi = Array.from(checkboxes).map(cb => cb.value);
     if (!nome) return toast('Il nome è obbligatorio','error');
-    const payload = { nome, date_info: dateInfo, giorni_attivi: giorniAttivi };
+    const payload = { nome, date_info: dateInfo, giorni_attivi: giorniAttivi.join(',') };
     let error;
     if (id) error = (await sb.from('settimane').update(payload).eq('id', id)).error;
     else error = (await sb.from('settimane').insert(payload)).error;
@@ -299,6 +288,15 @@
   };
   document.getElementById('add-sett-btn').onclick = () => editSettimana(0, '', '', '');
   window.deleteSettimana = async (id) => { if (!confirm('Eliminare?')) return; await sb.from('settimane').delete().eq('id', id); await sb.from('disponibilita').delete().eq('settimana_id', id); toast('Eliminata','success'); await loadSettimane(); await loadDispRiepilogo(); };
+
+  function parseGiorniAttivi(giorni) {
+    if (!giorni) return GIORNI_TUTTI;
+    if (typeof giorni === 'string') {
+      if (!giorni.trim()) return GIORNI_TUTTI;
+      return giorni.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g));
+    }
+    return GIORNI_TUTTI;
+  }
 
   async function loadDispRiepilogo() {
     const { data: settimane } = await sb.from('settimane').select('*').order('id');
