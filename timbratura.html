@@ -360,6 +360,11 @@
     await caricaImpostazioni();
     document.getElementById('btn-in').onclick = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
+    // Polling ogni 30s: aggiorna impostazioni GPS/lock in background senza disturbare l'utente
+    setInterval(async () => {
+      if (!currentUser) return;
+      await caricaImpostazioni();
+    }, 30000);
   }
 
   // DISPONIBILITÀ
