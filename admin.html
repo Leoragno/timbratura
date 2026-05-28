@@ -202,14 +202,14 @@
     const { data } = await sb.from('impostazioni').select('*');
     let geoAbilitata = true, geoLat = '', geoLon = '', geoRadius = '';
     dispChiuse = {};
+    const toBool = v => v === true || v === 'true';
     if (data) data.forEach(row => {
-      if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-      if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
-      if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore;
+      if (row.chiave === 'ingresso_aperto') ingressoAperto = toBool(row.valore);
+      if (row.chiave === 'uscita_aperta') uscitaAperta = toBool(row.valore);
+      if (row.chiave === 'geo_abilitata') geoAbilitata = toBool(row.valore);
       if (row.chiave === 'oratorio_lat') geoLat = row.valore;
       if (row.chiave === 'oratorio_lon') geoLon = row.valore;
       if (row.chiave === 'max_distanza') geoRadius = row.valore;
-      // Legge le chiavi disp_chiusa_<id>
       if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
         const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
         if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
@@ -223,7 +223,13 @@
     if (geoLat && geoLon) { const preview = document.getElementById('geo-current-preview'); preview.style.display = 'block'; preview.innerHTML = '📌 Attuali: <strong>' + geoLat + '</strong>, <strong>' + geoLon + '</strong> · raggio <strong>' + (geoRadius || '150') + 'm</strong>'; }
   }
 
-  async function upsertImpostazione(chiave, valore) { const { data: existing } = await sb.from('impostazioni').select('chiave').eq('chiave', chiave).maybeSingle(); if (existing) return sb.from('impostazioni').update({ valore: valore }).eq('chiave', chiave); else return sb.from('impostazioni').insert({ chiave: chiave, valore: valore }); }
+  async function upsertImpostazione(chiave, valore) {
+    // Converte tutto in stringa per compatibilità con la colonna text di Supabase
+    const valoreStr = String(valore);
+    const { error } = await sb.from('impostazioni')
+      .upsert({ chiave, valore: valoreStr }, { onConflict: 'chiave' });
+    if (error) console.error('Errore upsert impostazione', chiave, error);
+  }
 
   async function loadUsers() { const { data } = await sb.from('utenti').select('*'); allAnimators = data || []; }
   async function loadTimbrature() { const { data } = await sb.from('timbrature').select('*').order('id', { ascending: false }); allLog = data || []; }
