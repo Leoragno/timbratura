@@ -2,14 +2,14 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Timbratura</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Oratorio Timbratura</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #f5f2eb; --bg2: #ede9df; --surface: #fff; --border: #d8d2c4;
+      --bg: #f5f2eb; --surface: #fff; --border: #d8d2c4;
       --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
       --accent: #2d4a3e; --accent-lt: #e8f0ec;
       --red: #8b2e2e; --red-lt: #f5e8e8;
@@ -19,423 +19,510 @@
       --font-mono: 'Geist Mono', 'Courier New', monospace;
     }
     html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
-    body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(180,160,100,.08) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 90%, rgba(100,130,110,.06) 0%, transparent 60%); }
-    #login-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 24px; }
-    .login-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 44px 40px; box-shadow: 0 2px 24px rgba(0,0,0,.07); animation: riseIn .4s cubic-bezier(.23,1,.32,1) both; }
-    @keyframes riseIn { from { opacity: 0; transform: translateY(20px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    .login-eyebrow { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
-    .login-title { font-family: var(--font-serif); font-size: 32px; line-height: 1.1; margin-bottom: 32px; }
-    .login-title em { font-style: italic; color: var(--accent); }
+
+    /* AUTH */
+    #auth-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; background: var(--bg); }
+    .auth-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
+    .auth-title { font-family: var(--font-serif); font-size: 32px; line-height: 1.1; margin-bottom: 24px; text-align: center; }
+    .auth-title em { font-style: italic; color: var(--accent); }
     label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
-    input, select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px; }
-    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,74,62,.12); }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border: 1px solid transparent; border-radius: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
-    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); width: 100%; justify-content: center; padding: 12px; }
-    .btn-primary:hover { background: #1f3329; }
-    .btn-sm { padding: 6px 12px; font-size: 11px; }
-    .btn-green { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
-    .btn-red { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
-    .btn-amber { background: var(--amber-lt); color: var(--amber); border-color: #e0cfa0; }
-    .btn-ghost { background: transparent; color: var(--ink3); border-color: var(--border); }
-    .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
-    #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
-    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-    .topbar-title { font-family: var(--font-serif); font-size: 20px; }
+    input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px; }
+    input:focus { border-color: var(--accent); }
+    input[type=number] { -moz-appearance: textfield; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; margin-bottom: 12px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1f3329; }
+    .btn-green { background: var(--green); color: #fff; font-size: 15px; padding: 18px; }
+    .btn-green:hover:not(:disabled) { background: #1f3f2a; }
+    .btn-red { background: var(--red); color: #fff; font-size: 15px; padding: 18px; }
+    .btn-red:hover:not(:disabled) { background: #662121; }
+    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; margin-top: 8px; }
+    .auth-toggle span { text-decoration: underline; color: var(--accent); }
+    .error-msg  { color: var(--red);   font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+    .success-msg{ color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+
+    /* APP */
+    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 52px; }
+    .topbar-title { font-family: var(--font-serif); font-size: 19px; }
     .topbar-title em { font-style: italic; color: var(--accent); }
-    .topbar-badge { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; background: var(--accent-lt); color: var(--accent); padding: 3px 8px; border-radius: 20px; border: 1px solid #b2ccbc; }
-    .topbar-right { display: flex; align-items: center; gap: 16px; }
-    .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); }
-    .live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.8s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.7);} }
-    .topbar-clock { font-size: 12px; color: var(--ink3); }
-    .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 28px; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; }
-    .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
-    .stat-value { font-family: var(--font-serif); font-size: 40px; line-height: 1; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .section-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; }
-    .control-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 28px; }
-    .btn-toggle { width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; text-align: center; }
-    .btn-toggle.open { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
-    .btn-toggle.locked { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-    .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
-    .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 32px; }
-    .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
-    .animator-card.inside { border-left: 3px solid var(--green); }
-    .animator-card.outside { border-left: 3px solid var(--border2); }
-    .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
-    .anim-name span { font-size: 13px; color: var(--ink3); margin-left: 6px; }
-    .anim-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; margin-bottom: 12px; }
-    .anim-status.in { background: var(--green-lt); color: var(--green); }
-    .anim-status.out { background: var(--bg2); color: var(--ink3); }
-    .anim-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-    .anim-status.in::before { background: var(--green); }
-    .anim-status.out::before { background: var(--ink3); }
-    .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
-    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; min-width: 750px; }
-    th { background: var(--bg2); padding: 12px 14px; text-align: left; font-size: 10px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
-    tr:hover { background: var(--bg); }
-    .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
-    .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
-    .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
-    .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(26,23,20,.45); display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s; }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 36px 32px; width: 100%; max-width: 500px; }
-    .modal-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 20px; }
-    .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
-    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 18px; font-size: 12px; transform: translateY(20px); opacity: 0; transition: all .3s; z-index: 300; }
-    .toast.show { transform: translateY(0); opacity: 1; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { font-size: 11px; color: var(--ink3); }
+
+    /* TABS */
+    .tab-nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 13px 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .main-panel { max-width: 540px; margin: 0 auto; padding: 20px 16px; }
+
+    /* CARDS & DISPONIBILITÀ */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; margin-bottom: 16px; }
+    .user-name { font-family: var(--font-serif); font-size: 26px; text-align: center; margin-bottom: 4px; }
+    .user-meta { font-size: 11px; color: var(--ink3); text-align: center; margin-bottom: 20px; }
+    .gps-banner { display: none; background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: #7a5c1e; line-height: 1.6; }
+    .sett-block { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
+    .sett-header { background: var(--accent); color: #fff; padding: 12px 16px; }
+    .sett-header-nome { font-family: var(--font-serif); font-size: 16px; }
+    .sett-header-date { font-size: 10px; opacity: .8; }
+    .giorni-grid { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .giorno-row { display: flex; align-items: center; gap: 8px; }
+    .giorno-label { width: 100px; font-size: 11px; }
+    .disp-btns { display: flex; gap: 5px; flex: 1; }
+    .disp-btn { flex: 1; padding: 7px 4px; border: 1px solid var(--border); border-radius: 3px; font-size: 10px; font-family: var(--font-mono); cursor: pointer; background: var(--bg); color: var(--ink3); transition: all .12s; text-align: center; }
+    .disp-btn:hover:not(:disabled) { border-color: var(--ink3); }
+    .disp-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .disp-btn.sel-disp { background: var(--green-lt); border-color: #b2d4bc; color: var(--green); }
+    .disp-btn.sel-no { background: var(--red-lt); border-color: #dbb2b2; color: var(--red); }
+    .sett-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .btn-salva-sett { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 8px 18px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; cursor: pointer; }
+    .btn-salva-sett:hover:not(:disabled) { background: #1f3329; }
+    .btn-salva-sett:disabled { opacity: .4; cursor: not-allowed; }
+    .sett-saved { font-size: 10px; color: var(--green); display: none; }
+
+    /* Banner disponibilità chiuse */
+    .disp-locked-banner {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--red-lt); border: 1px solid #dbb2b2; border-radius: 3px;
+      padding: 10px 14px; margin: 8px 14px 4px;
+      font-size: 11px; color: var(--red); font-weight: 500; line-height: 1.5;
+    }
+
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); border-radius: 4px; padding: 11px 22px; font-size: 12px; opacity: 0; transition: all .3s; z-index: 400; pointer-events: none; max-width: 88vw; text-align: center; white-space: normal; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.success { background: var(--green); }
-    .toast.error { background: var(--red); }
-    .empty { text-align: center; padding: 48px; color: var(--ink3); }
-    .geo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 28px; }
-    .geo-row { display: grid; grid-template-columns: 1fr 2fr; gap: 28px; }
-    @media (max-width: 640px) { .geo-row { grid-template-columns: 1fr; } }
-    .geo-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    @media (max-width: 640px) { .geo-fields { grid-template-columns: 1fr; } }
-    .geo-fields input { margin-bottom: 0; }
-    .sett-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .sett-info { flex: 1; }
-    .sett-nome-admin { font-family: var(--font-serif); font-size: 17px; margin-bottom: 2px; }
-    .sett-date-admin { font-size: 11px; color: var(--ink3); }
-    /* Badge stato disponibilità */
-    .disp-lock-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; margin-top: 5px; }
-    .disp-lock-badge.open  { background: var(--green-lt); color: var(--green); border: 1px solid #b2d4bc; }
-    .disp-lock-badge.locked { background: var(--red-lt);   color: var(--red);   border: 1px solid #dbb2b2; }
-    .sett-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .disp-block { margin-bottom: 40px; }
-    .disp-block-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 5px; }
-    .disp-block-date { font-size: 12px; color: var(--ink3); margin-bottom: 16px; }
-    .disp-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); font-size: 12px; overflow-x: auto; display: block; }
-    .disp-table th, .disp-table td { border: 1px solid var(--border); padding: 8px 6px; text-align: center; vertical-align: middle; }
-    .disp-table th { background: var(--bg2); font-weight: 600; text-transform: uppercase; font-size: 10px; }
-    .disp-table td:first-child { text-align: left; font-weight: 600; background: var(--bg2); position: sticky; left: 0; }
-    .disp-si { color: var(--green); font-weight: 600; }
-    .disp-no { color: var(--red); font-weight: 600; }
-    .giorni-checkboxes { display: flex; gap: 12px; margin: 10px 0 20px; flex-wrap: wrap; }
-    .giorni-checkboxes label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; text-transform: none; color: var(--ink2); cursor: pointer; }
+    .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--accent); }
+    .empty-state { text-align: center; padding: 36px 16px; color: var(--ink3); font-size: 12px; line-height: 1.7; }
   </style>
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-eyebrow">Pannello di controllo</div>
-    <div class="login-title">Accesso <em>Admin</em></div>
-    <label for="admin-pass">Password</label>
-    <input type="password" id="admin-pass" placeholder="••••••••" />
-    <button class="btn btn-primary" id="loginBtn">Entra →</button>
-    <div class="login-err" id="login-err">Password errata. Riprova.</div>
+<div id="auth-screen">
+  <div class="auth-card" id="login-card">
+    <div class="auth-title">Accedi all'<em>Oratorio</em></div>
+    <div class="qr-alert" id="qr-alert-login" style="display:none; background:var(--accent-lt); color:var(--accent); border:1px solid #b2ccbc; padding:10px; border-radius:4px; margin-bottom:14px; text-align:center;">📱 QR Code rilevato! Accedi per timbrare.</div>
+    <label>👤 Nome e Cognome</label>
+    <input type="text" id="login-nome" placeholder="Mario Rossi" autocomplete="off" />
+    <label>🔐 Password</label>
+    <input type="password" id="login-password" />
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn btn-primary" id="login-btn">Entra →</button>
+    <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo? <span>Registrati</span></div>
+  </div>
+
+  <div class="auth-card" id="register-card" style="display:none;">
+    <div class="auth-title">Nuovo <em>Animatore</em></div>
+    <label>📛 Nome e Cognome</label>
+    <input type="text" id="reg-nome" />
+    <label>🎂 Anno di Nascita</label>
+    <input type="number" id="reg-anno" placeholder="2008" />
+    <label>🔐 Password (min. 4 caratteri)</label>
+    <input type="password" id="reg-password" />
+    <div class="error-msg" id="reg-error"></div>
+    <div class="success-msg" id="reg-success"></div>
+    <button class="btn btn-primary" id="register-btn">Registrati</button>
+    <div class="auth-toggle" onclick="toggleAuth(false)">Hai un account? <span>Accedi</span></div>
   </div>
 </div>
 
-<div id="app">
+<div id="app-screen">
   <div class="topbar">
-    <div class="topbar-brand"><div class="topbar-title">tim<em>bratura</em></div><div class="topbar-badge">Admin</div></div>
-    <div class="topbar-right"><span class="live-dot">Live</span><span class="topbar-clock" id="top-clock">—</span><button class="btn btn-ghost btn-sm" id="logoutBtn">Esci</button></div>
-  </div>
-  <div class="main">
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Totale animatori</div><div class="stat-value" id="stat-total">—</div></div>
-      <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value" id="stat-in">—</div></div>
-      <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value" id="stat-out">—</div></div>
+    <div class="topbar-title">tim<em>bratura</em></div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-user"></span>
+      <button class="btn-primary" id="logout-btn" style="padding: 4px 8px; font-size: 10px; background:transparent; border:1px solid var(--border); color:var(--ink3);">Esci</button>
     </div>
+  </div>
 
-    <div class="section-header"><div class="section-title">Controllo accessi (Locks)</div></div>
-    <div class="control-row"><button id="toggle-in-btn" class="btn-toggle">Ingressi: Caricamento...</button><button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button></div>
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-timbratura">⏱ Timbratura</button>
+    <button class="tab-btn" data-tab="tab-disponibilita">📅 Disponibilità</button>
+  </div>
 
-    <div class="section-header"><div class="section-title">Geolocalizzazione</div></div>
-    <div class="geo-card"><div class="geo-row"><div class="geo-toggle-col"><div class="stat-label" style="margin-bottom:10px;">Controllo GPS</div><button id="toggle-geo-btn" class="btn-toggle">Caricamento...</button><div style="font-size:11px; color:var(--ink3); margin-top:8px;">Se disabilitato, gli animatori possono timbrare senza verifica posizione.</div></div><div class="geo-coords-col"><div class="stat-label" style="margin-bottom:10px;">Coordinate Oratorio</div><div class="geo-fields"><div><label>Latitudine</label><input type="text" id="geo-lat" placeholder="45.706869" /></div><div><label>Longitudine</label><input type="text" id="geo-lon" placeholder="8.800464" /></div><div><label>Raggio (metri)</label><input type="number" id="geo-radius" placeholder="150" /></div></div><div style="display:flex; gap:8px;"><button class="btn btn-ghost btn-sm" id="geo-use-current">📍 Usa posizione attuale</button><button class="btn btn-primary btn-sm" id="geo-save-btn">💾 Salva</button></div><div id="geo-current-preview" style="font-size:11px; color:var(--ink3); margin-top:10px; display:none;"></div></div></div></div>
+  <div class="tab-panel active" id="tab-timbratura">
+    <div class="main-panel">
+      <div class="card">
+        <div class="user-name" id="user-display-name">—</div>
+        <div class="user-meta" id="user-display-meta">—</div>
+        <div class="gps-banner" id="geo-banner">
+          <strong>📍 Posizione richiesta</strong><br>
+          Per timbrare devi essere nei pressi dell'oratorio.<br>
+          <small>Consenti la geolocalizzazione quando richiesto.</small>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn-green" id="btn-in">⬆ INGRESSO</button>
+          <button class="btn btn-red" id="btn-out">⬇ USCITA</button>
+        </div>
+        <div id="gps-debug" style="margin-top:16px; font-size:10px; color:var(--ink3); border-top:1px solid var(--border); padding-top:12px; display:none;"></div>
+      </div>
+    </div>
+  </div>
 
-    <div class="section-header"><div class="section-title">Stato animatori</div><button class="btn btn-sm btn-ghost" id="refreshBtn">↻ Aggiorna</button></div>
-    <div class="filter-bar"><input type="text" id="filter-name" placeholder="Cerca nome o anno…"><select id="filter-status"><option value="">Tutti gli stati</option><option value="inside">Dentro</option><option value="outside">Fuori</option></select><select id="filter-sort"><option value="status">Ordina per: Stato</option><option value="alpha">Ordina per: Alfabetico</option><option value="anno">Ordina per: Anno</option></select></div>
-    <div class="status-grid" id="animators-grid"><div class="empty">⏳ Caricamento…</div></div>
-
-    <div class="section-header"><div class="section-title">Log timbrature</div></div>
-    <div class="filter-bar"><input type="text" id="log-search" placeholder="Cerca nome…"><input type="date" id="log-date"><select id="log-tipo"><option value="">Tutti</option><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select></div>
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr></thead><tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody></table></div>
-
-    <div class="section-header" style="margin-top:10px;"><div class="section-title">Settimane oratorio estivo</div><button class="btn btn-sm btn-primary" id="add-sett-btn">+ Aggiungi settimana</button></div>
-    <div id="settimane-list" style="margin-bottom:28px;"><div class="empty">⏳ Caricamento…</div></div>
-
-    <div class="section-header"><div class="section-title">Riepilogo disponibilità (dettaglio per animatore)</div><button class="btn btn-sm btn-ghost" id="refresh-disp-btn">↻ Aggiorna</button></div>
-    <div id="admin-disp-container" style="margin-bottom:32px;"><div class="empty">⏳ Caricamento…</div></div>
+  <div class="tab-panel" id="tab-disponibilita">
+    <div class="main-panel">
+      <div id="disp-container">
+        <div class="empty-state">⏳ Caricamento settimane...</div>
+      </div>
+    </div>
   </div>
 </div>
-
-<div class="modal-overlay" id="modal-manual"><div class="modal"><div class="modal-title">Timbratura manuale</div><p style="font-size:12px;margin-bottom:20px;">Registra per <strong id="manual-name-label">—</strong></p><select id="manual-tipo"><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select><input type="date" id="manual-data" /><input type="time" id="manual-ora" /><div class="modal-actions"><button class="btn btn-ghost" id="closeManualBtn">Annulla</button><button class="btn btn-primary" id="saveManualBtn">Salva</button></div></div></div>
-<div class="modal-overlay" id="modal-edit-profile"><div class="modal"><div class="modal-title">Modifica Anagrafica</div><input type="hidden" id="profile-old-nome" /><input type="hidden" id="profile-old-anno" /><input type="text" id="profile-new-nome" placeholder="Nuovo nome" /><input type="number" id="profile-new-anno" placeholder="Nuovo anno" /><div class="modal-actions"><button class="btn btn-ghost" id="closeProfileBtn">Annulla</button><button class="btn btn-amber" id="saveProfileBtn">Salva</button></div></div></div>
-<div class="modal-overlay" id="modal-settimana"><div class="modal"><div class="modal-title">Modifica settimana</div><input type="hidden" id="sett-id" /><label>Nome settimana</label><input type="text" id="sett-nome" /><label>Info date (opzionale)</label><input type="text" id="sett-date-info" /><label>Giorni attivi (spunta quelli da mostrare)</label><div class="giorni-checkboxes" id="giorni-checkboxes"></div><div class="modal-actions"><button class="btn btn-ghost" id="closeSettBtn">Annulla</button><button class="btn btn-primary" id="saveSettBtn">Salva</button></div></div></div>
 
 <div class="toast" id="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function() {
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const ADMIN_PASSWORD = 'admin123';
   const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+  let currentUser = null;
+  let settimane = [];
   const GIORNI_TUTTI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
-  let allAnimators = [], allLog = [], ingressoAperto = true, uscitaAperta = true, manualTarget = null;
-  // Cache locale delle disponibilità chiuse: { settimana_id: true/false }
+  let ingressoAperto = true;
+  let uscitaAperta = true;
+  let geoAbilitata = true;
+  let oratorioLat = 45.706869;
+  let oratorioLon = 8.800464;
+  let maxDistanza = 150;
+  let stampBusy = false;
+  // Mappa settimana_id → true (chiusa) / false (aperta)
   let dispChiuse = {};
 
-  function toast(msg, type) { const el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast ' + (type || '') + ' show'; setTimeout(() => el.classList.remove('show'), 3000); }
-  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"']/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]; }); }
-  function closeAllModals() { document.getElementById('modal-manual').classList.remove('open'); document.getElementById('modal-edit-profile').classList.remove('open'); document.getElementById('modal-settimana').classList.remove('open'); }
+  function toast(m, t) {
+    const el = document.getElementById('toast');
+    el.textContent = m;
+    el.className = 'toast ' + (t || '') + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
 
-  // LOGIN
-  async function doLogin() { const pw = document.getElementById('admin-pass').value; if (pw !== ADMIN_PASSWORD) { document.getElementById('login-err').style.display = 'block'; return; } document.getElementById('login-err').style.display = 'none'; sessionStorage.setItem('admin_auth', '1'); document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'block'; await loadAllData(); startClock(); }
-  document.getElementById('loginBtn').addEventListener('click', doLogin);
-  document.getElementById('admin-pass').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
-  document.getElementById('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('admin_auth'); location.reload(); });
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
-  async function loadAllData() { await loadSettings(); await loadUsers(); await loadTimbrature(); renderAnimators(); renderLog(); updateStats(); await loadSettimane(); await loadDispRiepilogo(); }
+  function distance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
 
-  async function loadSettings() {
+  async function caricaImpostazioni() {
     const { data } = await sb.from('impostazioni').select('*');
-    let geoAbilitata = true, geoLat = '', geoLon = '', geoRadius = '';
     dispChiuse = {};
-    const toBool = v => v === true || v === 'true';
-    if (data) data.forEach(row => {
-      if (row.chiave === 'ingresso_aperto') ingressoAperto = toBool(row.valore);
-      if (row.chiave === 'uscita_aperta') uscitaAperta = toBool(row.valore);
-      if (row.chiave === 'geo_abilitata') geoAbilitata = toBool(row.valore);
-      if (row.chiave === 'oratorio_lat') geoLat = row.valore;
-      if (row.chiave === 'oratorio_lon') geoLon = row.valore;
-      if (row.chiave === 'max_distanza') geoRadius = row.valore;
-      if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
-        const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
-        if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
+    if (data) {
+      data.forEach(row => {
+        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore === true || row.valore === 'true';
+        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore === true || row.valore === 'true';
+        if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore === true || row.valore === 'true';
+        if (row.chiave === 'oratorio_lat') oratorioLat = parseFloat(row.valore) || oratorioLat;
+        if (row.chiave === 'oratorio_lon') oratorioLon = parseFloat(row.valore) || oratorioLon;
+        if (row.chiave === 'max_distanza') maxDistanza = parseInt(row.valore) || maxDistanza;
+        // Legge le chiavi disp_chiusa_<id>
+        if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
+          const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
+          if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
+        }
+      });
+    }
+    const btnIn = document.getElementById('btn-in');
+    const btnOut = document.getElementById('btn-out');
+    if (btnIn) btnIn.disabled = !ingressoAperto;
+    if (btnOut) btnOut.disabled = !uscitaAperta;
+    const banner = document.getElementById('geo-banner');
+    if (banner) banner.style.display = geoAbilitata ? 'block' : 'none';
+  }
+
+  async function timbra(tipo) {
+    if (!currentUser) { toast('Devi effettuare il login', 'error'); return; }
+    if (stampBusy) { toast('Attendi...', 'info'); return; }
+    if (tipo === 'Ingresso' && !ingressoAperto) { toast('❌ Ingresso bloccato', 'error'); return; }
+    if (tipo === 'Uscita' && !uscitaAperta) { toast('❌ Uscita bloccata', 'error'); return; }
+
+    stampBusy = true;
+    const btn = document.getElementById(tipo === 'Ingresso' ? 'btn-in' : 'btn-out');
+    if (btn) btn.disabled = true;
+
+    if (!geoAbilitata) {
+      await salvaTimbratura(tipo);
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      toast('Geolocalizzazione non supportata', 'error');
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    const banner = document.getElementById('geo-banner');
+    const debugDiv = document.getElementById('gps-debug');
+    if (banner) banner.style.display = 'block';
+    if (debugDiv) debugDiv.style.display = 'block';
+    toast('📍 Acquisizione posizione...', 'info');
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const dist = distance(lat, lon, oratorioLat, oratorioLon);
+      if (debugDiv) debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
+      if (dist > maxDistanza) {
+        toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m)`, 'error');
+        stampBusy = false;
+        if (btn) btn.disabled = false;
+        return;
       }
+      await salvaTimbratura(tipo);
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+    }, (error) => {
+      let msg = 'Errore GPS';
+      if (error.code === 1) msg = 'Permesso GPS negato';
+      else if (error.code === 2) msg = 'Posizione non disponibile';
+      else if (error.code === 3) msg = 'Timeout GPS';
+      toast(msg, 'error');
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 15000 });
+  }
+
+  async function salvaTimbratura(tipo) {
+    const now = new Date();
+    const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+    const ora = now.toTimeString().slice(0,5);
+    const { error } = await sb.from('timbrature').insert({
+      user_id: currentUser.id,
+      nome: currentUser.nome,
+      anno: currentUser.anno || null,
+      data, ora, tipo,
+      created_at: now.toISOString()
     });
-    const btnIn = document.getElementById('toggle-in-btn'), btnOut = document.getElementById('toggle-out-btn');
-    btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI'; btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
-    btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE'; btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
-    const btnGeo = document.getElementById('toggle-geo-btn'); btnGeo.textContent = geoAbilitata ? '🛰️ GPS: ATTIVO' : '🚫 GPS: DISABILITATO'; btnGeo.className = 'btn-toggle ' + (geoAbilitata ? 'open' : 'locked');
-    if (geoLat) document.getElementById('geo-lat').value = geoLat; if (geoLon) document.getElementById('geo-lon').value = geoLon; if (geoRadius) document.getElementById('geo-radius').value = geoRadius;
-    if (geoLat && geoLon) { const preview = document.getElementById('geo-current-preview'); preview.style.display = 'block'; preview.innerHTML = '📌 Attuali: <strong>' + geoLat + '</strong>, <strong>' + geoLon + '</strong> · raggio <strong>' + (geoRadius || '150') + 'm</strong>'; }
+    if (error) toast(`Errore: ${error.message}`, 'error');
+    else toast(`✅ ${tipo} alle ${ora}`, 'success');
+    await caricaImpostazioni();
   }
 
-  async function upsertImpostazione(chiave, valore) {
-    // Converte tutto in stringa per compatibilità con la colonna text di Supabase
-    const valoreStr = String(valore);
-    const { error } = await sb.from('impostazioni')
-      .upsert({ chiave, valore: valoreStr }, { onConflict: 'chiave' });
-    if (error) console.error('Errore upsert impostazione', chiave, error);
+  // AUTH
+  window.toggleAuth = function(r) {
+    document.getElementById('login-card').style.display = r ? 'none' : 'block';
+    document.getElementById('register-card').style.display = r ? 'block' : 'none';
+  };
+
+  document.getElementById('login-btn').onclick = async () => {
+    const nome = document.getElementById('login-nome').value.trim();
+    const pw = document.getElementById('login-password').value;
+    if (!nome || !pw) { toast('Inserisci nome e password', 'error'); return; }
+    const { data, error } = await sb.from('utenti').select('*').eq('nome', nome).eq('password', pw).maybeSingle();
+    if (error || !data) { toast('Accesso fallito', 'error'); return; }
+    currentUser = data;
+    sessionStorage.setItem('cu', JSON.stringify(data));
+    mostraApp();
+  };
+
+  document.getElementById('register-btn').onclick = async () => {
+    const nome = document.getElementById('reg-nome').value.trim();
+    const anno = parseInt(document.getElementById('reg-anno').value);
+    const pw = document.getElementById('reg-password').value;
+    if (!nome || !pw) { toast('Compila tutti i campi', 'error'); return; }
+    if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; }
+    const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
+    if (exist) { toast('Nome già registrato', 'error'); return; }
+    const { error } = await sb.from('utenti').insert([{ nome, password: pw, anno: anno || null }]);
+    if (error) { toast('Errore registrazione', 'error'); return; }
+    toast('Registrato! Ora accedi.', 'success');
+    toggleAuth(false);
+    document.getElementById('reg-nome').value = '';
+    document.getElementById('reg-anno').value = '';
+    document.getElementById('reg-password').value = '';
+  };
+
+  document.getElementById('logout-btn').onclick = () => { sessionStorage.clear(); location.reload(); };
+
+  async function mostraApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('user-display-name').textContent = currentUser.nome;
+    document.getElementById('topbar-user').textContent = currentUser.nome;
+    document.getElementById('user-display-meta').textContent = 'Animatore - ' + (currentUser.anno || '?');
+    await caricaImpostazioni();
+    document.getElementById('btn-in').onclick = () => timbra('Ingresso');
+    document.getElementById('btn-out').onclick = () => timbra('Uscita');
+    // Polling ogni 30s: aggiorna impostazioni GPS/lock in background senza disturbare l'utente
+    setInterval(async () => {
+      if (!currentUser) return;
+      await caricaImpostazioni();
+    }, 30000);
   }
 
-  async function loadUsers() { const { data } = await sb.from('utenti').select('*'); allAnimators = data || []; }
-  async function loadTimbrature() { const { data } = await sb.from('timbrature').select('*').order('id', { ascending: false }); allLog = data || []; }
-
-  function renderAnimators() {
-    const search = document.getElementById('filter-name').value.toLowerCase(), statusFilter = document.getElementById('filter-status').value, sortBy = document.getElementById('filter-sort').value;
-    const lastStampMap = {}; allLog.forEach(l => { if (!lastStampMap[l.nome]) lastStampMap[l.nome] = l; });
-    let list = allAnimators.map(a => ({ nome: a.nome, anno: a.anno, lastStamp: lastStampMap[a.nome] || null, isInside: (lastStampMap[a.nome] && lastStampMap[a.nome].tipo === 'Ingresso') || false }));
-    if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || String(a.anno).includes(search));
-    if (statusFilter === 'inside') list = list.filter(a => a.isInside); if (statusFilter === 'outside') list = list.filter(a => !a.isInside);
-    if (sortBy === 'status') list.sort((a,b) => (b.isInside?1:0)-(a.isInside?1:0)); else if (sortBy === 'alpha') list.sort((a,b)=>a.nome.localeCompare(b.nome)); else if (sortBy === 'anno') list.sort((a,b)=>(parseInt(a.anno)||0)-(parseInt(b.anno)||0));
-    const grid = document.getElementById('animators-grid');
-    if (!list.length) { grid.innerHTML = '<div class="empty">👤 Nessun animatore trovato</div>'; return; }
-    grid.innerHTML = list.map(a => `<div class="animator-card ${a.isInside?'inside':'outside'}"><div class="anim-name">${escapeHtml(a.nome)} <span>(${a.anno||'—'})</span></div><div class="anim-status ${a.isInside?'in':'out'}">${a.isInside?'Dentro':'Fuori'}</div><div class="anim-last">${a.lastStamp ? (a.lastStamp.tipo+' — '+a.lastStamp.data+' '+a.lastStamp.ora) : 'Nessuna timbratura'}</div><div class="anim-actions"><button class="btn btn-green btn-sm" onclick="window._manualTimbratura('${escapeHtml(a.nome).replace(/'/g,"\\'")}','${a.anno||''}','Ingresso')">⬆ In</button><button class="btn btn-red btn-sm" onclick="window._manualTimbratura('${escapeHtml(a.nome).replace(/'/g,"\\'")}','${a.anno||''}','Uscita')">⬇ Out</button><button class="btn btn-amber btn-sm" onclick="window._editAnagrafica('${escapeHtml(a.nome).replace(/'/g,"\\'")}','${a.anno||''}')">✎ Modifica</button></div></div>`).join('');
-  }
-
-  function renderLog() {
-    const search = document.getElementById('log-search').value.toLowerCase(), date = document.getElementById('log-date').value, tipo = document.getElementById('log-tipo').value;
-    let filtered = allLog.filter(l => { if (search && !l.nome.toLowerCase().includes(search)) return false; if (tipo && l.tipo !== tipo) return false; if (date) { let parts = l.data.split('/'); let logDate = parts[2]+'-'+parts[1]+'-'+parts[0]; if (logDate !== date) return false; } return true; });
-    const tbody = document.getElementById('log-tbody');
-    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
-    tbody.innerHTML = filtered.map(l => `<tr><td><strong>${escapeHtml(l.nome)}</strong></td><td>${l.anno||'—'}</td><td>${escapeHtml(l.data)}</td><td>${escapeHtml(l.ora)}</td><td><span class="tipo-badge ${l.tipo.toLowerCase()==='ingresso'?'ingresso':'uscita'}">${escapeHtml(l.tipo)}</span></td><td><button class="btn btn-ghost btn-sm" onclick="window._deleteLog(${l.id})">🗑️</button></td></tr>`).join('');
-  }
-
-  function updateStats() { document.getElementById('stat-total').textContent = allAnimators.length; const lastMap = {}; allLog.forEach(l => { if (!lastMap[l.nome]) lastMap[l.nome] = l; }); let inside = 0; for (let n in lastMap) if (lastMap[n].tipo === 'Ingresso') inside++; document.getElementById('stat-in').textContent = inside; document.getElementById('stat-out').textContent = allAnimators.length - inside; }
-
-  // TIMBRATURA MANUALE
-  window._manualTimbratura = function(nome, anno, tipo) { manualTarget = { nome, anno }; document.getElementById('manual-name-label').textContent = nome; document.getElementById('manual-tipo').value = tipo; const now = new Date(); const tzOffset = now.getTimezoneOffset()*60000; const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0,-1); document.getElementById('manual-data').value = localISOTime.split('T')[0]; document.getElementById('manual-ora').value = now.toTimeString().substring(0,5); document.getElementById('modal-manual').classList.add('open'); };
-  document.getElementById('closeManualBtn').onclick = closeAllModals;
-  document.getElementById('saveManualBtn').onclick = async () => { const tipo = document.getElementById('manual-tipo').value, dRaw = document.getElementById('manual-data').value, oRaw = document.getElementById('manual-ora').value; if (!dRaw || !oRaw) return toast('Completa data e ora','error'); const dp = dRaw.split('-'); const dFormatted = dp[2]+'/'+dp[1]+'/'+dp[0]; const { error } = await sb.from('timbrature').insert([{ nome: manualTarget.nome, anno: manualTarget.anno, tipo, data: dFormatted, ora: oRaw }]); if (error) toast('Errore salvataggio','error'); else { toast('Timbratura manuale salvata','success'); closeAllModals(); await loadTimbrature(); renderAnimators(); renderLog(); updateStats(); } };
-  window._deleteLog = async (id) => { if (!confirm('Eliminare?')) return; const { error } = await sb.from('timbrature').delete().eq('id', id); if (error) toast('Errore','error'); else { toast('Eliminata','success'); await loadTimbrature(); renderAnimators(); renderLog(); updateStats(); } };
-  window._editAnagrafica = function(nome, anno) { document.getElementById('profile-old-nome').value = nome; document.getElementById('profile-old-anno').value = anno; document.getElementById('profile-new-nome').value = nome; document.getElementById('profile-new-anno').value = anno; document.getElementById('modal-edit-profile').classList.add('open'); };
-  document.getElementById('closeProfileBtn').onclick = closeAllModals;
-  document.getElementById('saveProfileBtn').onclick = async () => { const oldNome = document.getElementById('profile-old-nome').value, newNome = document.getElementById('profile-new-nome').value, newAnno = document.getElementById('profile-new-anno').value; if (!newNome) return toast('Il nome non può essere vuoto','error'); const { error: err1 } = await sb.from('utenti').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome); if (err1) return toast('Errore modifica','error'); if (newNome !== oldNome) await sb.from('timbrature').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome); toast('Profilo aggiornato','success'); closeAllModals(); await loadUsers(); await loadTimbrature(); renderAnimators(); renderLog(); updateStats(); };
-
-  // TOGGLE ACCESSI E GEO
-  document.getElementById('toggle-in-btn').onclick = async () => { ingressoAperto = !ingressoAperto; await upsertImpostazione('ingresso_aperto', ingressoAperto); toast(ingressoAperto?'Ingressi sbloccati':'Ingressi bloccati', ingressoAperto?'success':'error'); loadSettings(); };
-  document.getElementById('toggle-out-btn').onclick = async () => { uscitaAperta = !uscitaAperta; await upsertImpostazione('uscita_aperta', uscitaAperta); toast(uscitaAperta?'Uscite sbloccate':'Uscite bloccate', uscitaAperta?'success':'error'); loadSettings(); };
-  document.getElementById('toggle-geo-btn').onclick = async function() { const isAttivo = this.classList.contains('open'); await upsertImpostazione('geo_abilitata', !isAttivo); toast(!isAttivo?'Controllo GPS attivato':'Controllo GPS disabilitato', !isAttivo?'success':'error'); loadSettings(); };
-  document.getElementById('geo-save-btn').onclick = async () => { const lat = document.getElementById('geo-lat').value, lon = document.getElementById('geo-lon').value, rad = document.getElementById('geo-radius').value; if (!lat||!lon||!rad) return toast('Compila tutti i campi GPS','error'); await upsertImpostazione('oratorio_lat', lat); await upsertImpostazione('oratorio_lon', lon); await upsertImpostazione('max_distanza', rad); toast('Coordinate salvate','success'); loadSettings(); };
-  document.getElementById('geo-use-current').onclick = () => { if ("geolocation" in navigator) { toast('Acquisizione posizione...'); navigator.geolocation.getCurrentPosition(pos => { document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(6); document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(6); if(!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value="150"; toast('Posizione acquisita. Salva!','success'); }, err => toast('Errore GPS: '+err.message,'error'), { enableHighAccuracy: true }); } else toast('Geolocalizzazione non supportata','error'); };
-
-  // ─── TOGGLE DISPONIBILITÀ PER SETTIMANA ──────────────────────────────────
-  window.toggleDispSettimana = async (settId) => {
-    const chiave = 'disp_chiusa_' + settId;
-    const eraChiusa = !!dispChiuse[settId];
-    const nuovoStato = !eraChiusa; // true = chiusa
-    await upsertImpostazione(chiave, nuovoStato);
-    dispChiuse[settId] = nuovoStato;
-    toast(nuovoStato ? '🔒 Disponibilità chiuse' : '🔓 Disponibilità aperte', nuovoStato ? 'error' : 'success');
-    await loadSettimane(); // ri-renderizza con il nuovo stato
-  };
-
-  // SETTIMANE
-  async function loadSettimane() {
-    // Assicurati di avere dispChiuse aggiornato
-    const { data: impoData } = await sb.from('impostazioni').select('*');
-    dispChiuse = {};
-    if (impoData) impoData.forEach(row => {
-      if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
-        const settId = parseInt(row.chiave.replace('disp_chiusa_', ''));
-        if (!isNaN(settId)) dispChiuse[settId] = (row.valore === true || row.valore === 'true');
-      }
-    });
-
-    const { data } = await sb.from('settimane').select('*').order('id');
-    const container = document.getElementById('settimane-list');
-    if (!data || data.length === 0) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
-    container.innerHTML = data.map(s => {
-      let giorniMostrati = GIORNI_TUTTI;
-      if (s.giorni_attivi && typeof s.giorni_attivi === 'string' && s.giorni_attivi.trim()) {
-        giorniMostrati = s.giorni_attivi.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
-      }
-      const chiusa = !!dispChiuse[s.id];
-      const badgeClass = chiusa ? 'locked' : 'open';
-      const badgeLabel = chiusa ? '🔒 Disponibilità chiuse' : '🔓 Disponibilità aperte';
-      const btnLabel = chiusa ? '🔓 Apri disponibilità' : '🔒 Chiudi disponibilità';
-      const btnClass = chiusa ? 'btn btn-green btn-sm' : 'btn btn-red btn-sm';
-
-      return `<div class="sett-card">
-        <div class="sett-info">
-          <div class="sett-nome-admin">${escapeHtml(s.nome)}</div>
-          <div class="sett-date-admin">${escapeHtml(s.date_info||'')}</div>
-          <div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorniMostrati.join(', ')}</div>
-          <div class="disp-lock-badge ${badgeClass}">${badgeLabel}</div>
-        </div>
-        <div class="sett-actions">
-          <button class="${btnClass}" onclick="window.toggleDispSettimana(${s.id})">${btnLabel}</button>
-          <button class="btn btn-amber btn-sm" onclick="window.editSettimana(${s.id}, '${escapeHtml(s.nome)}', '${escapeHtml(s.date_info||'')}', '${escapeHtml(s.giorni_attivi||'')}')">✏️ Modifica</button>
-          <button class="btn btn-red btn-sm" onclick="window.deleteSettimana(${s.id})">🗑️</button>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  window.editSettimana = (id, nome, dateInfo, giorniAttiviStr) => {
-    document.getElementById('sett-id').value = id || '';
-    document.getElementById('sett-nome').value = nome || '';
-    document.getElementById('sett-date-info').value = dateInfo || '';
-    const container = document.getElementById('giorni-checkboxes');
-    const selezionati = giorniAttiviStr ? giorniAttiviStr.split(',').map(g=>g.trim()) : [];
-    container.innerHTML = GIORNI_TUTTI.map(g => `<label><input type="checkbox" value="${g}" ${selezionati.includes(g) ? 'checked' : ''}> ${g}</label>`).join('');
-    document.getElementById('modal-settimana').classList.add('open');
-  };
-
-  document.getElementById('closeSettBtn').onclick = () => document.getElementById('modal-settimana').classList.remove('open');
-
-  document.getElementById('add-sett-btn').onclick = () => {
-    document.getElementById('sett-id').value = '';
-    document.getElementById('sett-nome').value = '';
-    document.getElementById('sett-date-info').value = '';
-    const container = document.getElementById('giorni-checkboxes');
-    container.innerHTML = GIORNI_TUTTI.map(g => `<label><input type="checkbox" value="${g}" checked> ${g}</label>`).join('');
-    document.getElementById('modal-settimana').classList.add('open');
-  };
-
-  document.getElementById('saveSettBtn').onclick = async () => {
-    try {
-      const idRaw = document.getElementById('sett-id').value.trim();
-      const nome = document.getElementById('sett-nome').value.trim();
-      const dateInfo = document.getElementById('sett-date-info').value.trim();
-      const checkboxes = document.querySelectorAll('#giorni-checkboxes input[type="checkbox"]:checked');
-      const giorniAttivi = Array.from(checkboxes).map(cb => cb.value).join(',');
-      if (!nome) { toast('Il nome è obbligatorio', 'error'); return; }
-      const payload = { nome, date_info: dateInfo, giorni_attivi: giorniAttivi };
-      const numericId = parseInt(idRaw);
-      const isUpdate = !isNaN(numericId) && numericId > 0;
-      let result;
-      if (isUpdate) { result = await sb.from('settimane').update(payload).eq('id', numericId).select(); }
-      else { result = await sb.from('settimane').insert(payload).select(); }
-      if (result.error) { toast('Errore: ' + (result.error.message || result.error.code || 'Errore sconosciuto'), 'error'); return; }
-      toast('Settimana salvata con successo', 'success');
-      document.getElementById('modal-settimana').classList.remove('open');
-      await loadSettimane();
-      await loadDispRiepilogo();
-    } catch (err) { toast('Errore imprevisto: ' + err.message, 'error'); }
-  };
-
-  window.deleteSettimana = async (id) => {
-    if (!confirm('Eliminare definitivamente questa settimana?')) return;
-    const { error } = await sb.from('settimane').delete().eq('id', id);
-    if (error) { toast('Errore: ' + error.message, 'error'); return; }
-    await sb.from('disponibilita').delete().eq('settimana_id', id);
-    // Pulisce anche la chiave impostazione del lock
-    await sb.from('impostazioni').delete().eq('chiave', 'disp_chiusa_' + id);
-    toast('Settimana eliminata', 'success');
-    await loadSettimane();
-    await loadDispRiepilogo();
-  };
-
+  // DISPONIBILITÀ
   function parseGiorniAttivi(giorni) {
     if (!giorni) return GIORNI_TUTTI;
-    if (typeof giorni === 'string') { if (!giorni.trim()) return GIORNI_TUTTI; return giorni.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g)); }
+    if (typeof giorni === 'string') {
+      if (!giorni.trim()) return GIORNI_TUTTI;
+      return giorni.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
+    }
     return GIORNI_TUTTI;
   }
 
-  async function loadDispRiepilogo() {
-    const { data: settimane } = await sb.from('settimane').select('*').order('id');
-    const { data: dispo } = await sb.from('disponibilita').select('*');
-    const { data: utenti } = await sb.from('utenti').select('id, nome, anno').order('nome');
-    const container = document.getElementById('admin-disp-container');
-    if (!settimane || settimane.length === 0) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
-    let html = '';
+  async function caricaSettimane() {
+    let res = await sb.from('settimane').select('*').order('ordine', { ascending: true });
+    if (res.error) res = await sb.from('settimane').select('*').order('id', { ascending: true });
+    settimane = res.data || [];
+  }
+
+  async function caricaDisponibilita() {
+    const container = document.getElementById('disp-container');
+    container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
+
+    // Ricarica impostazioni per avere dispChiuse aggiornato
+    await caricaImpostazioni();
+    await caricaSettimane();
+
+    if (settimane.length === 0) {
+      container.innerHTML = '<div class="empty-state">Nessuna settimana trovata.</div>';
+      return;
+    }
+
+    const { data: scelte } = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
+    const dispMap = {};
+    if (scelte) scelte.forEach(d => dispMap[d.settimana_id + '_' + d.giorno_index] = d);
+
+    container.innerHTML = '';
     for (const s of settimane) {
       const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
       const chiusa = !!dispChiuse[s.id];
-      const lockInfo = chiusa
-        ? '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--red-lt);color:var(--red);border:1px solid #dbb2b2;padding:3px 10px;border-radius:20px;margin-left:12px;">🔒 Chiuse</span>'
-        : '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--green-lt);color:var(--green);border:1px solid #b2d4bc;padding:3px 10px;border-radius:20px;margin-left:12px;">🔓 Aperte</span>';
-      const map = new Map();
-      if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
-        const giornoNome = GIORNI_TUTTI[d.giorno_index];
-        const idx = giorniAttivi.indexOf(giornoNome);
-        if (idx === -1) return;
-        if (!map.has(d.user_id)) map.set(d.user_id, Array(giorniAttivi.length).fill(''));
-        const arr = map.get(d.user_id);
-        let simbolo = '';
-        if (d.stato === 'disponibile') simbolo = '<span class="disp-si">✅ Sì</span>';
-        else if (d.stato === 'non_disponibile') simbolo = '<span class="disp-no">❌ No</span>';
-        arr[idx] = simbolo;
-      });
-      html += `<div class="disp-block"><div class="disp-block-title">📅 ${escapeHtml(s.nome)}${lockInfo}</div><div class="disp-block-date">${escapeHtml(s.date_info||'')}</div><div style="overflow-x:auto;"><table class="disp-table"><thead><tr><th>Animatore</th>${giorniAttivi.map(g=>`<th>${g}</th>`).join('')}</tr></thead><tbody>`;
-      if (utenti) {
-        for (const u of utenti) {
-          const scelte = map.get(u.id) || Array(giorniAttivi.length).fill('');
-          html += `<tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.anno?'('+u.anno+')':''}</td>${scelte.map(c=>`<td>${c||'—'}</td>`).join('')}</tr>`;
-        }
+
+      const block = document.createElement('div');
+      block.className = 'sett-block';
+
+      // Header della settimana — se chiusa usa un colore leggermente diverso
+      const headerStyle = chiusa ? 'background: #5a3030;' : '';
+      block.innerHTML = `
+        <div class="sett-header" style="${headerStyle}">
+          <div class="sett-header-nome">${esc(s.nome)}${chiusa ? ' 🔒' : ''}</div>
+          <div class="sett-header-date">${esc(s.date_info || '')}</div>
+        </div>
+      `;
+
+      if (chiusa) {
+        // Banner di blocco
+        const banner = document.createElement('div');
+        banner.className = 'disp-locked-banner';
+        banner.innerHTML = '🔒 Le disponibilità per questa settimana sono state chiuse dall\'admin. Non è possibile modificarle.';
+        block.appendChild(banner);
       }
-      html += `</tbody></table></div></div><div style="margin-bottom:40px;"></div>`;
+
+      // Griglia giorni
+      const grid = document.createElement('div');
+      grid.className = 'giorni-grid';
+      grid.id = `grid-${s.id}`;
+      block.appendChild(grid);
+
+      // Footer con pulsante salva
+      const footer = document.createElement('div');
+      footer.className = 'sett-footer';
+      footer.innerHTML = `
+        <div class="sett-saved" id="saved-${s.id}">✓ Salvato</div>
+        <button class="btn-salva-sett" id="salva-btn-${s.id}" onclick="salvaSettimana(${s.id})" ${chiusa ? 'disabled title="Disponibilità chiuse"' : ''}>
+          ${chiusa ? '🔒 Chiuse' : 'Salva Settimana'}
+        </button>
+      `;
+      block.appendChild(footer);
+      container.appendChild(block);
+
+      // Popola i giorni
+      for (let idx = 0; idx < giorniAttivi.length; idx++) {
+        const giornoNome = giorniAttivi[idx];
+        const giornoIndex = GIORNI_TUTTI.indexOf(giornoNome);
+        const key = s.id + '_' + giornoIndex;
+        const stato = dispMap[key] ? dispMap[key].stato : '';
+        const row = document.createElement('div');
+        row.className = 'giorno-row';
+        const disabledAttr = chiusa ? 'disabled' : '';
+        row.innerHTML = `
+          <div class="giorno-label">${giornoNome}</div>
+          <div class="disp-btns" data-sett="${s.id}" data-idx="${giornoIndex}">
+            <button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')" ${disabledAttr}>Sì</button>
+            <button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')" ${disabledAttr}>No</button>
+          </div>
+        `;
+        grid.appendChild(row);
+      }
     }
-    container.innerHTML = html;
   }
 
-  // FILTRI E REFRESH
-  document.getElementById('filter-name').addEventListener('input', renderAnimators);
-  document.getElementById('filter-status').addEventListener('change', renderAnimators);
-  document.getElementById('filter-sort').addEventListener('change', renderAnimators);
-  document.getElementById('refreshBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators(); renderLog(); updateStats(); });
-  document.getElementById('log-search').addEventListener('input', renderLog);
-  document.getElementById('log-date').addEventListener('change', renderLog);
-  document.getElementById('log-tipo').addEventListener('change', renderLog);
-  document.getElementById('refresh-disp-btn').addEventListener('click', async () => { toast('Aggiornamento disponibilità...'); await loadDispRiepilogo(); });
+  window.setStato = (btn, val) => {
+    if (btn.disabled) return;
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.disp-btn').forEach(b => b.classList.remove('sel-disp', 'sel-no'));
+    const cls = val === 'disponibile' ? 'sel-disp' : 'sel-no';
+    btn.classList.add(cls);
+    parent.dataset.val = val;
+  };
 
-  function startClock() { setInterval(() => { const now = new Date(); const hours = String(now.getHours()).padStart(2,'0'); const minutes = String(now.getMinutes()).padStart(2,'0'); const clockEl = document.getElementById('top-clock'); if (clockEl) clockEl.textContent = hours+':'+minutes; }, 1000); }
+  window.salvaSettimana = async (settId) => {
+    // Controllo di sicurezza lato client
+    if (dispChiuse[settId]) {
+      toast('❌ Disponibilità chiuse per questa settimana', 'error');
+      return;
+    }
+    const rows = document.querySelectorAll(`.disp-btns[data-sett="${settId}"]`);
+    for (const r of rows) {
+      const stato = r.dataset.val;
+      if (!stato) continue;
+      const idx = r.dataset.idx;
+      const { data: exist } = await sb.from('disponibilita')
+        .select('id').eq('user_id', currentUser.id).eq('settimana_id', settId).eq('giorno_index', idx).maybeSingle();
+      const payload = { user_id: currentUser.id, nome: currentUser.nome, settimana_id: settId, giorno_index: idx, stato };
+      if (exist) await sb.from('disponibilita').update(payload).eq('id', exist.id);
+      else await sb.from('disponibilita').insert([payload]);
+    }
+    const saved = document.getElementById(`saved-${settId}`);
+    if (saved) { saved.style.display = 'block'; setTimeout(() => saved.style.display = 'none', 2000); }
+    toast('Disponibilità salvate!', 'success');
+  };
 
-  if (sessionStorage.getItem('admin_auth') === '1') { document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'block'; loadAllData(); startClock(); }
+  // TABS
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.tab-btn, .tab-panel').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const target = b.dataset.tab;
+      document.getElementById(target).classList.add('active');
+      if (target === 'tab-disponibilita') caricaDisponibilita();
+    };
+  });
+
+  // INIT
+  const saved = sessionStorage.getItem('cu');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      mostraApp();
+    } catch(e) { sessionStorage.removeItem('cu'); }
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const qa = urlParams.get('qa');
+  if (qa && !currentUser) {
+    sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
+    document.getElementById('qr-alert-login').style.display = 'block';
+  } else if (qa && currentUser) {
+    setTimeout(() => timbra(qa === 'in' ? 'Ingresso' : 'Uscita'), 500);
+  }
 })();
 </script>
 </body>
