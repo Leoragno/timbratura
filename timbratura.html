@@ -13,7 +13,6 @@
       --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
       --accent: #2d4a3e; --accent-lt: #e8f0ec;
       --red: #8b2e2e; --red-lt: #f5e8e8;
-      --amber: #7a5c1e; --amber-lt: #fdf3dc;
       --green: #2d5a3d; --green-lt: #e5f2ea;
       --font-serif: 'Instrument Serif', Georgia, serif;
       --font-mono: 'Geist Mono', 'Courier New', monospace;
@@ -62,7 +61,7 @@
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; margin-bottom: 16px; }
     .user-name { font-family: var(--font-serif); font-size: 26px; text-align: center; margin-bottom: 4px; }
     .user-meta { font-size: 11px; color: var(--ink3); text-align: center; margin-bottom: 20px; }
-    .gps-banner { display: none; background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: var(--amber); line-height: 1.6; }
+    .gps-banner { display: none; background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: #7a5c1e; line-height: 1.6; }
     .sett-block { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
     .sett-header { background: var(--accent); color: #fff; padding: 12px 16px; }
     .sett-header-nome { font-family: var(--font-serif); font-size: 16px; }
@@ -74,7 +73,6 @@
     .disp-btn { flex: 1; padding: 7px 4px; border: 1px solid var(--border); border-radius: 3px; font-size: 10px; font-family: var(--font-mono); cursor: pointer; background: var(--bg); color: var(--ink3); transition: all .12s; text-align: center; }
     .disp-btn:hover { border-color: var(--ink3); }
     .disp-btn.sel-disp { background: var(--green-lt); border-color: #b2d4bc; color: var(--green); }
-    .disp-btn.sel-forse { background: var(--amber-lt); border-color: #e0cfa0; color: var(--amber); }
     .disp-btn.sel-no { background: var(--red-lt); border-color: #dbb2b2; color: var(--red); }
     .sett-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .btn-salva-sett { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 8px 18px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; cursor: pointer; }
@@ -172,18 +170,16 @@
 
   let currentUser = null;
   let settimane = [];
-  const GIORNI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
+  const GIORNI_TUTTI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
-  // Variabili di configurazione (caricate da impostazioni)
   let ingressoAperto = true;
   let uscitaAperta = true;
   let geoAbilitata = true;
   let oratorioLat = 45.706869;
   let oratorioLon = 8.800464;
-  let maxDistanza = 150; // metri
+  let maxDistanza = 150;
   let stampBusy = false;
 
-  // --- UTILS ---
   function toast(m, t) {
     const el = document.getElementById('toast');
     el.textContent = m;
@@ -193,9 +189,8 @@
 
   function esc(s) { return s ? String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) : ''; }
 
-  // Calcolo distanza in metri tra due coordinate (Haversine)
   function distance(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // raggio Terra in metri
+    const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -205,7 +200,6 @@
     return R * c;
   }
 
-  // --- CARICAMENTO IMPOSTAZIONI DAL DB ---
   async function caricaImpostazioni() {
     const { data } = await sb.from('impostazioni').select('*');
     if (data) {
@@ -218,28 +212,24 @@
         if (row.chiave === 'max_distanza') maxDistanza = parseInt(row.valore) || maxDistanza;
       });
     }
-    // Aggiorna UI dei pulsanti (abilita/disabilita in base ai lock)
     const btnIn = document.getElementById('btn-in');
     const btnOut = document.getElementById('btn-out');
     if (btnIn) btnIn.disabled = !ingressoAperto;
     if (btnOut) btnOut.disabled = !uscitaAperta;
-    // Mostra/nascondi banner GPS in base alla configurazione
     const banner = document.getElementById('geo-banner');
     if (banner) banner.style.display = geoAbilitata ? 'block' : 'none';
   }
 
-  // --- TIMBRATURA PRINCIPALE ---
   async function timbra(tipo) {
     if (!currentUser) { toast('Devi effettuare il login', 'error'); return; }
-    if (stampBusy) { toast('Attendi, operazione in corso...', 'info'); return; }
-    if (tipo === 'Ingresso' && !ingressoAperto) { toast('❌ Ingresso bloccato dall\'amministratore', 'error'); return; }
-    if (tipo === 'Uscita' && !uscitaAperta) { toast('❌ Uscita bloccata dall\'amministratore', 'error'); return; }
+    if (stampBusy) { toast('Attendi...', 'info'); return; }
+    if (tipo === 'Ingresso' && !ingressoAperto) { toast('❌ Ingresso bloccato', 'error'); return; }
+    if (tipo === 'Uscita' && !uscitaAperta) { toast('❌ Uscita bloccata', 'error'); return; }
 
     stampBusy = true;
     const btn = document.getElementById(tipo === 'Ingresso' ? 'btn-in' : 'btn-out');
     if (btn) btn.disabled = true;
 
-    // Se GPS disabilitato, salva subito senza controllo posizione
     if (!geoAbilitata) {
       await salvaTimbratura(tipo);
       stampBusy = false;
@@ -247,9 +237,8 @@
       return;
     }
 
-    // Controllo GPS
     if (!navigator.geolocation) {
-      toast('Il tuo browser non supporta la geolocalizzazione', 'error');
+      toast('Geolocalizzazione non supportata', 'error');
       stampBusy = false;
       if (btn) btn.disabled = false;
       return;
@@ -259,73 +248,52 @@
     const debugDiv = document.getElementById('gps-debug');
     if (banner) banner.style.display = 'block';
     if (debugDiv) debugDiv.style.display = 'block';
-    toast('📍 Acquisizione posizione in corso...', 'info');
+    toast('📍 Acquisizione posizione...', 'info');
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
-      const accuracy = position.coords.accuracy;
       const dist = distance(lat, lon, oratorioLat, oratorioLon);
-
       if (debugDiv) {
-        debugDiv.innerHTML = `
-          📍 La tua posizione: ${lat.toFixed(6)}, ${lon.toFixed(6)} (errore ±${Math.round(accuracy)}m)<br>
-          🎯 Oratorio: ${oratorioLat.toFixed(6)}, ${oratorioLon.toFixed(6)}<br>
-          📏 Distanza: <strong>${Math.round(dist)}m</strong> (limite ${maxDistanza}m)
-        `;
+        debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
       }
-
       if (dist > maxDistanza) {
-        toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m). Avvicinati e riprova.`, 'error');
+        toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m)`, 'error');
         stampBusy = false;
         if (btn) btn.disabled = false;
         return;
       }
-
       await salvaTimbratura(tipo);
       stampBusy = false;
       if (btn) btn.disabled = false;
     }, (error) => {
-      console.error('Errore GPS:', error);
       let msg = 'Errore GPS';
-      if (error.code === 1) msg = 'Permesso GPS negato. Abilita la posizione nelle impostazioni del browser.';
-      else if (error.code === 2) msg = 'Posizione non disponibile. Riprova.';
-      else if (error.code === 3) msg = 'Timeout GPS. Sei in un\'area con scarso segnale?';
+      if (error.code === 1) msg = 'Permesso GPS negato';
+      else if (error.code === 2) msg = 'Posizione non disponibile';
+      else if (error.code === 3) msg = 'Timeout GPS';
       toast(msg, 'error');
       stampBusy = false;
       if (btn) btn.disabled = false;
-    }, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
-    });
+    }, { enableHighAccuracy: true, timeout: 15000 });
   }
 
   async function salvaTimbratura(tipo) {
     const now = new Date();
     const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
     const ora = now.toTimeString().slice(0,5);
-    const payload = {
+    const { error } = await sb.from('timbrature').insert({
       user_id: currentUser.id,
       nome: currentUser.nome,
       anno: currentUser.anno || null,
-      data: data,
-      ora: ora,
-      tipo: tipo,
+      data, ora, tipo,
       created_at: now.toISOString()
-    };
-    const { error } = await sb.from('timbrature').insert(payload);
-    if (error) {
-      toast(`Errore: ${error.message}`, 'error');
-      console.error(error);
-    } else {
-      toast(`✅ ${tipo} registrato alle ${ora}`, 'success');
-    }
-    // Ricarica le impostazioni nel caso i lock fossero cambiati
+    });
+    if (error) toast(`Errore: ${error.message}`, 'error');
+    else toast(`✅ ${tipo} alle ${ora}`, 'success');
     await caricaImpostazioni();
   }
 
-  // --- AUTH ---
+  // AUTH
   window.toggleAuth = (r) => {
     document.getElementById('login-card').style.display = r ? 'none' : 'block';
     document.getElementById('register-card').style.display = r ? 'block' : 'none';
@@ -348,11 +316,10 @@
     const pw = document.getElementById('reg-password').value;
     if (!nome || !pw) { toast('Compila tutti i campi', 'error'); return; }
     if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; }
-    // Controllo duplicati
     const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
     if (exist) { toast('Nome già registrato', 'error'); return; }
     const { error } = await sb.from('utenti').insert([{ nome, password: pw, anno: anno || null }]);
-    if (error) { toast('Errore registrazione: ' + error.message, 'error'); return; }
+    if (error) { toast('Errore registrazione', 'error'); return; }
     toast('Registrato! Ora accedi.', 'success');
     toggleAuth(false);
     document.getElementById('reg-nome').value = '';
@@ -362,7 +329,6 @@
 
   document.getElementById('logout-btn').onclick = () => { sessionStorage.clear(); location.reload(); };
 
-  // --- MOSTRA APP ---
   async function mostraApp() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
@@ -370,14 +336,11 @@
     document.getElementById('topbar-user').textContent = currentUser.nome;
     document.getElementById('user-display-meta').textContent = 'Animatore - ' + (currentUser.anno || '?');
     await caricaImpostazioni();
-    // Aggiorna anche lo stato dei pulsanti dopo il caricamento impostazioni
-    const btnIn = document.getElementById('btn-in');
-    const btnOut = document.getElementById('btn-out');
-    if (btnIn) btnIn.onclick = () => timbra('Ingresso');
-    if (btnOut) btnOut.onclick = () => timbra('Uscita');
+    document.getElementById('btn-in').onclick = () => timbra('Ingresso');
+    document.getElementById('btn-out').onclick = () => timbra('Uscita');
   }
 
-  // --- DISPONIBILITÀ (uguale al tuo codice originale, con piccolo fix) ---
+  // DISPONIBILITÀ (senza "Forse", con giorni selezionabili)
   async function caricaSettimane() {
     let res = await sb.from('settimane').select('*').order('ordine', { ascending: true });
     if (res.error) res = await sb.from('settimane').select('*').order('id', { ascending: true });
@@ -397,7 +360,8 @@
     if (scelte) scelte.forEach(d => dispMap[d.settimana_id + '_' + d.giorno_index] = d);
 
     container.innerHTML = '';
-    settimane.forEach(s => {
+    for (const s of settimane) {
+      const giorniAttivi = s.giorni_attivi && s.giorni_attivi.length ? s.giorni_attivi : GIORNI_TUTTI;
       const block = document.createElement('div');
       block.className = 'sett-block';
       block.innerHTML = `
@@ -413,28 +377,29 @@
       `;
       container.appendChild(block);
       const grid = document.getElementById(`grid-${s.id}`);
-      GIORNI.forEach((g, i) => {
-        const key = s.id + '_' + i;
+      for (let idx = 0; idx < giorniAttivi.length; idx++) {
+        const giornoNome = giorniAttivi[idx];
+        const giornoIndex = GIORNI_TUTTI.indexOf(giornoNome);
+        const key = s.id + '_' + giornoIndex;
         const stato = dispMap[key] ? dispMap[key].stato : '';
         const row = document.createElement('div');
         row.className = 'giorno-row';
         row.innerHTML = `
-          <div class="giorno-label">${g}</div>
-          <div class="disp-btns" data-sett="${s.id}" data-idx="${i}">
+          <div class="giorno-label">${giornoNome}</div>
+          <div class="disp-btns" data-sett="${s.id}" data-idx="${giornoIndex}">
             <button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')">Sì</button>
-            <button class="disp-btn ${stato==='forse'?'sel-forse':''}" onclick="setStato(this, 'forse')">?</button>
             <button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')">No</button>
           </div>
         `;
         grid.appendChild(row);
-      });
-    });
+      }
+    }
   }
 
   window.setStato = (btn, val) => {
     const parent = btn.parentElement;
-    parent.querySelectorAll('.disp-btn').forEach(b => b.classList.remove('sel-disp', 'sel-forse', 'sel-no'));
-    const cls = val === 'disponibile' ? 'sel-disp' : val === 'forse' ? 'sel-forse' : 'sel-no';
+    parent.querySelectorAll('.disp-btn').forEach(b => b.classList.remove('sel-disp', 'sel-no'));
+    const cls = val === 'disponibile' ? 'sel-disp' : 'sel-no';
     btn.classList.add(cls);
     parent.dataset.val = val;
   };
@@ -451,12 +416,12 @@
       if (exist) await sb.from('disponibilita').update(payload).eq('id', exist.id);
       else await sb.from('disponibilita').insert([payload]);
     }
-    document.getElementById(`saved-${settId}`).style.display = 'block';
-    setTimeout(() => { document.getElementById(`saved-${settId}`).style.display = 'none'; }, 2000);
+    const saved = document.getElementById(`saved-${settId}`);
+    if (saved) { saved.style.display = 'block'; setTimeout(() => saved.style.display = 'none', 2000); }
     toast('Disponibilità salvate!', 'success');
   };
 
-  // --- TABS ---
+  // TABS
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.onclick = () => {
       document.querySelectorAll('.tab-btn, .tab-panel').forEach(x => x.classList.remove('active'));
@@ -467,7 +432,7 @@
     };
   });
 
-  // --- INIZIALIZZAZIONE ---
+  // INIT
   const saved = sessionStorage.getItem('cu');
   if (saved) {
     try {
@@ -476,7 +441,6 @@
     } catch(e) { sessionStorage.removeItem('cu'); }
   }
 
-  // Gestione QR code (opzionale, mantiene la compatibilità)
   const urlParams = new URLSearchParams(window.location.search);
   const qa = urlParams.get('qa');
   if (qa && !currentUser) {
