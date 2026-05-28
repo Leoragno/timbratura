@@ -37,15 +37,6 @@
       color: var(--ink);
       font-family: var(--font-mono);
       font-size: 13px;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image:
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(180,160,100,.08) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(100,130,110,.06) 0%, transparent 60%);
     }
 
     /* LOGIN */
@@ -62,68 +53,43 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 44px 40px;
-      box-shadow: 0 2px 24px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.03);
-      animation: riseIn .4s cubic-bezier(.23,1,.32,1) both;
-    }
-
-    @keyframes riseIn {
-      from { opacity: 0; transform: translateY(20px) scale(.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .login-eyebrow {
-      font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
-      color: var(--ink3); margin-bottom: 8px;
+      box-shadow: 0 2px 24px rgba(0,0,0,.07);
     }
 
     .login-title {
       font-family: var(--font-serif); font-size: 32px;
-      line-height: 1.1; color: var(--ink);
       margin-bottom: 32px;
     }
-
     .login-title em { font-style: italic; color: var(--accent); }
 
-    label {
-      display: block; font-size: 10px; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--ink3); margin-bottom: 6px;
-    }
-
-    input[type="password"], input[type="text"], input[type="time"], input[type="date"], select, input[type="number"] {
+    input {
       width: 100%;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 3px;
       padding: 11px 13px;
-      font-family: var(--font-mono); font-size: 13px;
-      color: var(--ink);
-      outline: none;
-      transition: border-color .15s, box-shadow .15s;
+      font-family: var(--font-mono);
+      font-size: 13px;
       margin-bottom: 16px;
     }
 
-    input:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(45,74,62,.12);
-    }
-
     .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 18px;
+      display: inline-flex;
+      padding: 12px 18px;
       border: 1px solid transparent;
       border-radius: 3px;
-      font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
-      transition: all .15s;
-      letter-spacing: .3px;
-      white-space: nowrap;
     }
 
     .btn-primary {
-      background: var(--accent); color: #fff; border-color: var(--accent);
-      width: 100%;  justify-content: center; padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
     }
-    .btn-primary:hover:not(:disabled) { background: #1f3329; }
 
     .btn-sm { padding: 6px 12px; font-size: 11px; }
     .btn-green { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
@@ -133,97 +99,100 @@
 
     .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
 
-    /* MAIN APP */
-    #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
+    /* APP */
+    #app { display: none; min-height: 100vh; }
 
     .topbar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 0 32px;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       height: 56px;
     }
 
     .topbar-title { font-family: var(--font-serif); font-size: 20px; }
     .topbar-title em { font-style: italic; color: var(--accent); }
-    .topbar-badge {
-      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      background: var(--accent-lt); color: var(--accent);
-      padding: 3px 8px; border-radius: 20px;
-      border: 1px solid #b2ccbc;
-    }
 
-    .topbar-right { display: flex; align-items: center; gap: 16px; }
-    .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); }
-    .live-dot::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%;
-      background: var(--green); animation: pulse 1.8s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: .5; transform: scale(.7); }
-    }
-
-    .topbar-clock { font-size: 12px; color: var(--ink3); }
     .main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
 
     .stats-row {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
       margin-bottom: 28px;
     }
 
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; }
-    .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
-    .stat-value { font-family: var(--font-serif); font-size: 40px; line-height: 1; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px;
+    }
 
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .stat-label { font-size: 10px; text-transform: uppercase; color: var(--ink3); }
+    .stat-value { font-family: var(--font-serif); font-size: 40px; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
     .section-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; }
 
     .control-row {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
       margin-bottom: 28px;
     }
+
     .btn-toggle {
-      width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600;
-      border: 1px solid var(--border); border-radius: 4px; cursor: pointer; text-align: center;
-      transition: background .2s, color .2s, border-color .2s;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
     }
-    .btn-toggle.open {
-      background: var(--green-lt); color: var(--green); border-color: #b2d4bc;
-    }
-    .btn-toggle.locked {
-      background: var(--red-lt); color: var(--red); border-color: #dbb2b2;
-    }
+
+    .btn-toggle.open { background: var(--green-lt); color: var(--green); }
+    .btn-toggle.locked { background: var(--red-lt); color: var(--red); }
 
     .filter-bar {
-      display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
-      align-items: center;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
-    .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
+
+    .filter-bar input, .filter-bar select {
+      margin-bottom: 0;
+      width: auto;
+      flex: 1;
+      min-width: 140px;
+    }
 
     .status-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-      gap: 12px; margin-bottom: 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
     }
 
-    .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+    .animator-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+    }
+
     .animator-card.inside { border-left: 3px solid var(--green); }
-    .animator-card.outside { border-left: 3px solid var(--border2); }
-    .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
-    .anim-name span { font-size: 13px; color: var(--ink3); margin-left: 6px; }
-
-    .anim-status {
-      display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500;
-      padding: 3px 9px; border-radius: 20px; margin-bottom: 12px;
-    }
-    .anim-status.in { background: var(--green-lt); color: var(--green); }
-    .anim-status.out { background: var(--bg2); color: var(--ink3); }
-    .anim-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-    .anim-status.in::before { background: var(--green); }
-    .anim-status.out::before { background: var(--ink3); }
-
-    .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+    .anim-name { font-family: var(--font-serif); font-size: 18px; }
 
     .table-wrap {
       background: var(--surface);
@@ -232,36 +201,21 @@
       overflow-x: auto;
       margin-bottom: 20px;
     }
-    table { width: 100%; border-collapse: collapse; min-width: 750px; }
-    th {
-      background: var(--bg2); padding: 12px 14px; text-align: left;
-      font-size: 10px; text-transform: uppercase; color: var(--ink3);
-      border-bottom: 1px solid var(--border);
-    }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
-    tr:hover { background: var(--bg); }
 
-    .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
-    .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
-    .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
-
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 200; background: rgba(26,23,20,.45);
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-      opacity: 0; pointer-events: none; transition: opacity .2s;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-      padding: 36px 32px; width: 100%; max-width: 400px;
-    }
-    .modal-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 20px; }
-    .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--bg2); }
 
     .toast {
-      position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg);
-      border-radius: 4px; padding: 12px 18px; font-size: 12px;
-      transform: translateY(20px); opacity: 0; transition: all .3s;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: var(--bg);
+      border-radius: 4px;
+      padding: 12px 18px;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all .3s;
       z-index: 300;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
@@ -269,117 +223,58 @@
     .toast.error { background: var(--red); }
 
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
-    
-    .geo-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-      padding: 22px 24px; margin-bottom: 28px;
-    }
-    .geo-row {
-      display: grid; grid-template-columns: 1fr 2fr; gap: 28px;
-    }
-    @media (max-width: 640px) { .geo-row { grid-template-columns: 1fr; } }
-    .geo-fields {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;
-    }
-    @media (max-width: 640px) { .geo-fields { grid-template-columns: 1fr; } }
-    .geo-fields input { margin-bottom: 0; }
-    .geo-toggle-col { display: flex; flex-direction: column; }
 
-    /* SETTIMANE */
-    .sett-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .sett-info { flex: 1; }
-    .sett-nome-admin { font-family: var(--font-serif); font-size: 17px; margin-bottom: 2px; }
-    .sett-date-admin { font-size: 11px; color: var(--ink3); }
-    .sett-actions { display: flex; gap: 6px; }
+    .sett-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-    /* DISP RIEPILOGO */
     .disp-block { margin-bottom: 32px; }
-    .disp-block-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 3px; }
-    .disp-block-date  { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .disp-counters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    .dcnt { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .dcnt-si  { background: var(--green-lt); color: var(--green); }
+    .disp-block-title { font-family: var(--font-serif); font-size: 20px; }
+    .disp-counters { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .dcnt { padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .dcnt-si { background: var(--green-lt); color: var(--green); }
     .dcnt-for { background: var(--amber-lt); color: var(--amber); }
-    .dcnt-no  { background: var(--red-lt);   color: var(--red); }
-    .dcnt-nd  { background: var(--bg2);      color: var(--ink3); }
+    .dcnt-no { background: var(--red-lt); color: var(--red); }
+    .dcnt-nd { background: var(--bg2); color: var(--ink3); }
   </style>
 </head>
 <body>
 
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-eyebrow">Pannello di controllo</div>
     <div class="login-title">Accesso <em>Admin</em></div>
-    <label for="admin-pass">Password</label>
-    <input type="password" id="admin-pass" placeholder="••••••••" />
+    <input type="password" id="admin-pass" placeholder="Password" />
     <button class="btn btn-primary" id="loginBtn">Entra →</button>
-    <div class="login-err" id="login-err">Password errata. Riprova.</div>
+    <div class="login-err" id="login-err">Password errata</div>
   </div>
 </div>
 
 <div id="app">
   <div class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-title">tim<em>bratura</em></div>
-      <div class="topbar-badge">Admin</div>
-    </div>
-    <div class="topbar-right">
-      <span class="live-dot">Live</span>
-      <span class="topbar-clock" id="top-clock">—</span>
-      <button class="btn btn-ghost btn-sm" id="logoutBtn">Esci</button>
-    </div>
+    <div class="topbar-title">tim<em>bratura</em> - Admin</div>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Esci</button>
   </div>
 
   <div class="main">
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Totale animatori</div><div class="stat-value" id="stat-total">—</div></div>
-      <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value green" id="stat-in">—</div></div>
-      <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value red" id="stat-out">—</div></div>
+      <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value" id="stat-in">—</div></div>
+      <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value" id="stat-out">—</div></div>
     </div>
 
     <div class="section-header">
-      <div class="section-title">Controllo accessi (Locks)</div>
+      <div class="section-title">Controllo accessi</div>
     </div>
     <div class="control-row">
-      <button id="toggle-in-btn" class="btn-toggle">Ingressi: Caricamento...</button>
-      <button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button>
-    </div>
-
-    <div class="section-header">
-      <div class="section-title">Geolocalizzazione</div>
-    </div>
-    <div class="geo-card">
-      <div class="geo-row">
-        <div class="geo-toggle-col">
-          <div class="stat-label" style="margin-bottom:10px;">Controllo GPS</div>
-          <button id="toggle-geo-btn" class="btn-toggle">Caricamento...</button>
-          <div style="font-size:11px; color:var(--ink3); margin-top:8px; line-height:1.5;">
-            Se disabilitato, gli animatori possono timbrare da qualsiasi luogo senza verifica posizione.
-          </div>
-        </div>
-        <div class="geo-coords-col">
-          <div class="stat-label" style="margin-bottom:10px;">Coordinate Oratorio</div>
-          <div class="geo-fields">
-            <div>
-              <label>Latitudine</label>
-              <input type="text" id="geo-lat" placeholder="45.706869" />
-            </div>
-            <div>
-              <label>Longitudine</label>
-              <input type="text" id="geo-lon" placeholder="8.800464" />
-            </div>
-            <div>
-              <label>Raggio massimo (metri)</label>
-              <input type="number" id="geo-radius" placeholder="150" />
-            </div>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-            <button class="btn btn-ghost btn-sm" id="geo-use-current">📍 Usa posizione attuale</button>
-            <button class="btn btn-primary btn-sm" id="geo-save-btn" style="width:auto; margin-bottom:0;">💾 Salva</button>
-          </div>
-          <div id="geo-current-preview" style="font-size:11px; color:var(--ink3); margin-top:10px; display:none;"></div>
-        </div>
-      </div>
+      <button id="toggle-in-btn" class="btn-toggle">Ingressi: ATTIVI</button>
+      <button id="toggle-out-btn" class="btn-toggle">Uscite: ATTIVE</button>
     </div>
 
     <div class="section-header">
@@ -388,21 +283,16 @@
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="filter-name" placeholder="Cerca nome o anno…">
+      <input type="text" id="filter-name" placeholder="Cerca nome...">
       <select id="filter-status">
-        <option value="">Tutti gli stati</option>
+        <option value="">Tutti</option>
         <option value="inside">Dentro</option>
         <option value="outside">Fuori</option>
-      </select>
-      <select id="filter-sort">
-        <option value="status">Ordina per: Stato</option>
-        <option value="alpha">Ordina per: Alfabetico</option>
-        <option value="anno">Ordina per: Anno</option>
       </select>
     </div>
 
     <div class="status-grid" id="animators-grid">
-      <div class="empty">⏳ Caricamento…</div>
+      <div class="empty">⏳ Caricamento...</div>
     </div>
 
     <div class="section-header">
@@ -410,68 +300,28 @@
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="log-search" placeholder="Cerca nome…">
+      <input type="text" id="log-search" placeholder="Cerca nome...">
       <input type="date" id="log-date">
-      <select id="log-tipo">
-        <option value="">Tutti</option>
-        <option value="Ingresso">Ingresso</option>
-        <option value="Uscita">Uscita</option>
-      </select>
     </div>
 
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr>
-        </thead>
-        <tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody>
+        <thead><tr><th>Nome</th><th>Data</th><th>Ora</th><th>Tipo</th><th></th></tr></thead>
+        <tbody id="log-tbody"><tr><td colspan="5" class="empty">Caricamento...</td></tr></tbody>
       </table>
     </div>
 
-    <div class="section-header" style="margin-top:10px;">
-      <div class="section-title">Settimane oratorio estivo</div>
-      <button class="btn btn-sm btn-primary" id="add-sett-btn" style="width:auto;">+ Aggiungi settimana</button>
+    <div class="section-header">
+      <div class="section-title">Settimane</div>
+      <button class="btn btn-sm btn-primary" id="add-sett-btn">+ Aggiungi</button>
     </div>
-    <div id="settimane-list" style="margin-bottom:28px;">
-      <div class="empty">⏳ Caricamento…</div>
-    </div>
+    <div id="settimane-list"><div class="empty">Caricamento...</div></div>
 
     <div class="section-header">
       <div class="section-title">Riepilogo disponibilità</div>
       <button class="btn btn-sm btn-ghost" id="refresh-disp-btn">↻ Aggiorna</button>
     </div>
-    <div id="admin-disp-container" style="margin-bottom:32px;">
-      <div class="empty">⏳ Caricamento…</div>
-    </div>
-
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-manual">
-  <div class="modal">
-    <div class="modal-title">Timbratura manuale</div>
-    <p style="font-size:12px;color:var(--ink3);margin-bottom:20px;">Registra per <strong id="manual-name-label">—</strong></p>
-    <select id="manual-tipo"><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
-    <input type="date" id="manual-data" />
-    <input type="time" id="manual-ora" />
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="closeManualBtn">Annulla</button>
-      <button class="btn btn-primary" id="saveManualBtn">Salva</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-edit-profile">
-  <div class="modal">
-    <div class="modal-title">Modifica Anagrafica</div>
-    <input type="hidden" id="profile-old-nome" />
-    <input type="hidden" id="profile-old-anno" />
-    <input type="text" id="profile-new-nome" placeholder="Nuovo nome" />
-    <input type="number" id="profile-new-anno" placeholder="Nuovo anno" />
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="closeProfileBtn">Annulla</button>
-      <button class="btn btn-amber" id="saveProfileBtn">Salva</button>
-    </div>
+    <div id="admin-disp-container"><div class="empty">Caricamento...</div></div>
   </div>
 </div>
 
@@ -480,174 +330,275 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  (function() {
-    const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-    const ADMIN_PASSWORD = 'admin123';
+(function() {
+  const SUPABASE_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const ADMIN_PASSWORD = 'admin123';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let allAnimators = [];
-    let allLog = [];
-    let ingressoAperto = true;
-    let uscitaAperta = true;
-    let manualTarget = null;
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let allAnimators = [];
+  let allLog = [];
+  let ingressoAperto = true;
+  let uscitaAperta = true;
 
-    function showApp() {
+  function toast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + (type || '') + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+    });
+  }
+
+  // LOGIN
+  document.getElementById('loginBtn').onclick = function() {
+    const pw = document.getElementById('admin-pass').value;
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem('admin_auth', '1');
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+      loadAllData();
+    } else {
+      document.getElementById('login-err').style.display = 'block';
     }
+  };
 
-    function toast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast ' + (type || '') + ' show';
-      setTimeout(() => el.classList.remove('show'), 3000);
-    }
+  document.getElementById('logoutBtn').onclick = function() {
+    sessionStorage.removeItem('admin_auth');
+    location.reload();
+  };
 
-    function closeAllModals() {
-      document.getElementById('modal-manual').classList.remove('open');
-      document.getElementById('modal-edit-profile').classList.remove('open');
-    }
+  // CARICAMENTO DATI
+  async function loadAllData() {
+    await loadSettings();
+    await loadUsers();
+    await loadTimbrature();
+    renderAnimators();
+    renderLog();
+    updateStats();
+    await loadSettimane();
+    await loadDispRiepilogo();
+  }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"']/g, function(m) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+  async function loadSettings() {
+    const { data } = await supabase.from('impostazioni').select('*');
+    if (data) {
+      data.forEach(function(row) {
+        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
+        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
       });
     }
+    const btnIn = document.getElementById('toggle-in-btn');
+    const btnOut = document.getElementById('toggle-out-btn');
+    btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
+    btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
+    btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
+    btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
+  }
 
-    // LOGIN
-    async function doLogin() {
-      const pw = document.getElementById('admin-pass').value;
-      if (pw !== ADMIN_PASSWORD) {
-        document.getElementById('login-err').style.display = 'block';
-        return;
-      }
-      document.getElementById('login-err').style.display = 'none';
-      sessionStorage.setItem('admin_auth', '1');
-      showApp();
-      await loadAllData();
-      startClock();
+  async function loadUsers() {
+    const { data } = await supabase.from('utenti').select('*');
+    allAnimators = data || [];
+  }
+
+  async function loadTimbrature() {
+    const { data } = await supabase.from('timbrature').select('*').order('id', { ascending: false });
+    allLog = data || [];
+  }
+
+  function renderAnimators() {
+    const search = document.getElementById('filter-name').value.toLowerCase();
+    const statusFilter = document.getElementById('filter-status').value;
+
+    const lastStampMap = {};
+    allLog.forEach(log => { if (!lastStampMap[log.nome]) lastStampMap[log.nome] = log; });
+
+    let list = allAnimators.map(a => ({
+      nome: a.nome,
+      anno: a.anno,
+      lastStamp: lastStampMap[a.nome] || null,
+      isInside: lastStampMap[a.nome]?.tipo === 'Ingresso'
+    }));
+
+    if (search) list = list.filter(a => a.nome.toLowerCase().includes(search));
+    if (statusFilter === 'inside') list = list.filter(a => a.isInside);
+    if (statusFilter === 'outside') list = list.filter(a => !a.isInside);
+
+    const grid = document.getElementById('animators-grid');
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="empty">Nessun animatore trovato</div>';
+      return;
     }
 
-    document.getElementById('loginBtn').addEventListener('click', doLogin);
-    document.getElementById('admin-pass').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') doLogin();
+    grid.innerHTML = list.map(a => `
+      <div class="animator-card ${a.isInside ? 'inside' : 'outside'}">
+        <div class="anim-name">${escapeHtml(a.nome)} (${a.anno || '—'})</div>
+        <div style="font-size:11px; color:var(--ink3); margin-top:8px;">
+          ${a.lastStamp ? `${a.lastStamp.tipo} — ${a.lastStamp.data} ${a.lastStamp.ora}` : 'Nessuna timbratura'}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderLog() {
+    const search = document.getElementById('log-search').value.toLowerCase();
+    const date = document.getElementById('log-date').value;
+
+    let filtered = allLog.filter(l => {
+      if (search && !l.nome.toLowerCase().includes(search)) return false;
+      if (date) {
+        const parts = l.data.split('/');
+        const logDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        if (logDate !== date) return false;
+      }
+      return true;
     });
 
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-      sessionStorage.removeItem('admin_auth');
-      location.reload();
-    });
-
-    async function loadAllData() {
-      await loadSettings();
-      await loadUsers();
-      await loadTimbrature();
-      renderAnimators();
-      renderLog();
-      updateStats();
-      await loadSettimane();
-      await loadDispRiepilogo();
+    const tbody = document.getElementById('log-tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">Nessuna timbratura</td></tr>';
+      return;
     }
 
-    async function loadSettings() {
-      const { data } = await supabase.from('impostazioni').select('*');
-      var geoAbilitata = true;
-      var geoLat = '', geoLon = '', geoRadius = '';
-      if (data) {
-        data.forEach(function(row) {
-          if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore;
-          if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore;
-          if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore;
-          if (row.chiave === 'oratorio_lat') geoLat = row.valore;
-          if (row.chiave === 'oratorio_lon') geoLon = row.valore;
-          if (row.chiave === 'max_distanza') geoRadius = row.valore;
-        });
-      }
-      var btnIn = document.getElementById('toggle-in-btn');
-      var btnOut = document.getElementById('toggle-out-btn');
-      btnIn.textContent = ingressoAperto ? '🔓 INGRESSI: ATTIVI' : '🔒 INGRESSI: BLOCCATI';
-      btnIn.className = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
-      btnOut.textContent = uscitaAperta ? '🔓 USCITE: ATTIVE' : '🔒 USCITE: BLOCCATE';
-      btnOut.className = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
+    tbody.innerHTML = filtered.map(l => `
+      <tr>
+        <td><strong>${escapeHtml(l.nome)}</strong></td>
+        <td>${escapeHtml(l.data)}</td>
+        <td>${escapeHtml(l.ora)}</td>
+        <td><span style="background:${l.tipo === 'Ingresso' ? '#e5f2ea' : '#f5e8e8'}; padding:2px 8px; border-radius:20px;">${l.tipo}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="deleteLog(${l.id})">🗑️</button></td>
+      </tr>
+    `).join('');
+  }
+
+  window.deleteLog = async function(id) {
+    if (!confirm('Eliminare questa timbratura?')) return;
+    const { error } = await supabase.from('timbrature').delete().eq('id', id);
+    if (error) toast('Errore', 'error');
+    else { toast('Eliminata', 'success'); await loadTimbrature(); renderLog(); updateStats(); renderAnimators(); }
+  };
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = allAnimators.length;
+    const lastMap = {};
+    allLog.forEach(l => { if (!lastMap[l.nome]) lastMap[l.nome] = l; });
+    let inside = 0;
+    for (const nome in lastMap) if (lastMap[nome].tipo === 'Ingresso') inside++;
+    document.getElementById('stat-in').textContent = inside;
+    document.getElementById('stat-out').textContent = allAnimators.length - inside;
+  }
+
+  // SETTIMANE E DISPONIBILITA'
+  async function loadSettimane() {
+    const { data } = await supabase.from('settimane').select('*').order('id');
+    const container = document.getElementById('settimane-list');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty">Nessuna settimana</div>';
+      return;
+    }
+    container.innerHTML = data.map(s => `
+      <div class="sett-card">
+        <div><strong>${escapeHtml(s.nome)}</strong><br><span style="font-size:11px; color:var(--ink3);">${escapeHtml(s.date_info || '')}</span></div>
+        <button class="btn btn-red btn-sm" onclick="deleteSettimana(${s.id})">🗑️</button>
+      </div>
+    `).join('');
+  }
+
+  window.deleteSettimana = async function(id) {
+    if (!confirm('Eliminare questa settimana?')) return;
+    await supabase.from('settimane').delete().eq('id', id);
+    await supabase.from('disponibilita').delete().eq('settimana_id', id);
+    toast('Eliminata', 'success');
+    await loadSettimane();
+    await loadDispRiepilogo();
+  };
+
+  document.getElementById('add-sett-btn').onclick = async function() {
+    const nome = prompt('Nome settimana:');
+    if (!nome) return;
+    const dateInfo = prompt('Date (es. 10-14 Giugno):');
+    const { error } = await supabase.from('settimane').insert([{ nome, date_info: dateInfo }]);
+    if (error) toast('Errore: ' + error.message, 'error');
+    else { toast('Aggiunta!', 'success'); await loadSettimane(); await loadDispRiepilogo(); }
+  };
+
+  async function loadDispRiepilogo() {
+    const { data: settimane } = await supabase.from('settimane').select('*');
+    const { data: dispo } = await supabase.from('disponibilita').select('*');
+    const { data: utenti } = await supabase.from('utenti').select('id');
+
+    const container = document.getElementById('admin-disp-container');
+    if (!settimane || settimane.length === 0) {
+      container.innerHTML = '<div class="empty">Nessuna settimana</div>';
+      return;
+    }
+
+    let html = '';
+    for (const s of settimane) {
+      const dispoSett = dispo ? dispo.filter(d => d.settimana_id === s.id) : [];
       
-      var btnGeo = document.getElementById('toggle-geo-btn');
-      btnGeo.textContent = geoAbilitata ? '🛰️ GPS: ATTIVO' : '🚫 GPS: DISABILITATO';
-      btnGeo.className = 'btn-toggle ' + (geoAbilitata ? 'open' : 'locked');
-      
-      if (geoLat) document.getElementById('geo-lat').value = geoLat;
-      if (geoLon) document.getElementById('geo-lon').value = geoLon;
-      if (geoRadius) document.getElementById('geo-radius').value = geoRadius;
-      
-      if (geoLat && geoLon) {
-        var preview = document.getElementById('geo-current-preview');
-        preview.style.display = 'block';
-        preview.innerHTML = '📌 Attuali: <strong>' + geoLat + '</strong>, <strong>' + geoLon + '</strong> · raggio <strong>' + (geoRadius || '150') + 'm</strong>';
-      }
-    }
-
-    async function upsertImpostazione(chiave, valore) {
-      var { data: existing } = await supabase.from('impostazioni').select('chiave').eq('chiave', chiave).maybeSingle();
-      if (existing) {
-        return supabase.from('impostazioni').update({ valore: valore }).eq('chiave', chiave);
-      } else {
-        return supabase.from('impostazioni').insert({ chiave: chiave, valore: valore });
-      }
-    }
-
-    async function loadUsers() {
-      const { data } = await supabase.from('utenti').select('*');
-      allAnimators = data || [];
-    }
-
-    async function loadTimbrature() {
-      const { data } = await supabase.from('timbrature').select('*').order('created_at', { ascending: false });
-      allLog = data || [];
-    }
-
-    function renderAnimators() {
-      const search = document.getElementById('filter-name').value.toLowerCase();
-      const statusFilter = document.getElementById('filter-status').value;
-      const sortBy = document.getElementById('filter-sort').value;
-
-      var lastStampMap = {};
-      for (var i = 0; i < allLog.length; i++) {
-        var log = allLog[i];
-        if (!lastStampMap[log.nome]) lastStampMap[log.nome] = log;
-      }
-
-      var list = allAnimators.map(function(a) {
-        return {
-          id: a.id,
-          nome: a.nome,
-          anno: a.anno,
-          lastStamp: lastStampMap[a.nome] || null,
-          isInside: (lastStampMap[a.nome] && lastStampMap[a.nome].tipo === 'Ingresso') || false
-        };
+      let disponibili = 0, forse = 0, nonDisponibili = 0;
+      dispoSett.forEach(d => {
+        if (d.stato === 'disponibile') disponibili++;
+        else if (d.stato === 'forse') forse++;
+        else if (d.stato === 'non_disponibile') nonDisponibili++;
       });
+      
+      const utentiCheHannoCompilato = new Set(dispoSett.map(d => d.user_id)).size;
+      const totaleUtenti = utenti ? utenti.length : 0;
+      const nonCompilato = totaleUtenti - utentiCheHannoCompilato;
 
-      if (search) list = list.filter(function(a) { return a.nome.toLowerCase().includes(search) || String(a.anno).includes(search); });
-      if (statusFilter === 'inside') list = list.filter(function(a) { return a.isInside; });
-      if (statusFilter === 'outside') list = list.filter(function(a) { return !a.isInside; });
+      html += `
+        <div class="disp-block">
+          <div class="disp-block-title">📅 ${escapeHtml(s.nome)}</div>
+          <div class="disp-block-date">${escapeHtml(s.date_info || '')}</div>
+          <div class="disp-counters">
+            <span class="dcnt dcnt-si">✅ ${disponibili} disponibilità</span>
+            <span class="dcnt dcnt-for">🤔 ${forse} forse</span>
+            <span class="dcnt dcnt-no">❌ ${nonDisponibili} non disponibili</span>
+            <span class="dcnt dcnt-nd">📝 ${nonCompilato} senza dati</span>
+          </div>
+          <div style="font-size:11px; color:var(--ink3);">👥 ${utentiCheHannoCompilato}/${totaleUtenti} animatori hanno compilato</div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
 
-      if (sortBy === 'status') list.sort(function(a, b) { return (b.isInside ? 1 : 0) - (a.isInside ? 1 : 0); });
-      else if (sortBy === 'alpha') list.sort(function(a, b) { return a.nome.localeCompare(b.nome); });
-      else if (sortBy === 'anno') list.sort(function(a, b) { return (parseInt(a.anno) || 0) - (parseInt(b.anno) || 0); });
+  // FILTRI
+  document.getElementById('filter-name').addEventListener('input', renderAnimators);
+  document.getElementById('filter-status').addEventListener('change', renderAnimators);
+  document.getElementById('log-search').addEventListener('input', renderLog);
+  document.getElementById('log-date').addEventListener('change', renderLog);
+  document.getElementById('refreshBtn').addEventListener('click', async () => { await loadTimbrature(); renderAnimators(); renderLog(); updateStats(); });
+  document.getElementById('refresh-disp-btn').addEventListener('click', loadDispRiepilogo);
 
-      var grid = document.getElementById('animators-grid');
-      if (list.length === 0) {
-        grid.innerHTML = '<div class="empty">👤 Nessun animatore trovato</div>';
-        return;
-      }
+  // TOGGLE LOCK
+  document.getElementById('toggle-in-btn').onclick = async function() {
+    ingressoAperto = !ingressoAperto;
+    await supabase.from('impostazioni').upsert({ chiave: 'ingresso_aperto', valore: ingressoAperto });
+    loadSettings();
+    toast(ingressoAperto ? 'Ingressi aperti' : 'Ingressi bloccati', ingressoAperto ? 'success' : 'error');
+  };
+  document.getElementById('toggle-out-btn').onclick = async function() {
+    uscitaAperta = !uscitaAperta;
+    await supabase.from('impostazioni').upsert({ chiave: 'uscita_aperta', valore: uscitaAperta });
+    loadSettings();
+    toast(uscitaAperta ? 'Uscite aperte' : 'Uscite bloccate', uscitaAperta ? 'success' : 'error');
+  };
 
-      grid.innerHTML = list.map(function(a) {
-        var nomeEsc = escapeHtml(a.nome);
-        var annoEsc = escapeHtml(a.anno || '');
-        var lastTxt = a.lastStamp ? (a.lastStamp.tipo + ' — ' + a.lastStamp.data + ' ' + a.lastStamp.ora) : 'Nessuna timbratura';
-        return '<div class="animator-card ' + (a.isInside ? 'inside' : 'outside') + '">' +
-          '<div class="anim-name">' + nomeEsc + ' <span>(' + (a.anno || '—') + ')</span></div>' +
-          '<div class="anim-status ' + (a.isInside ? 'in' : 'out') + '">' + (a.isInside ? 'Dentro' : 'Fuori') + '</div>' +
-          '<div class="anim-last">' + escapeHtml(lastTxt) + '</div>' +
-          '<div class="anim-actions">' +
-            '<button class="btn btn-green btn-sm" onclick="window._manualTimbratura(\'' + nomeEsc
+  // CHECK SESSIONE
+  if (sessionStorage.getItem('admin_auth') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAllData();
+  }
+})();
+</script>
+</body>
+</html>
