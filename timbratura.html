@@ -228,7 +228,6 @@
   const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
   const GIORNI_SETTIMANA = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
-  // Valori GPS — sovrascritti da Supabase
   var GEO_LAT = 45.706869501092136;
   var GEO_LON = 8.800464096722195;
   var GEO_RAGGIO = 150;
@@ -260,7 +259,6 @@
     return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
   }
   function formatDate(isoStr) {
-    // isoStr: "2025-06-16"
     if (!isoStr) return '';
     var p = isoStr.split('-');
     return p[2] + '/' + p[1] + '/' + p[0];
@@ -310,32 +308,19 @@
 
   window.handleLogout = function() { sessionStorage.removeItem('cu'); location.reload(); };
 
-  // ── IMPOSTAZIONI (GPS + locks) ────────────────────────
-  // IMPORTANTE: questa funzione non sovrascrive i valori GPS
-  // se la riga non esiste in Supabase — mantiene i default.
+  // ── IMPOSTAZIONI ─────────────────────────────────────
   async function caricaImpostazioni() {
     var res = await sb.from('impostazioni').select('*');
     if (res.error || !res.data) return;
     res.data.forEach(function(r) {
       var v = r.valore;
-      // jsonb: booleani arrivano come true/false JS, numeri come number, stringhe come string
       if (r.chiave === 'ingresso_aperto') ingressoAperto = (v === true || v === 'true');
       if (r.chiave === 'uscita_aperta')   uscitaAperta   = (v === true || v === 'true');
       if (r.chiave === 'geo_abilitata')   GEO_ON         = (v === true || v === 'true');
-      if (r.chiave === 'oratorio_lat') {
-        var parsed = parseFloat(v);
-        if (!isNaN(parsed) && parsed !== 0) GEO_LAT = parsed;
-      }
-      if (r.chiave === 'oratorio_lon') {
-        var parsed = parseFloat(v);
-        if (!isNaN(parsed) && parsed !== 0) GEO_LON = parsed;
-      }
-      if (r.chiave === 'max_distanza') {
-        var parsed = parseInt(v);
-        if (!isNaN(parsed) && parsed > 0) GEO_RAGGIO = parsed;
-      }
+      if (r.chiave === 'oratorio_lat') { var p=parseFloat(v); if(!isNaN(p)&&p!==0) GEO_LAT=p; }
+      if (r.chiave === 'oratorio_lon') { var p=parseFloat(v); if(!isNaN(p)&&p!==0) GEO_LON=p; }
+      if (r.chiave === 'max_distanza') { var p=parseInt(v);   if(!isNaN(p)&&p>0)   GEO_RAGGIO=p; }
     });
-    // Log per debug (visibile in console)
     console.log('[GPS] LAT='+GEO_LAT+' LON='+GEO_LON+' RAGGIO='+GEO_RAGGIO+'m GEO_ON='+GEO_ON);
   }
 
@@ -388,20 +373,9 @@
     }).join('');
   };
 
-  // ── TIMBRATURA ──────────────────────────────────────────────────────────
-  //
-  // FLUSSO CORRETTO per iOS:
-  //   1. Al tap: chiedi subito getCurrentPosition (richiede gesto utente)
-  //   2. In parallelo: aggiorna impostazioni da Supabase (incluse coordinate)
-  //   3. Quando ENTRAMBI sono pronti: usa le coordinate FRESCHE di Supabase
-  //      per calcolare la distanza
-  //
-  // IMPORTANTE: GEO_ON viene controllato DOPO caricaImpostazioni(), non prima,
-  // perché altrimenti si usano i valori stale della sessione precedente.
-  //
+  // ── TIMBRATURA ───────────────────────────────────────
   function doStamp(tipo) {
     if (!currentUser || stampBusy) { if(stampBusy) toast('⏳ Attendi...','info'); return; }
-    // Check veloce con valori locali (solo per feedback immediato)
     if (tipo==='Ingresso' && !ingressoAperto) { toast('🔒 Ingresso bloccato!','error'); return; }
     if (tipo==='Uscita'   && !uscitaAperta)   { toast('🔒 Uscite bloccate!','error');  return; }
 
@@ -413,39 +387,29 @@
 
     toast('📍 Verifica posizione...','info');
 
-    // STEP 1 — chiedi posizione SUBITO (iOS richiede gesto utente diretto, no await prima)
     var geoPromise = navigator.geolocation
       ? new Promise(function(resolve, reject) {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: true, timeout: 15000, maximumAge: 0
           });
         })
-      : Promise.resolve(null); // GPS non supportato → null
+      : Promise.resolve(null);
 
-    // STEP 2 — aggiorna impostazioni da Supabase (coordinate fresche)
     var settPromise = caricaImpostazioni();
 
-    // STEP 3 — aspetta entrambi, poi usa i valori AGGIORNATI
     Promise.all([geoPromise, settPromise]).then(function(results) {
-      var pos = results[0]; // null se GPS non supportato
+      var pos = results[0];
 
-      // Ricontrolla locks con dati freschi
       if (tipo==='Ingresso' && !ingressoAperto) { toast('🔒 Ingresso bloccato!','error'); stampBusy=false; aggiornaBottoni(); return; }
       if (tipo==='Uscita'   && !uscitaAperta)   { toast('🔒 Uscite bloccate!','error');   stampBusy=false; aggiornaBottoni(); return; }
 
-      // Se GPS disabilitato dall'admin O non supportato → timbratura diretta
-      if (!GEO_ON || !pos) {
-        salvaTimbratura(tipo);
-        return;
-      }
+      if (!GEO_ON || !pos) { salvaTimbratura(tipo); return; }
 
-      // Calcola distanza con coordinate AGGIORNATE da Supabase
       var lat  = pos.coords.latitude;
       var lon  = pos.coords.longitude;
       var acc  = pos.coords.accuracy;
       var dist = distanza(lat, lon, GEO_LAT, GEO_LON);
 
-      // Mostra debug sempre (utile per capire se le coordinate sono giuste)
       var dbg = document.getElementById('gps-debug');
       dbg.style.display = 'block';
       document.getElementById('debug-pos').innerHTML =
@@ -459,7 +423,6 @@
         stampBusy=false; aggiornaBottoni(); return;
       }
 
-      // Sei dentro → salva
       salvaTimbratura(tipo);
 
     }).catch(function(e) {
@@ -487,23 +450,28 @@
     });
   }
 
-  // ── DISPONIBILITÀ GIORNO PER GIORNO ──────────────────
+  // ── DISPONIBILITÀ ─────────────────────────────────────
+  // BUG FIX 1: usare .order('id') invece di .order('ordine') che non esiste
   async function caricaSettimane() {
-    var res = await sb.from('settimane').select('*').order('ordine',{ascending:true});
+    var res = await sb.from('settimane').select('*').order('id', {ascending: true});
     settimane = res.data || [];
   }
 
   async function caricaDisponibilita() {
     var container = document.getElementById('disp-container');
     container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
+
     await caricaSettimane();
+
     if (settimane.length === 0) {
       container.innerHTML = '<div class="empty-state">📭 Nessuna settimana ancora configurata.<br>L\'admin le aggiungerà dal pannello.</div>';
       return;
     }
-    // Carica tutte le disponibilità di questo utente
-    var res = await sb.from('settimane').select('*').order('id',{ascending:true});
-    // dispMap[settimana_id + '_' + giorno_index] = stato
+
+    // BUG FIX 2: caricare le disponibilità dell'utente (non le settimane di nuovo)
+    // e usare il nome corretto della variabile (dispRes → res)
+    var dispRes = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
+
     var dispMap = {};
     if (dispRes.data) {
       dispRes.data.forEach(function(d) {
@@ -512,21 +480,26 @@
     }
 
     container.innerHTML = '';
+
     settimane.forEach(function(s) {
       var block = document.createElement('div');
       block.className = 'sett-block';
 
-      // Header settimana
+      // Header — usa date_info se non ci sono data_inizio/data_fine ISO
       var header = document.createElement('div');
       header.className = 'sett-header';
       var dateStr = '';
       if (s.data_inizio && s.data_fine) {
         dateStr = formatDate(s.data_inizio) + ' – ' + formatDate(s.data_fine);
+      } else if (s.date_info) {
+        dateStr = s.date_info;
       }
-      header.innerHTML = '<div class="sett-header-nome">'+esc(s.nome)+'</div>'+(dateStr?'<div class="sett-header-date">📆 '+esc(dateStr)+'</div>':'');
+      header.innerHTML =
+        '<div class="sett-header-nome">'+esc(s.nome)+'</div>' +
+        (dateStr ? '<div class="sett-header-date">📆 '+esc(dateStr)+'</div>' : '');
       block.appendChild(header);
 
-      // Griglia giorni (lun-ven = 5 giorni)
+      // Griglia giorni lun–ven
       var grid = document.createElement('div');
       grid.className = 'giorni-grid';
 
@@ -542,18 +515,19 @@
         row.dataset.stato     = stato;
 
         row.innerHTML =
-          '<div class="giorno-label">'+GIORNI_SETTIMANA[i]+(dataGiorno?'<div class="data-label">'+dataGiorno+'</div>':'')+'</div>'+
+          '<div class="giorno-label">'+GIORNI_SETTIMANA[i]+
+            (dataGiorno ? '<div class="data-label">'+dataGiorno+'</div>' : '')+
+          '</div>'+
           '<div class="disp-btns">'+
             '<button class="disp-btn'+(stato==='disponibile'?' sel-disp':'')+'" data-val="disponibile">✅ Sì</button>'+
             '<button class="disp-btn'+(stato==='forse'?' sel-forse':'')+'" data-val="forse">🤔 Forse</button>'+
             '<button class="disp-btn'+(stato==='non_disponibile'?' sel-no':'')+'" data-val="non_disponibile">❌ No</button>'+
           '</div>';
 
-        // Selezione
         row.querySelectorAll('.disp-btn').forEach(function(btn) {
           btn.addEventListener('click', function() {
             row.querySelectorAll('.disp-btn').forEach(function(b){ b.className='disp-btn'; });
-            var cls = btn.dataset.val==='disponibile'?'sel-disp':btn.dataset.val==='forse'?'sel-forse':'sel-no';
+            var cls = btn.dataset.val==='disponibile' ? 'sel-disp' : btn.dataset.val==='forse' ? 'sel-forse' : 'sel-no';
             btn.className = 'disp-btn ' + cls;
             row.dataset.stato = btn.dataset.val;
           });
@@ -563,7 +537,7 @@
       }
       block.appendChild(grid);
 
-      // Footer con salva
+      // Footer salva
       var footer = document.createElement('div');
       footer.className = 'sett-footer';
       footer.innerHTML = '<div class="sett-saved" id="saved-'+s.id+'">✓ Salvato</div><button class="btn-salva-sett">Salva settimana</button>';
