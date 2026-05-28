@@ -165,7 +165,7 @@
     }
 
     .topbar-clock { font-size: 12px; color: var(--ink3); }
-    .main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+    .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
 
     .stats-row {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;
@@ -292,16 +292,43 @@
     .sett-date-admin { font-size: 11px; color: var(--ink3); }
     .sett-actions { display: flex; gap: 6px; }
 
-    /* DISP RIEPILOGO */
-    .disp-block { margin-bottom: 32px; }
-    .disp-block-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 3px; }
-    .disp-block-date  { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .disp-counters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    .dcnt { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .dcnt-si  { background: var(--green-lt); color: var(--green); }
-    .dcnt-for { background: var(--amber-lt); color: var(--amber); }
-    .dcnt-no  { background: var(--red-lt);   color: var(--red); }
-    .dcnt-nd  { background: var(--bg2);      color: var(--ink3); }
+    /* DISP RIEPILOGO - TABELLA DETTAGLIATA */
+    .disp-block { margin-bottom: 40px; }
+    .disp-block-title { font-family: var(--font-serif); font-size: 24px; font-style: italic; margin-bottom: 5px; }
+    .disp-block-date  { font-size: 12px; color: var(--ink3); margin-bottom: 16px; }
+    .disp-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      overflow-x: auto;
+      display: block;
+    }
+    .disp-table th, .disp-table td {
+      border: 1px solid var(--border);
+      padding: 8px 6px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .disp-table th {
+      background: var(--bg2);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+    .disp-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      background: var(--bg2);
+      position: sticky;
+      left: 0;
+      background-color: var(--bg2);
+    }
+    .disp-si { color: var(--green); font-weight: 600; }
+    .disp-forse { color: var(--amber); font-weight: 600; }
+    .disp-no { color: var(--red); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -437,7 +464,7 @@
     </div>
 
     <div class="section-header">
-      <div class="section-title">Riepilogo disponibilità</div>
+      <div class="section-title">Riepilogo disponibilità (dettaglio per animatore)</div>
       <button class="btn btn-sm btn-ghost" id="refresh-disp-btn">↻ Aggiorna</button>
     </div>
     <div id="admin-disp-container" style="margin-bottom:32px;">
@@ -811,7 +838,7 @@
     } else toast('Geolocalizzazione non supportata', 'error');
   });
 
-  // SETTIMANE E RIEPILOGO DISPONIBILITÀ
+  // SETTIMANE E RIEPILOGO DISPONIBILITÀ (TABELLA DETTAGLIATA)
   async function loadSettimane() {
     const { data } = await sb.from('settimane').select('*').order('id', { ascending: true });
     const container = document.getElementById('settimane-list');
@@ -850,39 +877,70 @@
     else { toast('Settimana aggiunta', 'success'); await loadSettimane(); await loadDispRiepilogo(); }
   });
 
+  // FUNZIONE PRINCIPALE: mostra tabella con tutti gli animatori e le disponibilità giorno per giorno
   async function loadDispRiepilogo() {
     const { data: settimane } = await sb.from('settimane').select('*').order('id');
     const { data: dispo } = await sb.from('disponibilita').select('*');
-    const { data: utenti } = await sb.from('utenti').select('id');
+    const { data: utenti } = await sb.from('utenti').select('id, nome, anno').order('nome');
+    
     const container = document.getElementById('admin-disp-container');
     if (!settimane || settimane.length === 0) {
       container.innerHTML = '<div class="empty">Nessuna settimana configurata.</div>';
       return;
     }
+
+    const giorni = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
     let html = '';
+
     for (const s of settimane) {
-      const dispoSett = dispo ? dispo.filter(d => d.settimana_id === s.id) : [];
-      let disponibili = 0, forse = 0, nonDisponibili = 0;
-      dispoSett.forEach(d => {
-        if (d.stato === 'disponibile') disponibili++;
-        else if (d.stato === 'forse') forse++;
-        else if (d.stato === 'non_disponibile') nonDisponibili++;
-      });
-      const utentiCheHannoCompilato = new Set(dispoSett.map(d => d.user_id)).size;
-      const totaleUtenti = utenti ? utenti.length : 0;
-      const nonCompilato = totaleUtenti - utentiCheHannoCompilato;
+      // Mappa: user_id -> array di 5 stringhe (stato leggibile)
+      const map = new Map();
+      if (dispo) {
+        dispo.filter(d => d.settimana_id === s.id).forEach(d => {
+          if (!map.has(d.user_id)) map.set(d.user_id, ['', '', '', '', '']);
+          const arr = map.get(d.user_id);
+          if (d.giorno_index >= 0 && d.giorno_index < 5) {
+            let simbolo = '';
+            if (d.stato === 'disponibile') simbolo = '<span class="disp-si">✅ Sì</span>';
+            else if (d.stato === 'forse') simbolo = '<span class="disp-forse">🤔 Forse</span>';
+            else if (d.stato === 'non_disponibile') simbolo = '<span class="disp-no">❌ No</span>';
+            arr[d.giorno_index] = simbolo;
+          }
+        });
+      }
+
+      // Costruisci tabella
       html += `
         <div class="disp-block">
           <div class="disp-block-title">📅 ${escapeHtml(s.nome)}</div>
           <div class="disp-block-date">${escapeHtml(s.date_info || '')}</div>
-          <div class="disp-counters">
-            <span class="dcnt dcnt-si">✅ ${disponibili} disponibilità</span>
-            <span class="dcnt dcnt-for">🤔 ${forse} forse</span>
-            <span class="dcnt dcnt-no">❌ ${nonDisponibili} non disponibili</span>
-            <span class="dcnt dcnt-nd">📝 ${nonCompilato} senza dati</span>
+          <div style="overflow-x: auto;">
+            <table class="disp-table">
+              <thead>
+                <tr>
+                  <th>Animatore</th>
+                  ${giorni.map(g => `<th>${g}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      for (const u of utenti) {
+        const scelte = map.get(u.id) || ['', '', '', '', ''];
+        html += `
+          <tr>
+            <td><strong>${escapeHtml(u.nome)}</strong> ${u.anno ? '('+u.anno+')' : ''}</td>
+            ${scelte.map(cella => `<td>${cella || '—'}</td>`).join('')}
+          </tr>
+        `;
+      }
+
+      html += `
+              </tbody>
+            </table>
           </div>
-          <div style="font-size:11px; color:var(--ink3);">👥 ${utentiCheHannoCompilato}/${totaleUtenti} animatori hanno compilato</div>
         </div>
+        <div style="margin-bottom: 40px;"></div>
       `;
     }
     container.innerHTML = html;
