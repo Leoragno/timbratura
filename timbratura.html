@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
+    /* Stessi stili del file timbratura precedente, identici */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #f5f2eb; --surface: #fff; --border: #d8d2c4;
@@ -340,7 +341,12 @@
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
   }
 
-  // DISPONIBILITÀ (senza "Forse", con giorni selezionabili)
+  // DISPONIBILITÀ (con giorni attivi come stringa)
+  function parseGiorniAttivi(giorniStr) {
+    if (!giorniStr || !giorniStr.trim()) return GIORNI_TUTTI;
+    return giorniStr.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
+  }
+
   async function caricaSettimane() {
     let res = await sb.from('settimane').select('*').order('ordine', { ascending: true });
     if (res.error) res = await sb.from('settimane').select('*').order('id', { ascending: true });
@@ -361,7 +367,7 @@
 
     container.innerHTML = '';
     for (const s of settimane) {
-      const giorniAttivi = s.giorni_attivi && s.giorni_attivi.length ? s.giorni_attivi : GIORNI_TUTTI;
+      const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
       const block = document.createElement('div');
       block.className = 'sett-block';
       block.innerHTML = `
