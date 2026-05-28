@@ -502,7 +502,7 @@
       return;
     }
     // Carica tutte le disponibilità di questo utente
-    var dispRes = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
+    var res = await sb.from('settimane').select('*').order('id',{ascending:true});
     // dispMap[settimana_id + '_' + giorno_index] = stato
     var dispMap = {};
     if (dispRes.data) {
