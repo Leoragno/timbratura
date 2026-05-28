@@ -247,6 +247,8 @@
   async function timbra(tipo) {
     if (!currentUser) { toast('Devi effettuare il login', 'error'); return; }
     if (stampBusy) { toast('Attendi...', 'info'); return; }
+    // Ricarica sempre le impostazioni fresche prima di timbrare
+    await caricaImpostazioni();
     if (tipo === 'Ingresso' && !ingressoAperto) { toast('❌ Ingresso bloccato', 'error'); return; }
     if (tipo === 'Uscita' && !uscitaAperta) { toast('❌ Uscita bloccata', 'error'); return; }
 
