@@ -1,66 +1,637 @@
-document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
-      
-      // Attiva il tab e il pannello cliccato
-      btn.classList.add('active');
-      var target = btn.getAttribute('data-tab');
-      document.getElementById(target).classList.add('active');
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Oratorio Timbratura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f2eb; --surface: #fff; --border: #d8d2c4;
+      --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
+      --accent: #2d4a3e; --accent-lt: #e8f0ec;
+      --red: #8b2e2e; --red-lt: #f5e8e8;
+      --amber: #7a5c1e; --amber-lt: #fdf3dc;
+      --green: #2d5a3d; --green-lt: #e5f2ea;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono: 'Geist Mono', 'Courier New', monospace;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
 
-      // Se l'utente apre le disponibilità, caricale
-      if (target === 'tab-disponibilita') {
-        caricaDisponibilita();
-      }
-    });
-  });
+    /* AUTH */
+    #auth-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; background: var(--bg); }
+    .auth-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
+    .auth-title { font-family: var(--font-serif); font-size: 32px; line-height: 1.1; margin-bottom: 24px; text-align: center; }
+    .auth-title em { font-style: italic; color: var(--accent); }
+    label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+    input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px; }
+    input:focus { border-color: var(--accent); }
+    input[type=number] { -moz-appearance: textfield; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; margin-bottom: 12px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1f3329; }
+    .btn-green { background: var(--green); color: #fff; font-size: 15px; padding: 18px; }
+    .btn-green:hover:not(:disabled) { background: #1f3f2a; }
+    .btn-red { background: var(--red); color: #fff; font-size: 15px; padding: 18px; }
+    .btn-red:hover:not(:disabled) { background: #662121; }
+    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; margin-top: 8px; }
+    .auth-toggle span { text-decoration: underline; color: var(--accent); }
+    .error-msg  { color: var(--red);   font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+    .success-msg{ color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
 
-  // ── INIZIALIZZAZIONE E EVENT LISTENERS ────────────────
-  on('login-btn', 'click', handleLogin);
-  on('login-password', 'keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
-  
-  on('register-btn', 'click', handleRegister);
-  on('reg-password', 'keypress', function(e) { if(e.key === 'Enter') handleRegister(); });
-  
-  on('logout-btn', 'click', handleLogout);
-  
-  on('btn-in', 'click', function() { doStamp('Ingresso'); });
-  on('btn-out', 'click', function() { doStamp('Uscita'); });
-  
-  // Event Listener Admin
-  on('toggle-in-btn', 'click', function() { toggleLock('ingresso_aperto'); });
-  on('toggle-out-btn', 'click', function() { toggleLock('uscita_aperta'); });
-  on('aggiorna-registro', 'click', function() { 
-    caricaRegistroAdmin(); 
-    toast('Registro aggiornato', 'info'); 
-  });
+    /* APP */
+    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 52px; }
+    .topbar-title { font-family: var(--font-serif); font-size: 19px; }
+    .topbar-title em { font-style: italic; color: var(--accent); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { font-size: 11px; color: var(--ink3); }
 
-  // Gestione Sessione e Parametri QR Code all'avvio
-  var urlParams = new URLSearchParams(window.location.search);
-  var qa = urlParams.get('qa'); // Es: ?qa=in oppure ?qa=out
+    /* TABS */
+    .tab-nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 13px 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .main-panel { max-width: 540px; margin: 0 auto; padding: 20px 16px; }
 
-  var savedUser = sessionStorage.getItem('cu');
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      mostraApp();
-      
-      // Se l'utente è loggato e arriva da un QR Code
-      if (qa) {
-        document.getElementById('qr-alert-processing').style.display = 'block';
-        setTimeout(function() {
-          document.getElementById('qr-alert-processing').style.display = 'none';
-          doStamp(qa === 'in' ? 'Ingresso' : 'Uscita');
-        }, 800);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    } catch(e) {
-      sessionStorage.removeItem('cu');
-    }
-  } else {
-    // Se l'utente non è loggato ma ha scansionato un QR
-    if (qa) {
-      sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
-      document.getElementById('qr-alert-login').style.display = 'block';
-    }
-  }
+    /* CARDS */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; margin-bottom: 16px; }
+    .card-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 14px; }
+    .user-name { font-family: var(--font-serif); font-size: 26px; margin-bottom: 4px; text-align: center; }
+    .user-meta { font-size: 11px; color: var(--ink3); margin-bottom: 20px; text-align: center; }
+    .stamp-box { display: flex; flex-direction: column; gap: 12px; }
+
+    /* GPS BANNER */
+    .gps-banner { display: none; background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: var(--amber); line-height: 1.6; }
+    .gps-banner strong { display: block; margin-bottom: 3px; }
+    .qr-alert { display: none; background: var(--accent-lt); color: var(--accent); border: 1px solid #b2ccbc; padding: 10px 12px; border-radius: 4px; font-size: 12px; margin-bottom: 14px; font-weight: 500; }
+
+    /* DISPONIBILITÀ */
+    .sett-block { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
+    .sett-header { background: var(--accent); color: #fff; padding: 12px 16px; }
+    .sett-header-nome { font-family: var(--font-serif); font-size: 16px; }
+    .sett-header-date { font-size: 10px; opacity: .8; margin-top: 2px; }
+    .giorni-grid { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .giorno-row { display: flex; align-items: center; gap: 8px; }
+    .giorno-label { width: 100px; font-size: 11px; color: var(--ink2); flex-shrink: 0; }
+    .giorno-label .data-label { font-size: 10px; color: var(--ink3); }
+    .disp-btns { display: flex; gap: 5px; flex: 1; }
+    .disp-btn { flex: 1; padding: 7px 4px; border: 1px solid var(--border); border-radius: 3px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; cursor: pointer; background: var(--bg); color: var(--ink3); transition: all .12s; text-align: center; }
+    .disp-btn:hover { border-color: var(--ink3); }
+    .disp-btn.sel-disp { background: var(--green-lt); border-color: #b2d4bc; color: var(--green); }
+    .disp-btn.sel-forse { background: var(--amber-lt); border-color: #e0cfa0; color: var(--amber); }
+    .disp-btn.sel-no { background: var(--red-lt); border-color: #dbb2b2; color: var(--red); }
+    .sett-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .btn-salva-sett { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 8px 18px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; cursor: pointer; }
+    .btn-salva-sett:hover { background: #1f3329; }
+    .sett-saved { font-size: 10px; color: var(--green); display: none; }
+
+    /* ADMIN */
+    .admin-card { background: #faf9f5; border: 2px dashed var(--accent); }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    .admin-title { font-family: var(--font-serif); font-size: 20px; color: var(--accent); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; width: auto; margin-bottom: 0; }
+    .btn-ghost { background: transparent; color: var(--ink3); border: 1px solid var(--border); }
+    .toggle-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .btn-toggle { flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; transition: all .15s; }
+    .t-open { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
+    .t-locked { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
+    .mini-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .mini-table th { background: var(--accent-lt); color: var(--accent); padding: 8px 10px; text-align: left; font-size: 9px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .mini-table td { padding: 8px 10px; border-bottom: 1px solid #ede9df; }
+    .badge { padding: 2px 7px; border-radius: 20px; font-size: 9px; font-weight: 700; display: inline-block; }
+    .b-in { background: var(--green-lt); color: var(--green); }
+    .b-out { background: var(--red-lt); color: var(--red); }
+
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); border-radius: 4px; padding: 11px 22px; font-size: 12px; opacity: 0; transition: all .3s; z-index: 400; pointer-events: none; max-width: 88vw; text-align: center; white-space: normal; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--accent); }
+    .empty-state { text-align: center; padding: 36px 16px; color: var(--ink3); font-size: 12px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card" id="login-card">
+    <div class="auth-title">Accedi all'<em>Oratorio</em></div>
+    <div class="qr-alert" id="qr-alert-login">📱 QR Code rilevato! Accedi per timbrare.</div>
+    <label>👤 Nome e Cognome</label>
+    <input type="text" id="login-nome" placeholder="Mario Rossi" autocomplete="off" />
+    <label>🔐 Password</label>
+    <input type="password" id="login-password" placeholder="••••••••" />
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn btn-primary" id="login-btn">Entra →</button>
+    <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo animatore? <span>Registrati qui</span></div>
+  </div>
+  <div class="auth-card" id="register-card" style="display:none;">
+    <div class="auth-title">Nuovo <em>Animatore</em></div>
+    <label>📛 Nome e Cognome</label>
+    <input type="text" id="reg-nome" placeholder="Mario Rossi" />
+    <label>🎂 Anno di Nascita</label>
+    <input type="number" id="reg-anno" placeholder="2008" oninput="if(this.value.length>4)this.value=this.value.slice(0,4);" />
+    <label>🔐 Password (min. 4 caratteri)</label>
+    <input type="password" id="reg-password" placeholder="••••••••" />
+    <div class="error-msg" id="reg-error"></div>
+    <div class="success-msg" id="reg-success"></div>
+    <button class="btn btn-primary" id="register-btn">Registrati</button>
+    <div class="auth-toggle" onclick="toggleAuth(false)">Hai già un account? <span>Accedi</span></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-title">tim<em>bratura</em></div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-user"></span>
+      <button class="btn btn-ghost btn-sm" id="logout-btn">Esci</button>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-timbratura">⏱ Timbratura</button>
+    <button class="tab-btn" data-tab="tab-disponibilita">📅 Disponibilità</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-timbratura">
+    <div class="main-panel">
+      <div class="card" style="text-align:center;">
+        <div class="user-name" id="user-display-name">—</div>
+        <div class="user-meta" id="user-display-meta">—</div>
+        <div class="qr-alert" id="qr-alert-processing">⏳ Elaborazione QR Code...</div>
+        <div class="gps-banner" id="geo-banner">
+          <strong>📍 Posizione richiesta</strong>
+          Safari chiederà di condividere la posizione. Premi <strong>"Consenti"</strong>.<br>
+          Se non vedi il popup: <em>Impostazioni → Privacy → Servizi di localizzazione → Safari → "Mentre uso l'app"</em>.
+        </div>
+        <div class="stamp-box">
+          <button class="btn btn-green" id="btn-in">⬆ REGISTRA INGRESSO</button>
+          <button class="btn btn-red"   id="btn-out">⬇ REGISTRA USCITA</button>
+        </div>
+        <div id="gps-debug" style="margin-top:16px;font-size:10px;color:var(--ink3);display:none;border-top:1px solid var(--border);padding-top:12px;text-align:left;">
+          <div id="debug-pos"></div><div id="debug-dist"></div>
+        </div>
+      </div>
+
+      <div class="card admin-card" id="admin-panel" style="display:none;">
+        <div class="admin-header">
+          <div class="admin-title">Admin 🛠️</div>
+          <button class="btn btn-ghost btn-sm" id="aggiorna-registro">↻ Aggiorna</button>
+        </div>
+        <p style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:8px;">Blocco timbratura:</p>
+        <div class="toggle-row">
+          <button class="btn-toggle" id="toggle-in-btn">...</button>
+          <button class="btn-toggle" id="toggle-out-btn">...</button>
+        </div>
+        <p style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:8px;padding-top:10px;border-top:1px solid var(--border);">Ultime timbrature:</p>
+        <div style="overflow-x:auto;">
+          <table class="mini-table">
+            <thead><tr><th>Nome</th><th>Data</th><th>Ora</th><th>Tipo</th></tr></thead>
+            <tbody id="admin-tbody"><tr><td colspan="4" style="text-align:center;color:var(--ink3);">Caricamento...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-disponibilita">
+    <div class="main-panel">
+      <div class="card-title">Le mie disponibilità</div>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:16px;line-height:1.6;">Indica per ogni giorno se sei <strong style="color:var(--green);">Disponibile</strong>, <strong style="color:var(--amber);">Forse</strong> o <strong style="color:var(--red);">Non disponibile</strong>.</p>
+      <div id="disp-container">
+        <div class="empty-state">⏳ Caricamento settimane...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function() {
+  const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+  const ADMIN_NAMES = ['admin', 'direttore', 'capocentro'];
+  const GIORNI_SETTIMANA = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
+
+  var GEO_LAT = 45.706869501092136;
+  var GEO_LON = 8.800464096722195;
+  var GEO_RAGGIO = 150;
+  var GEO_ON = true;
+
+  var ingressoAperto = true;
+  var uscitaAperta   = true;
+  var currentUser    = null;
+  var stampBusy      = false;
+  var settimane      = [];
+
+  // ── UTILITY ──────────────────────────────────────────
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function toast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + (type||'info') + ' show';
+    setTimeout(function(){ el.classList.remove('show'); }, 4000);
+  }
+  function on(id, ev, fn) { var el=document.getElementById(id); if(el) el.addEventListener(ev,fn); }
+  function distanza(a, b, c, d) {
+    var R=6371000, dLat=(c-a)*Math.PI/180, dLon=(d-b)*Math.PI/180;
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function formatDate(isoStr) {
+    if (!isoStr) return '';
+    var p = isoStr.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+  function addDays(isoStr, n) {
+    var d = new Date(isoStr);
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+
+  // ── AUTH ─────────────────────────────────────────────
+  window.toggleAuth = function(r) {
+    document.getElementById('login-card').style.display    = r ? 'none'  : 'block';
+    document.getElementById('register-card').style.display = r ? 'block' : 'none';
+  };
+
+  window.handleRegister = async function() {
+    var nome = document.getElementById('reg-nome').value.trim();
+    var anno = document.getElementById('reg-anno').value.trim();
+    var pw   = document.getElementById('reg-password').value;
+    function err(m){ var d=document.getElementById('reg-error'); d.textContent=m; d.style.display='block'; setTimeout(function(){d.style.display='none';},3000); }
+    function ok(m) { var d=document.getElementById('reg-success'); d.textContent=m; d.style.display='block'; }
+    if (!nome||!anno||!pw) return err('❌ Tutti i campi obbligatori');
+    if (pw.length<4) return err('❌ Password min. 4 caratteri');
+    if (anno.length!==4||isNaN(parseInt(anno))) return err('❌ Anno non valido');
+    var chk = await sb.from('utenti').select('nome').eq('nome',nome).maybeSingle();
+    if (chk.data) return err('❌ Nome già registrato');
+    var ins = await sb.from('utenti').insert([{nome,password:pw,anno:parseInt(anno),created_at:new Date()}]);
+    if (ins.error) return err('❌ '+ins.error.message);
+    ok('✅ Registrato! Accedi ora.');
+    setTimeout(function(){ window.toggleAuth(false); }, 1800);
+  };
+
+  window.handleLogin = async function() {
+    var nome = document.getElementById('login-nome').value.trim();
+    var pw   = document.getElementById('login-password').value;
+    function err(m){ var d=document.getElementById('login-error'); d.textContent=m; d.style.display='block'; setTimeout(function(){d.style.display='none';},3000); }
+    if (!nome||!pw) return err('❌ Inserisci nome e password');
+    var res = await sb.from('utenti').select('*').eq('nome',nome).eq('password',pw).maybeSingle();
+    if (res.error||!res.data) return err('❌ Nome o password errati');
+    currentUser = {id:res.data.id, nome:res.data.nome, anno:res.data.anno};
+    sessionStorage.setItem('cu', JSON.stringify(currentUser));
+    await mostraApp();
+    var pending = sessionStorage.getItem('pqa');
+    if (pending) { sessionStorage.removeItem('pqa'); doStamp(pending); }
+  };
+
+  window.handleLogout = function() { sessionStorage.removeItem('cu'); location.reload(); };
+
+  // ── IMPOSTAZIONI ─────────────────────────────────────
+  async function caricaImpostazioni() {
+    var res = await sb.from('impostazioni').select('*');
+    if (res.error || !res.data) return;
+    res.data.forEach(function(r) {
+      var v = r.valore;
+      if (r.chiave === 'ingresso_aperto') ingressoAperto = (v === true || v === 'true');
+      if (r.chiave === 'uscita_aperta')   uscitaAperta   = (v === true || v === 'true');
+      if (r.chiave === 'geo_abilitata')   GEO_ON         = (v === true || v === 'true');
+      if (r.chiave === 'oratorio_lat') { var p=parseFloat(v); if(!isNaN(p)&&p!==0) GEO_LAT=p; }
+      if (r.chiave === 'oratorio_lon') { var p=parseFloat(v); if(!isNaN(p)&&p!==0) GEO_LON=p; }
+      if (r.chiave === 'max_distanza') { var p=parseInt(v);   if(!isNaN(p)&&p>0)   GEO_RAGGIO=p; }
+    });
+    console.log('[GPS] LAT='+GEO_LAT+' LON='+GEO_LON+' RAGGIO='+GEO_RAGGIO+'m GEO_ON='+GEO_ON);
+  }
+
+  function aggiornaBottoni() {
+    var bIn  = document.getElementById('btn-in');
+    var bOut = document.getElementById('btn-out');
+    if (bIn)  { bIn.disabled  = !ingressoAperto; bIn.textContent  = ingressoAperto ? '⬆ REGISTRA INGRESSO' : '🔒 INGRESSO BLOCCATO'; }
+    if (bOut) { bOut.disabled = !uscitaAperta;   bOut.textContent = uscitaAperta   ? '⬇ REGISTRA USCITA'   : '🔒 USCITA BLOCCATA';   }
+    var tIn  = document.getElementById('toggle-in-btn');
+    var tOut = document.getElementById('toggle-out-btn');
+    if (tIn)  { tIn.textContent  = ingressoAperto ? '🔓 Ingressi: ON'  : '🔒 Ingressi: OFF'; tIn.className  = 'btn-toggle ' + (ingressoAperto ? 't-open' : 't-locked'); }
+    if (tOut) { tOut.textContent = uscitaAperta   ? '🔓 Uscite: ON'    : '🔒 Uscite: OFF';   tOut.className = 'btn-toggle ' + (uscitaAperta   ? 't-open' : 't-locked'); }
+  }
+
+  window.toggleLock = async function(chiave) {
+    var cur = chiave === 'ingresso_aperto' ? ingressoAperto : uscitaAperta;
+    await sb.from('impostazioni').update({valore: !cur}).eq('chiave', chiave);
+    await caricaImpostazioni();
+    aggiornaBottoni();
+    toast('Aggiornato!', 'success');
+  };
+
+  // ── MOSTRA APP ────────────────────────────────────────
+  async function mostraApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display  = 'block';
+    document.getElementById('user-display-name').textContent = currentUser.nome;
+    document.getElementById('user-display-meta').textContent = '📅 Anno ' + (currentUser.anno||'—');
+    document.getElementById('topbar-user').textContent = currentUser.nome;
+    await caricaImpostazioni();
+    aggiornaBottoni();
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && GEO_ON) {
+      document.getElementById('geo-banner').style.display = 'block';
+    }
+    if (ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) {
+      document.getElementById('admin-panel').style.display = 'block';
+      caricaRegistroAdmin();
+    }
+  }
+
+  // ── ADMIN REGISTRO ────────────────────────────────────
+  window.caricaRegistroAdmin = async function() {
+    var tbody = document.getElementById('admin-tbody');
+    if (!tbody) return;
+    var res = await sb.from('timbrature').select('*').order('id',{ascending:false}).limit(50);
+    if (!res.data||res.data.length===0) { tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--ink3);">Nessuna timbratura</td></tr>'; return; }
+    tbody.innerHTML = res.data.map(function(r){
+      var bc = r.tipo==='Ingresso' ? 'b-in' : 'b-out';
+      return '<tr><td><strong>'+esc(r.nome)+'</strong></td><td>'+esc(r.data)+'</td><td>'+esc(r.ora)+'</td><td><span class="badge '+bc+'">'+esc(r.tipo)+'</span></td></tr>';
+    }).join('');
+  };
+
+  // ── TIMBRATURA ───────────────────────────────────────
+  function doStamp(tipo) {
+    if (!currentUser || stampBusy) { if(stampBusy) toast('⏳ Attendi...','info'); return; }
+    if (tipo==='Ingresso' && !ingressoAperto) { toast('🔒 Ingresso bloccato!','error'); return; }
+    if (tipo==='Uscita'   && !uscitaAperta)   { toast('🔒 Uscite bloccate!','error');  return; }
+
+    stampBusy = true;
+    document.getElementById('btn-in').disabled  = true;
+    document.getElementById('btn-out').disabled = true;
+    document.getElementById('geo-banner').style.display = 'none';
+    document.getElementById('gps-debug').style.display = 'none';
+
+    toast('📍 Verifica posizione...','info');
+
+    var geoPromise = navigator.geolocation
+      ? new Promise(function(resolve, reject) {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true, timeout: 15000, maximumAge: 0
+          });
+        })
+      : Promise.resolve(null);
+
+    var settPromise = caricaImpostazioni();
+
+    Promise.all([geoPromise, settPromise]).then(function(results) {
+      var pos = results[0];
+
+      if (tipo==='Ingresso' && !ingressoAperto) { toast('🔒 Ingresso bloccato!','error'); stampBusy=false; aggiornaBottoni(); return; }
+      if (tipo==='Uscita'   && !uscitaAperta)   { toast('🔒 Uscite bloccate!','error');   stampBusy=false; aggiornaBottoni(); return; }
+
+      if (!GEO_ON || !pos) { salvaTimbratura(tipo); return; }
+
+      var lat  = pos.coords.latitude;
+      var lon  = pos.coords.longitude;
+      var acc  = pos.coords.accuracy;
+      var dist = distanza(lat, lon, GEO_LAT, GEO_LON);
+
+      var dbg = document.getElementById('gps-debug');
+      dbg.style.display = 'block';
+      document.getElementById('debug-pos').innerHTML =
+        '📍 Tu: <strong>'+lat.toFixed(6)+'</strong>, <strong>'+lon.toFixed(6)+'</strong> ±'+Math.round(acc)+'m<br>' +
+        '🎯 Oratorio: '+GEO_LAT.toFixed(6)+', '+GEO_LON.toFixed(6)+'<br>' +
+        '📏 Distanza: <strong>'+Math.round(dist)+'m</strong> (limite: '+GEO_RAGGIO+'m)';
+      document.getElementById('debug-dist').innerHTML = '';
+
+      if (dist > GEO_RAGGIO) {
+        toast('❌ Sei a '+Math.round(dist)+'m dall\'oratorio (limite '+GEO_RAGGIO+'m)','error');
+        stampBusy=false; aggiornaBottoni(); return;
+      }
+
+      salvaTimbratura(tipo);
+
+    }).catch(function(e) {
+      stampBusy=false; aggiornaBottoni();
+      var msg;
+      if (e && e.code === 1)      msg = '❌ Permesso GPS negato.\n\niOS: Impostazioni → Privacy → Servizi di localizzazione → Safari → "Mentre uso l\'app"';
+      else if (e && e.code === 2) msg = '❌ GPS non disponibile. Attiva la posizione e riprova.';
+      else if (e && e.code === 3) msg = '⏰ Timeout GPS. Riprova.';
+      else msg = '❌ Errore: ' + (e && e.message ? e.message : 'sconosciuto');
+      toast(msg, 'error');
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent) && e && e.code===1) {
+        document.getElementById('geo-banner').style.display = 'block';
+      }
+    });
+  }
+
+  function salvaTimbratura(tipo) {
+    var now  = new Date();
+    var data = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+    var ora  = now.toTimeString().slice(0,5);
+    sb.from('timbrature').insert({user_id:currentUser.id,nome:currentUser.nome,anno:currentUser.anno?parseInt(currentUser.anno):null,data,ora,tipo}).then(function(r){
+      stampBusy=false; aggiornaBottoni();
+      if (r.error) toast('❌ '+r.error.message,'error');
+      else { toast('✅ '+tipo+' alle '+ora,'success'); if(ADMIN_NAMES.includes(currentUser.nome.toLowerCase())) caricaRegistroAdmin(); }
+    });
+  }
+
+  // ── DISPONIBILITÀ ─────────────────────────────────────
+  // BUG FIX 1: usare .order('id') invece di .order('ordine') che non esiste
+  async function caricaSettimane() {
+    var res = await sb.from('settimane').select('*').order('id', {ascending: true});
+    settimane = res.data || [];
+  }
+
+  async function caricaDisponibilita() {
+    var container = document.getElementById('disp-container');
+    container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
+
+    await caricaSettimane();
+
+    if (settimane.length === 0) {
+      container.innerHTML = '<div class="empty-state">📭 Nessuna settimana ancora configurata.<br>L\'admin le aggiungerà dal pannello.</div>';
+      return;
+    }
+
+    // BUG FIX 2: caricare le disponibilità dell'utente (non le settimane di nuovo)
+    // e usare il nome corretto della variabile (dispRes → res)
+    var dispRes = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
+
+    var dispMap = {};
+    if (dispRes.data) {
+      dispRes.data.forEach(function(d) {
+        dispMap[d.settimana_id + '_' + d.giorno_index] = {id: d.id, stato: d.stato};
+      });
+    }
+
+    container.innerHTML = '';
+
+    settimane.forEach(function(s) {
+      var block = document.createElement('div');
+      block.className = 'sett-block';
+
+      // Header — usa date_info se non ci sono data_inizio/data_fine ISO
+      var header = document.createElement('div');
+      header.className = 'sett-header';
+      var dateStr = '';
+      if (s.data_inizio && s.data_fine) {
+        dateStr = formatDate(s.data_inizio) + ' – ' + formatDate(s.data_fine);
+      } else if (s.date_info) {
+        dateStr = s.date_info;
+      }
+      header.innerHTML =
+        '<div class="sett-header-nome">'+esc(s.nome)+'</div>' +
+        (dateStr ? '<div class="sett-header-date">📆 '+esc(dateStr)+'</div>' : '');
+      block.appendChild(header);
+
+      // Griglia giorni lun–ven
+      var grid = document.createElement('div');
+      grid.className = 'giorni-grid';
+
+      for (var i = 0; i < 5; i++) {
+        var key   = s.id + '_' + i;
+        var stato = dispMap[key] ? dispMap[key].stato : '';
+        var dataGiorno = s.data_inizio ? formatDate(addDays(s.data_inizio, i)) : '';
+
+        var row = document.createElement('div');
+        row.className = 'giorno-row';
+        row.dataset.settId    = s.id;
+        row.dataset.giornoIdx = i;
+        row.dataset.stato     = stato;
+
+        row.innerHTML =
+          '<div class="giorno-label">'+GIORNI_SETTIMANA[i]+
+            (dataGiorno ? '<div class="data-label">'+dataGiorno+'</div>' : '')+
+          '</div>'+
+          '<div class="disp-btns">'+
+            '<button class="disp-btn'+(stato==='disponibile'?' sel-disp':'')+'" data-val="disponibile">✅ Sì</button>'+
+            '<button class="disp-btn'+(stato==='forse'?' sel-forse':'')+'" data-val="forse">🤔 Forse</button>'+
+            '<button class="disp-btn'+(stato==='non_disponibile'?' sel-no':'')+'" data-val="non_disponibile">❌ No</button>'+
+          '</div>';
+
+        row.querySelectorAll('.disp-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            row.querySelectorAll('.disp-btn').forEach(function(b){ b.className='disp-btn'; });
+            var cls = btn.dataset.val==='disponibile' ? 'sel-disp' : btn.dataset.val==='forse' ? 'sel-forse' : 'sel-no';
+            btn.className = 'disp-btn ' + cls;
+            row.dataset.stato = btn.dataset.val;
+          });
+        });
+
+        grid.appendChild(row);
+      }
+      block.appendChild(grid);
+
+      // Footer salva
+      var footer = document.createElement('div');
+      footer.className = 'sett-footer';
+      footer.innerHTML = '<div class="sett-saved" id="saved-'+s.id+'">✓ Salvato</div><button class="btn-salva-sett">Salva settimana</button>';
+      footer.querySelector('.btn-salva-sett').addEventListener('click', async function() {
+        var rows = grid.querySelectorAll('.giorno-row');
+        var ok = true;
+        for (var j = 0; j < rows.length; j++) {
+          var r   = rows[j];
+          var st  = r.dataset.stato;
+          var sid = parseInt(r.dataset.settId);
+          var idx = parseInt(r.dataset.giornoIdx);
+          if (!st) continue;
+          var existKey = sid + '_' + idx;
+          var existing = dispMap[existKey];
+          var payload  = {user_id:currentUser.id, nome:currentUser.nome, settimana_id:sid, giorno_index:idx, stato:st};
+          var res2;
+          if (existing) {
+            res2 = await sb.from('disponibilita').update({stato:st}).eq('id',existing.id);
+          } else {
+            res2 = await sb.from('disponibilita').insert(payload).select();
+            if (res2.data && res2.data[0]) dispMap[existKey] = {id:res2.data[0].id, stato:st};
+          }
+          if (res2.error) { ok=false; toast('❌ Errore: '+res2.error.message,'error'); break; }
+          else if (existing) dispMap[existKey].stato = st;
+        }
+        if (ok) {
+          var badge = document.getElementById('saved-'+s.id);
+          if (badge) { badge.style.display='block'; setTimeout(function(){badge.style.display='none';},2500); }
+          toast('✅ Disponibilità salvata!','success');
+        }
+      });
+      block.appendChild(footer);
+      container.appendChild(block);
+    });
+  }
+
+  // ── TABS ──────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      
+      btn.classList.add('active');
+      var target = btn.getAttribute('data-tab');
+      document.getElementById(target).classList.add('active');
+      
+      if (target === 'tab-disponibilita') {
+        caricaDisponibilita();
+      }
+    });
+  });
+
+  // ── INIZIALIZZAZIONE E EVENT LISTENERS ────────────────
+  on('login-btn', 'click', handleLogin);
+  on('login-password', 'keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
+
+  on('register-btn', 'click', handleRegister);
+  on('reg-password', 'keypress', function(e) { if(e.key === 'Enter') handleRegister(); });
+
+  on('logout-btn', 'click', handleLogout);
+
+  on('btn-in', 'click', function() { doStamp('Ingresso'); });
+  on('btn-out', 'click', function() { doStamp('Uscita'); });
+
+  // Event Listener Admin
+  on('toggle-in-btn', 'click', function() { toggleLock('ingresso_aperto'); });
+  on('toggle-out-btn', 'click', function() { toggleLock('uscita_aperta'); });
+  on('aggiorna-registro', 'click', function() { 
+    caricaRegistroAdmin(); 
+    toast('Registro aggiornato', 'info'); 
+  });
+
+  // Gestione Sessione e Parametri QR Code all'avvio
+  var urlParams = new URLSearchParams(window.location.search);
+  var qa = urlParams.get('qa');
+
+  var savedUser = sessionStorage.getItem('cu');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      mostraApp();
+
+      if (qa) {
+        document.getElementById('qr-alert-processing').style.display = 'block';
+        setTimeout(function() {
+          document.getElementById('qr-alert-processing').style.display = 'none';
+          doStamp(qa === 'in' ? 'Ingresso' : 'Uscita');
+        }, 800);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch(e) {
+      sessionStorage.removeItem('cu');
+    }
+  } else {
+    if (qa) {
+      sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
+      document.getElementById('qr-alert-login').style.display = 'block';
+    }
+  }
 
 })();
 </script>
