@@ -7,34 +7,218 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* Stesso CSS del timbratura originale, identico a quello che hai già funzionante */
-    /* Per brevità, includi il CSS dal file timbratura che usavi prima (quello senza errori) */
-    /* Se vuoi, te lo re-invio ma è uguale a quello del messaggio precedente (la versione con Sì/No) */
-    /* Per non appesantire, prendi lo stile dal tuo timbratura funzionante, oppure copialo dal file admin qui sopra (le parti comuni) */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f2eb; --surface: #fff; --border: #d8d2c4;
+      --ink: #1a1714; --ink2: #5a5148; --ink3: #8a7f72;
+      --accent: #2d4a3e; --accent-lt: #e8f0ec;
+      --red: #8b2e2e; --red-lt: #f5e8e8;
+      --green: #2d5a3d; --green-lt: #e5f2ea;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono: 'Geist Mono', 'Courier New', monospace;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
+
+    /* AUTH */
+    #auth-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; background: var(--bg); }
+    .auth-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
+    .auth-title { font-family: var(--font-serif); font-size: 32px; line-height: 1.1; margin-bottom: 24px; text-align: center; }
+    .auth-title em { font-style: italic; color: var(--accent); }
+    label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+    input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px; }
+    input:focus { border-color: var(--accent); }
+    input[type=number] { -moz-appearance: textfield; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; margin-bottom: 12px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1f3329; }
+    .btn-green { background: var(--green); color: #fff; font-size: 15px; padding: 18px; }
+    .btn-green:hover:not(:disabled) { background: #1f3f2a; }
+    .btn-red { background: var(--red); color: #fff; font-size: 15px; padding: 18px; }
+    .btn-red:hover:not(:disabled) { background: #662121; }
+    .auth-toggle { text-align: center; font-size: 12px; color: var(--ink2); cursor: pointer; margin-top: 8px; }
+    .auth-toggle span { text-decoration: underline; color: var(--accent); }
+    .error-msg  { color: var(--red);   font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+    .success-msg{ color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+
+    /* APP */
+    #app-screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 52px; }
+    .topbar-title { font-family: var(--font-serif); font-size: 19px; }
+    .topbar-title em { font-style: italic; color: var(--accent); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { font-size: 11px; color: var(--ink3); }
+
+    /* TABS */
+    .tab-nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 13px 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .main-panel { max-width: 540px; margin: 0 auto; padding: 20px 16px; }
+
+    /* CARDS & DISPONIBILITÀ */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; margin-bottom: 16px; }
+    .user-name { font-family: var(--font-serif); font-size: 26px; text-align: center; margin-bottom: 4px; }
+    .user-meta { font-size: 11px; color: var(--ink3); text-align: center; margin-bottom: 20px; }
+    .gps-banner { display: none; background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: #7a5c1e; line-height: 1.6; }
+    .sett-block { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
+    .sett-header { background: var(--accent); color: #fff; padding: 12px 16px; }
+    .sett-header-nome { font-family: var(--font-serif); font-size: 16px; }
+    .sett-header-date { font-size: 10px; opacity: .8; }
+    .giorni-grid { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .giorno-row { display: flex; align-items: center; gap: 8px; }
+    .giorno-label { width: 100px; font-size: 11px; }
+    .disp-btns { display: flex; gap: 5px; flex: 1; }
+    .disp-btn { flex: 1; padding: 7px 4px; border: 1px solid var(--border); border-radius: 3px; font-size: 10px; font-family: var(--font-mono); cursor: pointer; background: var(--bg); color: var(--ink3); transition: all .12s; text-align: center; }
+    .disp-btn:hover { border-color: var(--ink3); }
+    .disp-btn.sel-disp { background: var(--green-lt); border-color: #b2d4bc; color: var(--green); }
+    .disp-btn.sel-no { background: var(--red-lt); border-color: #dbb2b2; color: var(--red); }
+    .sett-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .btn-salva-sett { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 8px 18px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; cursor: pointer; }
+    .btn-salva-sett:hover { background: #1f3329; }
+    .sett-saved { font-size: 10px; color: var(--green); display: none; }
+
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); border-radius: 4px; padding: 11px 22px; font-size: 12px; opacity: 0; transition: all .3s; z-index: 400; pointer-events: none; max-width: 88vw; text-align: center; white-space: normal; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--accent); }
+    .empty-state { text-align: center; padding: 36px 16px; color: var(--ink3); font-size: 12px; line-height: 1.7; }
   </style>
 </head>
 <body>
-<!-- stesso HTML del timbratura originale, ma con la logica aggiornata per leggere giorni_attivi -->
+
+<div id="auth-screen">
+  <div class="auth-card" id="login-card">
+    <div class="auth-title">Accedi all'<em>Oratorio</em></div>
+    <div class="qr-alert" id="qr-alert-login" style="display:none; background:var(--accent-lt); color:var(--accent); border:1px solid #b2ccbc; padding:10px; border-radius:4px; margin-bottom:14px; text-align:center;">📱 QR Code rilevato! Accedi per timbrare.</div>
+    <label>👤 Nome e Cognome</label>
+    <input type="text" id="login-nome" placeholder="Mario Rossi" autocomplete="off" />
+    <label>🔐 Password</label>
+    <input type="password" id="login-password" />
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn btn-primary" id="login-btn">Entra →</button>
+    <div class="auth-toggle" onclick="toggleAuth(true)">Nuovo? <span>Registrati</span></div>
+  </div>
+
+  <div class="auth-card" id="register-card" style="display:none;">
+    <div class="auth-title">Nuovo <em>Animatore</em></div>
+    <label>📛 Nome e Cognome</label>
+    <input type="text" id="reg-nome" />
+    <label>🎂 Anno di Nascita</label>
+    <input type="number" id="reg-anno" placeholder="2008" />
+    <label>🔐 Password (min. 4 caratteri)</label>
+    <input type="password" id="reg-password" />
+    <div class="error-msg" id="reg-error"></div>
+    <div class="success-msg" id="reg-success"></div>
+    <button class="btn btn-primary" id="register-btn">Registrati</button>
+    <div class="auth-toggle" onclick="toggleAuth(false)">Hai un account? <span>Accedi</span></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-title">tim<em>bratura</em></div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-user"></span>
+      <button class="btn-primary" id="logout-btn" style="padding: 4px 8px; font-size: 10px; background:transparent; border:1px solid var(--border); color:var(--ink3);">Esci</button>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-timbratura">⏱ Timbratura</button>
+    <button class="tab-btn" data-tab="tab-disponibilita">📅 Disponibilità</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-timbratura">
+    <div class="main-panel">
+      <div class="card">
+        <div class="user-name" id="user-display-name">—</div>
+        <div class="user-meta" id="user-display-meta">—</div>
+        <div class="gps-banner" id="geo-banner">
+          <strong>📍 Posizione richiesta</strong><br>
+          Per timbrare devi essere nei pressi dell'oratorio.<br>
+          <small>Consenti la geolocalizzazione quando richiesto.</small>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn-green" id="btn-in">⬆ INGRESSO</button>
+          <button class="btn btn-red" id="btn-out">⬇ USCITA</button>
+        </div>
+        <div id="gps-debug" style="margin-top:16px; font-size:10px; color:var(--ink3); border-top:1px solid var(--border); padding-top:12px; display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-disponibilita">
+    <div class="main-panel">
+      <div id="disp-container">
+        <div class="empty-state">⏳ Caricamento settimane...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function() {
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
   let currentUser = null;
   let settimane = [];
   const GIORNI_TUTTI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
-  let ingressoAperto = true, uscitaAperta = true, geoAbilitata = true, oratorioLat = 45.706869, oratorioLon = 8.800464, maxDistanza = 150, stampBusy = false;
+  let ingressoAperto = true;
+  let uscitaAperta = true;
+  let geoAbilitata = true;
+  let oratorioLat = 45.706869;
+  let oratorioLon = 8.800464;
+  let maxDistanza = 150;
+  let stampBusy = false;
 
-  function toast(m, t) { const el = document.getElementById('toast'); el.textContent = m; el.className = 'toast ' + (t || '') + ' show'; setTimeout(() => el.classList.remove('show'), 3000); }
-  function esc(s) { return s ? String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) : ''; }
-  function distance(lat1, lon1, lat2, lon2) { const R = 6371000; const dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180; const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
+  function toast(m, t) {
+    const el = document.getElementById('toast');
+    el.textContent = m;
+    el.className = 'toast ' + (t || '') + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function distance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
 
   async function caricaImpostazioni() {
     const { data } = await sb.from('impostazioni').select('*');
-    if (data) data.forEach(row => { if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore === true || row.valore === 'true'; if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore === true || row.valore === 'true'; if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore === true || row.valore === 'true'; if (row.chiave === 'oratorio_lat') oratorioLat = parseFloat(row.valore) || oratorioLat; if (row.chiave === 'oratorio_lon') oratorioLon = parseFloat(row.valore) || oratorioLon; if (row.chiave === 'max_distanza') maxDistanza = parseInt(row.valore) || maxDistanza; });
-    const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out');
+    if (data) {
+      data.forEach(row => {
+        if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore === true || row.valore === 'true';
+        if (row.chiave === 'uscita_aperta') uscitaAperta = row.valore === true || row.valore === 'true';
+        if (row.chiave === 'geo_abilitata') geoAbilitata = row.valore === true || row.valore === 'true';
+        if (row.chiave === 'oratorio_lat') oratorioLat = parseFloat(row.valore) || oratorioLat;
+        if (row.chiave === 'oratorio_lon') oratorioLon = parseFloat(row.valore) || oratorioLon;
+        if (row.chiave === 'max_distanza') maxDistanza = parseInt(row.valore) || maxDistanza;
+      });
+    }
+    const btnIn = document.getElementById('btn-in');
+    const btnOut = document.getElementById('btn-out');
     if (btnIn) btnIn.disabled = !ingressoAperto;
     if (btnOut) btnOut.disabled = !uscitaAperta;
     const banner = document.getElementById('geo-banner');
@@ -46,57 +230,165 @@
     if (stampBusy) { toast('Attendi...', 'info'); return; }
     if (tipo === 'Ingresso' && !ingressoAperto) { toast('❌ Ingresso bloccato', 'error'); return; }
     if (tipo === 'Uscita' && !uscitaAperta) { toast('❌ Uscita bloccata', 'error'); return; }
+
     stampBusy = true;
     const btn = document.getElementById(tipo === 'Ingresso' ? 'btn-in' : 'btn-out');
     if (btn) btn.disabled = true;
-    if (!geoAbilitata) { await salvaTimbratura(tipo); stampBusy = false; if (btn) btn.disabled = false; return; }
-    if (!navigator.geolocation) { toast('Geolocalizzazione non supportata', 'error'); stampBusy = false; if (btn) btn.disabled = false; return; }
-    const banner = document.getElementById('geo-banner'), debugDiv = document.getElementById('gps-debug');
+
+    if (!geoAbilitata) {
+      await salvaTimbratura(tipo);
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      toast('Geolocalizzazione non supportata', 'error');
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    const banner = document.getElementById('geo-banner');
+    const debugDiv = document.getElementById('gps-debug');
     if (banner) banner.style.display = 'block';
     if (debugDiv) debugDiv.style.display = 'block';
     toast('📍 Acquisizione posizione...', 'info');
+
     navigator.geolocation.getCurrentPosition(async (position) => {
-      const lat = position.coords.latitude, lon = position.coords.longitude, dist = distance(lat, lon, oratorioLat, oratorioLon);
-      if (debugDiv) debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
-      if (dist > maxDistanza) { toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m)`, 'error'); stampBusy = false; if (btn) btn.disabled = false; return; }
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const dist = distance(lat, lon, oratorioLat, oratorioLon);
+      if (debugDiv) {
+        debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
+      }
+      if (dist > maxDistanza) {
+        toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m)`, 'error');
+        stampBusy = false;
+        if (btn) btn.disabled = false;
+        return;
+      }
       await salvaTimbratura(tipo);
-      stampBusy = false; if (btn) btn.disabled = false;
-    }, (error) => { let msg = 'Errore GPS'; if (error.code === 1) msg = 'Permesso GPS negato'; else if (error.code === 2) msg = 'Posizione non disponibile'; else if (error.code === 3) msg = 'Timeout GPS'; toast(msg, 'error'); stampBusy = false; if (btn) btn.disabled = false; }, { enableHighAccuracy: true, timeout: 15000 });
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+    }, (error) => {
+      let msg = 'Errore GPS';
+      if (error.code === 1) msg = 'Permesso GPS negato';
+      else if (error.code === 2) msg = 'Posizione non disponibile';
+      else if (error.code === 3) msg = 'Timeout GPS';
+      toast(msg, 'error');
+      stampBusy = false;
+      if (btn) btn.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 15000 });
   }
 
   async function salvaTimbratura(tipo) {
     const now = new Date();
     const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
     const ora = now.toTimeString().slice(0,5);
-    const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data, ora, tipo, created_at: now.toISOString() });
+    const { error } = await sb.from('timbrature').insert({
+      user_id: currentUser.id,
+      nome: currentUser.nome,
+      anno: currentUser.anno || null,
+      data, ora, tipo,
+      created_at: now.toISOString()
+    });
     if (error) toast(`Errore: ${error.message}`, 'error');
     else toast(`✅ ${tipo} alle ${ora}`, 'success');
     await caricaImpostazioni();
   }
 
-  window.toggleAuth = (r) => { document.getElementById('login-card').style.display = r ? 'none' : 'block'; document.getElementById('register-card').style.display = r ? 'block' : 'none'; };
-  document.getElementById('login-btn').onclick = async () => { const nome = document.getElementById('login-nome').value.trim(), pw = document.getElementById('login-password').value; if (!nome || !pw) { toast('Inserisci nome e password', 'error'); return; } const { data, error } = await sb.from('utenti').select('*').eq('nome', nome).eq('password', pw).maybeSingle(); if (error || !data) { toast('Accesso fallito', 'error'); return; } currentUser = data; sessionStorage.setItem('cu', JSON.stringify(data)); mostraApp(); };
-  document.getElementById('register-btn').onclick = async () => { const nome = document.getElementById('reg-nome').value.trim(), anno = parseInt(document.getElementById('reg-anno').value), pw = document.getElementById('reg-password').value; if (!nome || !pw) { toast('Compila tutti i campi', 'error'); return; } if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; } const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle(); if (exist) { toast('Nome già registrato', 'error'); return; } const { error } = await sb.from('utenti').insert([{ nome, password: pw, anno: anno || null }]); if (error) { toast('Errore registrazione', 'error'); return; } toast('Registrato! Ora accedi.', 'success'); toggleAuth(false); };
+  // AUTH
+  window.toggleAuth = function(r) {
+    document.getElementById('login-card').style.display = r ? 'none' : 'block';
+    document.getElementById('register-card').style.display = r ? 'block' : 'none';
+  };
+
+  document.getElementById('login-btn').onclick = async () => {
+    const nome = document.getElementById('login-nome').value.trim();
+    const pw = document.getElementById('login-password').value;
+    if (!nome || !pw) { toast('Inserisci nome e password', 'error'); return; }
+    const { data, error } = await sb.from('utenti').select('*').eq('nome', nome).eq('password', pw).maybeSingle();
+    if (error || !data) { toast('Accesso fallito', 'error'); return; }
+    currentUser = data;
+    sessionStorage.setItem('cu', JSON.stringify(data));
+    mostraApp();
+  };
+
+  document.getElementById('register-btn').onclick = async () => {
+    const nome = document.getElementById('reg-nome').value.trim();
+    const anno = parseInt(document.getElementById('reg-anno').value);
+    const pw = document.getElementById('reg-password').value;
+    if (!nome || !pw) { toast('Compila tutti i campi', 'error'); return; }
+    if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; }
+    const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
+    if (exist) { toast('Nome già registrato', 'error'); return; }
+    const { error } = await sb.from('utenti').insert([{ nome, password: pw, anno: anno || null }]);
+    if (error) { toast('Errore registrazione', 'error'); return; }
+    toast('Registrato! Ora accedi.', 'success');
+    toggleAuth(false);
+    document.getElementById('reg-nome').value = '';
+    document.getElementById('reg-anno').value = '';
+    document.getElementById('reg-password').value = '';
+  };
+
   document.getElementById('logout-btn').onclick = () => { sessionStorage.clear(); location.reload(); };
 
-  async function mostraApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app-screen').style.display = 'block'; document.getElementById('user-display-name').textContent = currentUser.nome; document.getElementById('topbar-user').textContent = currentUser.nome; document.getElementById('user-display-meta').textContent = 'Animatore - ' + (currentUser.anno || '?'); await caricaImpostazioni(); document.getElementById('btn-in').onclick = () => timbra('Ingresso'); document.getElementById('btn-out').onclick = () => timbra('Uscita'); }
+  async function mostraApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('user-display-name').textContent = currentUser.nome;
+    document.getElementById('topbar-user').textContent = currentUser.nome;
+    document.getElementById('user-display-meta').textContent = 'Animatore - ' + (currentUser.anno || '?');
+    await caricaImpostazioni();
+    document.getElementById('btn-in').onclick = () => timbra('Ingresso');
+    document.getElementById('btn-out').onclick = () => timbra('Uscita');
+  }
 
-  function parseGiorniAttivi(giorni) { if (!giorni) return GIORNI_TUTTI; if (typeof giorni === 'string') { if (!giorni.trim()) return GIORNI_TUTTI; return giorni.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g)); } return GIORNI_TUTTI; }
+  // DISPONIBILITÀ (con giorni attivi da stringa)
+  function parseGiorniAttivi(giorni) {
+    if (!giorni) return GIORNI_TUTTI;
+    if (typeof giorni === 'string') {
+      if (!giorni.trim()) return GIORNI_TUTTI;
+      return giorni.split(',').map(g => g.trim()).filter(g => GIORNI_TUTTI.includes(g));
+    }
+    return GIORNI_TUTTI;
+  }
 
-  async function caricaSettimane() { let res = await sb.from('settimane').select('*').order('ordine', { ascending: true }); if (res.error) res = await sb.from('settimane').select('*').order('id', { ascending: true }); settimane = res.data || []; }
+  async function caricaSettimane() {
+    let res = await sb.from('settimane').select('*').order('ordine', { ascending: true });
+    if (res.error) res = await sb.from('settimane').select('*').order('id', { ascending: true });
+    settimane = res.data || [];
+  }
 
   async function caricaDisponibilita() {
     const container = document.getElementById('disp-container');
     container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
     await caricaSettimane();
-    if (settimane.length === 0) { container.innerHTML = '<div class="empty-state">Nessuna settimana trovata.</div>'; return; }
+    if (settimane.length === 0) {
+      container.innerHTML = '<div class="empty-state">Nessuna settimana trovata.</div>';
+      return;
+    }
     const { data: scelte } = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
-    const dispMap = {}; if (scelte) scelte.forEach(d => dispMap[d.settimana_id + '_' + d.giorno_index] = d);
+    const dispMap = {};
+    if (scelte) scelte.forEach(d => dispMap[d.settimana_id + '_' + d.giorno_index] = d);
+
     container.innerHTML = '';
     for (const s of settimane) {
       const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
-      const block = document.createElement('div'); block.className = 'sett-block';
-      block.innerHTML = `<div class="sett-header"><div class="sett-header-nome">${esc(s.nome)}</div><div class="sett-header-date">${esc(s.date_info || '')}</div></div><div class="giorni-grid" id="grid-${s.id}"></div><div class="sett-footer"><div class="sett-saved" id="saved-${s.id}">✓ Salvato</div><button class="btn-salva-sett" onclick="salvaSettimana(${s.id})">Salva Settimana</button></div>`;
+      const block = document.createElement('div');
+      block.className = 'sett-block';
+      block.innerHTML = `
+        <div class="sett-header">
+          <div class="sett-header-nome">${esc(s.nome)}</div>
+          <div class="sett-header-date">${esc(s.date_info || '')}</div>
+        </div>
+        <div class="giorni-grid" id="grid-${s.id}"></div>
+        <div class="sett-footer">
+          <div class="sett-saved" id="saved-${s.id}">✓ Salvato</div>
+          <button class="btn-salva-sett" onclick="salvaSettimana(${s.id})">Salva Settimana</button>
+        </div>
+      `;
       container.appendChild(block);
       const grid = document.getElementById(`grid-${s.id}`);
       for (let idx = 0; idx < giorniAttivi.length; idx++) {
@@ -104,20 +396,73 @@
         const giornoIndex = GIORNI_TUTTI.indexOf(giornoNome);
         const key = s.id + '_' + giornoIndex;
         const stato = dispMap[key] ? dispMap[key].stato : '';
-        const row = document.createElement('div'); row.className = 'giorno-row';
-        row.innerHTML = `<div class="giorno-label">${giornoNome}</div><div class="disp-btns" data-sett="${s.id}" data-idx="${giornoIndex}"><button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')">Sì</button><button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')">No</button></div>`;
+        const row = document.createElement('div');
+        row.className = 'giorno-row';
+        row.innerHTML = `
+          <div class="giorno-label">${giornoNome}</div>
+          <div class="disp-btns" data-sett="${s.id}" data-idx="${giornoIndex}">
+            <button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')">Sì</button>
+            <button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')">No</button>
+          </div>
+        `;
         grid.appendChild(row);
       }
     }
   }
 
-  window.setStato = (btn, val) => { const parent = btn.parentElement; parent.querySelectorAll('.disp-btn').forEach(b => b.classList.remove('sel-disp', 'sel-no')); const cls = val === 'disponibile' ? 'sel-disp' : 'sel-no'; btn.classList.add(cls); parent.dataset.val = val; };
-  window.salvaSettimana = async (settId) => { const rows = document.querySelectorAll(`.disp-btns[data-sett="${settId}"]`); for (const r of rows) { const stato = r.dataset.val; if (!stato) continue; const idx = r.dataset.idx; const { data: exist } = await sb.from('disponibilita').select('id').eq('user_id', currentUser.id).eq('settimana_id', settId).eq('giorno_index', idx).maybeSingle(); const payload = { user_id: currentUser.id, nome: currentUser.nome, settimana_id: settId, giorno_index: idx, stato }; if (exist) await sb.from('disponibilita').update(payload).eq('id', exist.id); else await sb.from('disponibilita').insert([payload]); } const saved = document.getElementById(`saved-${settId}`); if (saved) { saved.style.display = 'block'; setTimeout(() => saved.style.display = 'none', 2000); } toast('Disponibilità salvate!', 'success'); };
+  window.setStato = (btn, val) => {
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.disp-btn').forEach(b => b.classList.remove('sel-disp', 'sel-no'));
+    const cls = val === 'disponibile' ? 'sel-disp' : 'sel-no';
+    btn.classList.add(cls);
+    parent.dataset.val = val;
+  };
 
-  document.querySelectorAll('.tab-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('.tab-btn, .tab-panel').forEach(x => x.classList.remove('active')); b.classList.add('active'); const target = b.dataset.tab; document.getElementById(target).classList.add('active'); if (target === 'tab-disponibilita') caricaDisponibilita(); }; });
+  window.salvaSettimana = async (settId) => {
+    const rows = document.querySelectorAll(`.disp-btns[data-sett="${settId}"]`);
+    for (const r of rows) {
+      const stato = r.dataset.val;
+      if (!stato) continue;
+      const idx = r.dataset.idx;
+      const { data: exist } = await sb.from('disponibilita')
+        .select('id').eq('user_id', currentUser.id).eq('settimana_id', settId).eq('giorno_index', idx).maybeSingle();
+      const payload = { user_id: currentUser.id, nome: currentUser.nome, settimana_id: settId, giorno_index: idx, stato };
+      if (exist) await sb.from('disponibilita').update(payload).eq('id', exist.id);
+      else await sb.from('disponibilita').insert([payload]);
+    }
+    const saved = document.getElementById(`saved-${settId}`);
+    if (saved) { saved.style.display = 'block'; setTimeout(() => saved.style.display = 'none', 2000); }
+    toast('Disponibilità salvate!', 'success');
+  };
 
-  const saved = sessionStorage.getItem('cu'); if (saved) { try { currentUser = JSON.parse(saved); mostraApp(); } catch(e) { sessionStorage.removeItem('cu'); } }
-  const urlParams = new URLSearchParams(window.location.search); const qa = urlParams.get('qa'); if (qa && !currentUser) { sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita'); document.getElementById('qr-alert-login').style.display = 'block'; } else if (qa && currentUser) { setTimeout(() => timbra(qa === 'in' ? 'Ingresso' : 'Uscita'), 500); }
+  // TABS
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.tab-btn, .tab-panel').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const target = b.dataset.tab;
+      document.getElementById(target).classList.add('active');
+      if (target === 'tab-disponibilita') caricaDisponibilita();
+    };
+  });
+
+  // INIT
+  const saved = sessionStorage.getItem('cu');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      mostraApp();
+    } catch(e) { sessionStorage.removeItem('cu'); }
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const qa = urlParams.get('qa');
+  if (qa && !currentUser) {
+    sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
+    document.getElementById('qr-alert-login').style.display = 'block';
+  } else if (qa && currentUser) {
+    setTimeout(() => timbra(qa === 'in' ? 'Ingresso' : 'Uscita'), 500);
+  }
 })();
 </script>
 </body>
