@@ -20,7 +20,6 @@
     }
     html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
     body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(180,160,100,.08) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 90%, rgba(100,130,110,.06) 0%, transparent 60%); }
-    /* LOGIN */
     #login-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 24px; }
     .login-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 44px 40px; box-shadow: 0 2px 24px rgba(0,0,0,.07); animation: riseIn .4s cubic-bezier(.23,1,.32,1) both; }
     @keyframes riseIn { from { opacity: 0; transform: translateY(20px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -39,7 +38,6 @@
     .btn-amber { background: var(--amber-lt); color: var(--amber); border-color: #e0cfa0; }
     .btn-ghost { background: transparent; color: var(--ink3); border-color: var(--border); }
     .login-err { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
-    /* MAIN APP */
     #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
     .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
     .topbar-title { font-family: var(--font-serif); font-size: 20px; }
@@ -155,7 +153,7 @@
 
     <div class="section-header"><div class="section-title">Log timbrature</div></div>
     <div class="filter-bar"><input type="text" id="log-search" placeholder="Cerca nome…"><input type="date" id="log-date"><select id="log-tipo"><option value="">Tutti</option><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select></div>
-    <div class="table-wrap"><table><thead>前进<th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr></thead><tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr></thead><tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody></table></div>
 
     <div class="section-header" style="margin-top:10px;"><div class="section-title">Settimane oratorio estivo</div><button class="btn btn-sm btn-primary" id="add-sett-btn">+ Aggiungi settimana</button></div>
     <div id="settimane-list" style="margin-bottom:28px;"><div class="empty">⏳ Caricamento…</div></div>
@@ -241,14 +239,14 @@
   document.getElementById('closeProfileBtn').onclick = closeAllModals;
   document.getElementById('saveProfileBtn').onclick = async () => { const oldNome = document.getElementById('profile-old-nome').value, newNome = document.getElementById('profile-new-nome').value, newAnno = document.getElementById('profile-new-anno').value; if (!newNome) return toast('Il nome non può essere vuoto','error'); const { error: err1 } = await sb.from('utenti').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome); if (err1) return toast('Errore modifica','error'); if (newNome !== oldNome) await sb.from('timbrature').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome); toast('Profilo aggiornato','success'); closeAllModals(); await loadUsers(); await loadTimbrature(); renderAnimators(); renderLog(); updateStats(); };
 
-  // GEOLOCALIZZAZIONE
+  // TOGGLE ACCESSI E GEO
   document.getElementById('toggle-in-btn').onclick = async () => { ingressoAperto = !ingressoAperto; await upsertImpostazione('ingresso_aperto', ingressoAperto); toast(ingressoAperto?'Ingressi sbloccati':'Ingressi bloccati', ingressoAperto?'success':'error'); loadSettings(); };
   document.getElementById('toggle-out-btn').onclick = async () => { uscitaAperta = !uscitaAperta; await upsertImpostazione('uscita_aperta', uscitaAperta); toast(uscitaAperta?'Uscite sbloccate':'Uscite bloccate', uscitaAperta?'success':'error'); loadSettings(); };
   document.getElementById('toggle-geo-btn').onclick = async function() { const isAttivo = this.classList.contains('open'); await upsertImpostazione('geo_abilitata', !isAttivo); toast(!isAttivo?'Controllo GPS attivato':'Controllo GPS disabilitato', !isAttivo?'success':'error'); loadSettings(); };
   document.getElementById('geo-save-btn').onclick = async () => { const lat = document.getElementById('geo-lat').value, lon = document.getElementById('geo-lon').value, rad = document.getElementById('geo-radius').value; if (!lat||!lon||!rad) return toast('Compila tutti i campi GPS','error'); await upsertImpostazione('oratorio_lat', lat); await upsertImpostazione('oratorio_lon', lon); await upsertImpostazione('max_distanza', rad); toast('Coordinate salvate','success'); loadSettings(); };
   document.getElementById('geo-use-current').onclick = () => { if ("geolocation" in navigator) { toast('Acquisizione posizione...'); navigator.geolocation.getCurrentPosition(pos => { document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(6); document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(6); if(!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value="150"; toast('Posizione acquisita. Salva!','success'); }, err => toast('Errore GPS: '+err.message,'error'), { enableHighAccuracy: true }); } else toast('Geolocalizzazione non supportata','error'); };
 
-  // SETTIMANE E DISPONIBILITÀ
+  // SETTIMANE
   async function loadSettimane() {
     const { data } = await sb.from('settimane').select('*').order('id');
     const container = document.getElementById('settimane-list');
@@ -271,66 +269,68 @@
     container.innerHTML = GIORNI_TUTTI.map(g => `<label><input type="checkbox" value="${g}" ${selezionati.includes(g) ? 'checked' : ''}> ${g}</label>`).join('');
     document.getElementById('modal-settimana').classList.add('open');
   };
+
   document.getElementById('closeSettBtn').onclick = () => document.getElementById('modal-settimana').classList.remove('open');
-  
-  // FIX: listener robusto per il salvataggio delle settimane
-  const saveSettBtn = document.getElementById('saveSettBtn');
-  if (saveSettBtn) {
-    saveSettBtn.onclick = async () => {
-      try {
-        const id = document.getElementById('sett-id').value;
-        const nome = document.getElementById('sett-nome').value.trim();
-        const dateInfo = document.getElementById('sett-date-info').value.trim();
-        const checkboxes = document.querySelectorAll('#giorni-checkboxes input:checked');
-        const giorniAttivi = Array.from(checkboxes).map(cb => cb.value);
-        
-        if (!nome) {
-          toast('Il nome è obbligatorio', 'error');
-          return;
-        }
-        
-        const payload = { 
-          nome, 
-          date_info: dateInfo, 
-          giorni_attivi: giorniAttivi.join(',')
-        };
-        
-        let result;
-        // Se id è un numero positivo (diverso da "0", stringa vuota o null) -> update
-        if (id && id !== '0' && id !== '') {
-          result = await sb.from('settimane').update(payload).eq('id', parseInt(id));
-        } else {
-          result = await sb.from('settimane').insert(payload);
-        }
-        
-        if (result.error) {
-          console.error('Errore Supabase:', result.error);
-          toast('Errore: ' + result.error.message, 'error');
-        } else {
-          toast('Settimana salvata con successo', 'success');
-          document.getElementById('modal-settimana').classList.remove('open');
-          await loadSettimane();
-          await loadDispRiepilogo();
-        }
-      } catch (err) {
-        console.error('Eccezione in saveSettBtn:', err);
-        toast('Errore imprevisto: ' + err.message, 'error');
+
+  document.getElementById('add-sett-btn').onclick = () => {
+    // Per una nuova settimana, preseleziona tutti i giorni di default
+    document.getElementById('sett-id').value = '';
+    document.getElementById('sett-nome').value = '';
+    document.getElementById('sett-date-info').value = '';
+    const container = document.getElementById('giorni-checkboxes');
+    container.innerHTML = GIORNI_TUTTI.map(g => `<label><input type="checkbox" value="${g}" checked> ${g}</label>`).join('');
+    document.getElementById('modal-settimana').classList.add('open');
+  };
+
+  document.getElementById('saveSettBtn').onclick = async () => {
+    try {
+      const idRaw = document.getElementById('sett-id').value.trim();
+      const nome = document.getElementById('sett-nome').value.trim();
+      const dateInfo = document.getElementById('sett-date-info').value.trim();
+      const checkboxes = document.querySelectorAll('#giorni-checkboxes input[type="checkbox"]:checked');
+      const giorniAttivi = Array.from(checkboxes).map(cb => cb.value).join(',');
+
+      if (!nome) {
+        toast('Il nome è obbligatorio', 'error');
+        return;
       }
-    };
-  } else {
-    console.error('❌ Bottone saveSettBtn non trovato nel DOM');
-  }
-  
-  document.getElementById('add-sett-btn').onclick = () => window.editSettimana(0, '', '', '');
-  
-  window.deleteSettimana = async (id) => { 
-    if (!confirm('Eliminare definitivamente questa settimana?')) return; 
-    const { error } = await sb.from('settimane').delete().eq('id', id); 
+
+      const payload = { nome, date_info: dateInfo, giorni_attivi: giorniAttivi };
+      const numericId = parseInt(idRaw);
+      const isUpdate = !isNaN(numericId) && numericId > 0;
+
+      let result;
+      if (isUpdate) {
+        result = await sb.from('settimane').update(payload).eq('id', numericId).select();
+      } else {
+        // INSERT: non passare mai l'id, lascia che Supabase lo generi automaticamente
+        result = await sb.from('settimane').insert(payload).select();
+      }
+
+      if (result.error) {
+        console.error('Errore Supabase settimane:', result.error);
+        toast('Errore: ' + (result.error.message || result.error.code || 'Errore sconosciuto'), 'error');
+        return;
+      }
+
+      toast('Settimana salvata con successo', 'success');
+      document.getElementById('modal-settimana').classList.remove('open');
+      await loadSettimane();
+      await loadDispRiepilogo();
+    } catch (err) {
+      console.error('Eccezione saveSettBtn:', err);
+      toast('Errore imprevisto: ' + err.message, 'error');
+    }
+  };
+
+  window.deleteSettimana = async (id) => {
+    if (!confirm('Eliminare definitivamente questa settimana?')) return;
+    const { error } = await sb.from('settimane').delete().eq('id', id);
     if (error) { toast('Errore: ' + error.message, 'error'); return; }
-    await sb.from('disponibilita').delete().eq('settimana_id', id); 
-    toast('Settimana eliminata', 'success'); 
-    await loadSettimane(); 
-    await loadDispRiepilogo(); 
+    await sb.from('disponibilita').delete().eq('settimana_id', id);
+    toast('Settimana eliminata', 'success');
+    await loadSettimane();
+    await loadDispRiepilogo();
   };
 
   function parseGiorniAttivi(giorni) {
@@ -353,7 +353,6 @@
       const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
       const map = new Map();
       if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
-        // Mappa il giorno_index al nome del giorno usando GIORNI_TUTTI (base fissa)
         const giornoNome = GIORNI_TUTTI[d.giorno_index];
         const idx = giorniAttivi.indexOf(giornoNome);
         if (idx === -1) return;
@@ -365,9 +364,11 @@
         arr[idx] = simbolo;
       });
       html += `<div class="disp-block"><div class="disp-block-title">📅 ${escapeHtml(s.nome)}</div><div class="disp-block-date">${escapeHtml(s.date_info||'')}</div><div style="overflow-x:auto;"><table class="disp-table"><thead><tr><th>Animatore</th>${giorniAttivi.map(g=>`<th>${g}</th>`).join('')}</tr></thead><tbody>`;
-      for (const u of utenti) {
-        const scelte = map.get(u.id) || Array(giorniAttivi.length).fill('');
-        html += `<tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.anno?'('+u.anno+')':''}</td>${scelte.map(c=>`<td>${c||'—'}</td>`).join('')}</tr>`;
+      if (utenti) {
+        for (const u of utenti) {
+          const scelte = map.get(u.id) || Array(giorniAttivi.length).fill('');
+          html += `<tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.anno?'('+u.anno+')':''}</td>${scelte.map(c=>`<td>${c||'—'}</td>`).join('')}</tr>`;
+        }
       }
       html += `</tbody></table></div></div><div style="margin-bottom:40px;"></div>`;
     }
