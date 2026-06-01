@@ -252,35 +252,6 @@
       </div>
 
       <div class="section-header">
-        <div class="section-title">Stato animatori live</div>
-        <button class="btn btn-sm btn-ghost" id="refreshBtn">↻ Aggiorna</button>
-      </div>
-      <div class="filter-bar">
-        <input type="text" id="filter-name" placeholder="Cerca nome o anno…">
-        <select id="filter-status"><option value="">Tutti</option><option value="inside">Dentro</option><option value="outside">Fuori</option></select>
-        <select id="filter-sort"><option value="status">Ordina: Stato</option><option value="alpha">Ordina: Alfabetico</option><option value="anno">Ordina: Anno</option></select>
-      </div>
-      <div class="status-grid" id="animators-grid"><div class="empty">⏳ Caricamento…</div></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════ TAB: ANIMATORI -->
-  <div class="tab-panel" id="tab-animatori">
-    <div class="main">
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Tutti gli animatori</div>
-        <button class="btn btn-sm btn-ghost" id="refreshAnimBtn">↻ Aggiorna</button>
-      </div>
-      <div class="filter-bar">
-        <input type="text" id="filter-name2" placeholder="Cerca nome o anno…">
-        <select id="filter-status2"><option value="">Tutti</option><option value="inside">Dentro</option><option value="outside">Fuori</option></select>
-        <select id="filter-sort2"><option value="alpha">Ordina: Alfabetico</option><option value="status">Ordina: Stato</option><option value="anno">Ordina: Anno</option></select>
-      </div>
-      <div class="status-grid" id="animators-grid2"><div class="empty">⏳ Caricamento…</div></div>
-
-      <hr class="divider">
-
-      <div class="section-header">
         <div class="section-title">Esportazione presenze</div>
       </div>
       <div class="export-card">
@@ -320,6 +291,23 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ TAB: ANIMATORI -->
+  <div class="tab-panel" id="tab-animatori">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">Tutti gli animatori</div>
+        <button class="btn btn-sm btn-ghost" id="refreshAnimBtn">↻ Aggiorna</button>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="filter-name2" placeholder="Cerca nome o anno…">
+        <select id="filter-status2"><option value="">Tutti</option><option value="inside">Dentro</option><option value="outside">Fuori</option></select>
+        <select id="filter-sort2"><option value="alpha">Ordina: Alfabetico</option><option value="status">Ordina: Stato</option><option value="anno">Ordina: Anno</option></select>
+      </div>
+      <div class="status-grid" id="animators-grid2"><div class="empty">⏳ Caricamento…</div></div>
+
     </div>
   </div>
 
@@ -445,7 +433,6 @@
     await loadSettings();
     await loadUsers();
     await loadTimbrature();
-    renderAnimators();
     renderAnimators2();
     renderLog();
     updateStats();
@@ -795,20 +782,27 @@
     return fn;
   }
 
+  // Converte DD/MM/YYYY in YYYY-MM-DD direttamente, senza Date (evita bug timezone)
+  function dataLogToISO(str) {
+    if (!str) return '';
+    const p = str.split('/');
+    return p.length === 3 ? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : '';
+  }
+
   function filtraLog() {
     const tipo = document.getElementById('export-tipo').value;
     const periodo = document.querySelector('input[name="export-periodo"]:checked').value;
     let f = tipo==='entrambi' ? [...allLog] : allLog.filter(l=>l.tipo===tipo);
     if (periodo==='giorno') {
       const g = document.getElementById('export-giorno').value;
-      if (g) f = f.filter(l => { const d=parseDataLog(l.data); return d&&d.toISOString().split('T')[0]===g; });
+      if (g) f = f.filter(l => dataLogToISO(l.data) === g);
     } else if (periodo==='settimana') {
       const w = document.getElementById('export-week').value;
       if (w) f = f.filter(l => { const d=parseDataLog(l.data); return d&&getISOWeek(d)===w; });
     } else if (periodo==='intervallo') {
       const dal=document.getElementById('export-dal').value, al=document.getElementById('export-al').value;
-      if (dal) f = f.filter(l => { const d=parseDataLog(l.data); return d&&d.toISOString().split('T')[0]>=dal; });
-      if (al)  f = f.filter(l => { const d=parseDataLog(l.data); return d&&d.toISOString().split('T')[0]<=al;  });
+      if (dal) f = f.filter(l => dataLogToISO(l.data) >= dal);
+      if (al)  f = f.filter(l => dataLogToISO(l.data) <= al);
     }
     return f;
   }
@@ -883,16 +877,13 @@
   aggiornaPreview();
 
   // ── FILTRI ─────────────────────────────────────────────────────────────────
-  document.getElementById('filter-name').addEventListener('input', renderAnimators);
-  document.getElementById('filter-status').addEventListener('change', renderAnimators);
-  document.getElementById('filter-sort').addEventListener('change', renderAnimators);
   document.getElementById('filter-name2').addEventListener('input', renderAnimators2);
   document.getElementById('filter-status2').addEventListener('change', renderAnimators2);
   document.getElementById('filter-sort2').addEventListener('change', renderAnimators2);
   document.getElementById('log-search').addEventListener('input', renderLog);
   document.getElementById('log-date').addEventListener('change', renderLog);
   document.getElementById('log-tipo').addEventListener('change', renderLog);
-  document.getElementById('refreshBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators(); renderAnimators2(); updateStats(); });
+  document.getElementById('refreshAnimBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators2(); updateStats(); });
   document.getElementById('refreshAnimBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators2(); updateStats(); });
   document.getElementById('refreshLogBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); renderLog(); });
   document.getElementById('refresh-disp-btn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadDispRiepilogo(); });
@@ -916,4 +907,3 @@
 </script>
 </body>
 </html>
-         
