@@ -287,7 +287,13 @@
             <label>📝 Note (opzionale)</label>
             <input type="text" id="export-note" placeholder="Es. Settimana 1 campo estivo" />
             <div class="export-preview"><strong>File:</strong> <span id="export-filename-preview">—</span></div>
-            <button class="btn btn-excel" id="export-btn" style="width:100%; justify-content:center;">📥 Scarica Excel</button>
+            <button class="btn btn-excel" id="export-btn" style="width:100%; justify-content:center; margin-bottom:8px;">📥 Scarica Presenze Excel</button>
+            <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+            <label>📋 Disponibilità animatori</label>
+            <select id="export-disp-sett" style="margin-bottom:8px;">
+              <option value="tutte">Tutte le settimane</option>
+            </select>
+            <button class="btn btn-ghost" id="export-disp-btn" style="width:100%; justify-content:center; border-color:var(--accent); color:var(--accent);">📋 Scarica Disponibilità Excel</button>
           </div>
         </div>
       </div>
@@ -856,6 +862,88 @@
     XLSX.writeFile(wb, filename);
     toast('✅ Excel scaricato!','success');
   };
+
+  // ── EXPORT DISPONIBILITÀ ────────────────────────────────────────────────────
+  async function caricaSettimanePerExport() {
+    const { data } = await sb.from('settimane').select('*').order('id');
+    const sel = document.getElementById('export-disp-sett');
+    if (!sel || !data) return;
+    // Mantieni opzione "tutte"
+    sel.innerHTML = '<option value="tutte">Tutte le settimane</option>';
+    data.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.nome + (s.date_info ? ' — ' + s.date_info : '');
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById('export-disp-btn').onclick = async () => {
+    if (!window.XLSX) return toast('Libreria Excel non caricata','error');
+    toast('Caricamento dati disponibilità...','');
+
+    const settScelta = document.getElementById('export-disp-sett').value;
+
+    // Carica dati
+    let settQuery = sb.from('settimane').select('*').order('id');
+    const { data: settimane } = await settQuery;
+    const { data: dispo }    = await sb.from('disponibilita').select('*');
+    const { data: utenti }   = await sb.from('utenti').select('id, nome, anno').order('nome');
+
+    if (!settimane || !settimane.length) return toast('Nessuna settimana trovata','error');
+    if (!utenti || !utenti.length)       return toast('Nessun animatore trovato','error');
+
+    const settDaEsportare = settScelta === 'tutte'
+      ? settimane
+      : settimane.filter(s => String(s.id) === String(settScelta));
+
+    if (!settDaEsportare.length) return toast('Settimana non trovata','error');
+
+    const wb = XLSX.utils.book_new();
+
+    for (const s of settDaEsportare) {
+      const giorni = parseGiorniAttivi(s.giorni_attivi);
+      // Mappa user_id → array di stati per giorno
+      const map = new Map();
+      if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
+        const gn = GIORNI_TUTTI[d.giorno_index];
+        const idx = giorni.indexOf(gn);
+        if (idx === -1) return;
+        if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(''));
+        map.get(d.user_id)[idx] = d.stato === 'disponibile' ? 'Sì' : 'No';
+      });
+
+      // Costruisci righe
+      const rows = utenti.map(u => {
+        const scelte = map.get(u.id) || Array(giorni.length).fill('');
+        const row = { 'Nome': u.nome, 'Anno': u.anno || '' };
+        giorni.forEach((g, i) => { row[g] = scelte[i] || '—'; });
+        return row;
+      });
+
+      if (!rows.length) continue;
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      // Larghezze colonne
+      ws['!cols'] = [{ wch: 22 }, { wch: 6 }, ...giorni.map(() => ({ wch: 12 }))];
+
+      // Nome foglio: max 31 caratteri (limite Excel)
+      const nomeSheet = s.nome.substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, nomeSheet);
+    }
+
+    if (!wb.SheetNames.length) return toast('Nessun dato da esportare','error');
+
+    const filename = settScelta === 'tutte'
+      ? 'Disponibilita_Tutte_Settimane.xlsx'
+      : 'Disponibilita_' + (settDaEsportare[0].nome.replace(/\s+/g,'_')) + '.xlsx';
+
+    XLSX.writeFile(wb, filename);
+    toast('✅ Disponibilità scaricata!','success');
+  };
+
+  // Carica settimane nel select disponibilità all'avvio
+  caricaSettimanePerExport();
 
   // Export UI
   document.querySelectorAll('input[name="export-periodo"]').forEach(r => {
