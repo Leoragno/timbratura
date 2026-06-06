@@ -701,7 +701,11 @@
       if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
         const gn = GIORNI_TUTTI[d.giorno_index]; const idx = giorni.indexOf(gn); if (idx === -1) return;
         if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(''));
-        map.get(d.user_id)[idx] = d.stato === 'disponibile' ? '<span class="disp-si">✅ Sì</span>' : '<span class="disp-no">❌ No</span>';
+        let cell = '';
+        if (d.stato === 'disponibile')     cell = '<span class="disp-si">✅ Sì</span>';
+        else if (d.stato === 'non_disponibile') cell = '<span class="disp-no">❌ No</span>';
+        if (d.note) cell += '<br><span style="font-size:10px;color:var(--ink3);font-style:italic;">' + esc(d.note) + '</span>';
+        map.get(d.user_id)[idx] = cell;
       });
       html += `<div class="disp-block">
         <div class="disp-block-title">📅 ${esc(s.nome)}${lockTag}</div>
@@ -909,15 +913,24 @@
         const gn = GIORNI_TUTTI[d.giorno_index];
         const idx = giorni.indexOf(gn);
         if (idx === -1) return;
-        if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(''));
-        map.get(d.user_id)[idx] = d.stato === 'disponibile' ? 'Sì' : 'No';
+        if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(null));
+        map.get(d.user_id)[idx] = { stato: d.stato, note: d.note || '' };
       });
 
-      // Costruisci righe
+      // Costruisci righe (stato + note per ogni giorno)
       const rows = utenti.map(u => {
-        const scelte = map.get(u.id) || Array(giorni.length).fill('');
+        const scelte = map.get(u.id) || Array(giorni.length).fill(null);
         const row = { 'Nome': u.nome, 'Anno': u.anno || '' };
-        giorni.forEach((g, i) => { row[g] = scelte[i] || '—'; });
+        giorni.forEach((g, i) => {
+          const cell = scelte[i];
+          if (cell) {
+            row[g] = cell.stato === 'disponibile' ? 'Sì' : cell.stato === 'non_disponibile' ? 'No' : '—';
+            row[g + ' (note)'] = cell.note || '';
+          } else {
+            row[g] = '—';
+            row[g + ' (note)'] = '';
+          }
+        });
         return row;
       });
 
