@@ -76,6 +76,9 @@
     .disp-btn:disabled { opacity: .5; cursor: not-allowed; }
     .disp-btn.sel-disp { background: var(--green-lt); border-color: #b2d4bc; color: var(--green); }
     .disp-btn.sel-no { background: var(--red-lt); border-color: #dbb2b2; color: var(--red); }
+    .giorno-note { flex: 2; font-size: 11px; font-family: var(--font-mono); border: 1px solid var(--border); border-radius: 3px; padding: 5px 8px; background: var(--bg); color: var(--ink); resize: none; height: 32px; line-height: 1.4; min-width: 0; }
+    .giorno-note:focus { border-color: var(--accent); outline: none; }
+    .giorno-note:disabled { opacity: .5; cursor: not-allowed; background: var(--bg2); }
     .sett-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .btn-salva-sett { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 8px 18px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; cursor: pointer; }
     .btn-salva-sett:hover:not(:disabled) { background: #1f3329; }
@@ -454,12 +457,14 @@
         const row = document.createElement('div');
         row.className = 'giorno-row';
         const disabledAttr = chiusa ? 'disabled' : '';
+        const noteVal = dispMap[key] ? (dispMap[key].note || '') : '';
         row.innerHTML = `
           <div class="giorno-label">${giornoNome}</div>
           <div class="disp-btns" data-sett="${s.id}" data-idx="${giornoIndex}">
             <button class="disp-btn ${stato==='disponibile'?'sel-disp':''}" onclick="setStato(this, 'disponibile')" ${disabledAttr}>Sì</button>
             <button class="disp-btn ${stato==='non_disponibile'?'sel-no':''}" onclick="setStato(this, 'non_disponibile')" ${disabledAttr}>No</button>
           </div>
+          <textarea class="giorno-note" data-sett="${s.id}" data-idx="${giornoIndex}" placeholder="Note…" ${disabledAttr}>${esc(noteVal)}</textarea>
         `;
         grid.appendChild(row);
       }
@@ -484,11 +489,15 @@
     const rows = document.querySelectorAll(`.disp-btns[data-sett="${settId}"]`);
     for (const r of rows) {
       const stato = r.dataset.val;
-      if (!stato) continue;
       const idx = r.dataset.idx;
+      // Leggi nota associata a questo giorno
+      const noteEl = document.querySelector(`.giorno-note[data-sett="${settId}"][data-idx="${idx}"]`);
+      const note = noteEl ? noteEl.value.trim() : '';
+      // Salva solo se c'è uno stato selezionato o una nota
+      if (!stato && !note) continue;
       const { data: exist } = await sb.from('disponibilita')
         .select('id').eq('user_id', currentUser.id).eq('settimana_id', settId).eq('giorno_index', idx).maybeSingle();
-      const payload = { user_id: currentUser.id, nome: currentUser.nome, settimana_id: settId, giorno_index: idx, stato };
+      const payload = { user_id: currentUser.id, nome: currentUser.nome, settimana_id: settId, giorno_index: idx, stato: stato || null, note: note || null };
       if (exist) await sb.from('disponibilita').update(payload).eq('id', exist.id);
       else await sb.from('disponibilita').insert([payload]);
     }
