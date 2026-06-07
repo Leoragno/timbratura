@@ -570,7 +570,9 @@
 
   // ── TIMBRATURA MANUALE ─────────────────────────────────────────────────────
   window._mt = function(nome, anno, tipo) {
-    manualTarget = { nome, anno };
+    // Trova user_id dall'elenco animatori caricato
+    const utente = allAnimators.find(a => a.nome === nome);
+    manualTarget = { nome, anno, userId: utente ? utente.id : null };
     document.getElementById('manual-name-label').textContent = nome;
     document.getElementById('manual-tipo').value = tipo;
     const now = new Date(); const off = now.getTimezoneOffset()*60000;
@@ -585,7 +587,7 @@
     const oRaw = document.getElementById('manual-ora').value;
     if (!dRaw || !oRaw) return toast('Completa data e ora','error');
     const p = dRaw.split('-');
-    const { error } = await sb.from('timbrature').insert([{ nome: manualTarget.nome, anno: manualTarget.anno, tipo, data: p[2]+'/'+p[1]+'/'+p[0], ora: oRaw }]);
+    const { error } = await sb.from('timbrature').insert([{ nome: manualTarget.nome, anno: manualTarget.anno, user_id: manualTarget.userId || null, tipo, data: p[2]+'/'+p[1]+'/'+p[0], ora: oRaw }]);
     if (error) toast('Errore salvataggio','error');
     else { toast('Timbratura manuale salvata','success'); closeAllModals(); await loadTimbrature(); renderAnimators(); renderAnimators2(); renderLog(); updateStats(); }
   };
