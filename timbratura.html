@@ -407,13 +407,28 @@
   document.getElementById('logout-btn').onclick = () => { sessionStorage.clear(); location.reload(); };
 
   async function aggiornaStatoUI() {
-    // Legge l'ultima timbratura dell'utente corrente
-    const { data } = await sb.from('timbrature')
-      .select('tipo, ora, data')
+    // Legge l'ultima timbratura: cerca per user_id (timbrature proprie e manuali admin)
+    // oppure per nome (timbrature vecchie senza user_id)
+    let data = null;
+    const { data: byId } = await sb.from('timbrature')
+      .select('tipo, ora, data, id')
       .eq('user_id', currentUser.id)
       .order('id', { ascending: false })
       .limit(1)
       .maybeSingle();
+    const { data: byNome } = await sb.from('timbrature')
+      .select('tipo, ora, data, id')
+      .eq('nome', currentUser.nome)
+      .is('user_id', null)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    // Prendi la più recente tra le due (quella con id più alto)
+    if (byId && byNome) {
+      data = byId.id >= byNome.id ? byId : byNome;
+    } else {
+      data = byId || byNome;
+    }
 
     const dentro = data && data.tipo === 'Ingresso';
     const banner  = document.getElementById('stato-banner');
