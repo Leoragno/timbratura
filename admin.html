@@ -656,16 +656,26 @@
         if (!isNaN(id)) dispChiuse[id] = (r.valore === true || r.valore === 'true');
       }
     });
-    const { data } = await sb.from('settimane').select('*').order('id');
+    const { data }       = await sb.from('settimane').select('*').order('id');
+    const { data: dispo }  = await sb.from('disponibilita').select('user_id, settimana_id');
+    const { data: utenti } = await sb.from('utenti').select('id');
+    const totale = utenti ? utenti.length : 0;
+
     const container = document.getElementById('settimane-list');
     if (!data || !data.length) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
     container.innerHTML = data.map(s => {
       let giorni = GIORNI_TUTTI;
       if (s.giorni_attivi && s.giorni_attivi.trim()) giorni = s.giorni_attivi.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g));
       const chiusa = !!dispChiuse[s.id];
+      const hannoVotato = dispo ? new Set(dispo.filter(d => d.settimana_id === s.id).map(d => d.user_id)).size : 0;
+      const mancanti = totale - hannoVotato;
       return `<div class="sett-card">
         <div class="sett-info">
-          <div class="sett-nome-admin">${esc(s.nome)}</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+            <div class="sett-nome-admin" style="margin-bottom:0;">${esc(s.nome)}</div>
+            <span style="font-size:11px;font-weight:600;background:var(--green-lt);color:var(--green);border:1px solid #b2d4bc;padding:2px 9px;border-radius:20px;">✅ ${hannoVotato} compilato</span>
+            <span style="font-size:11px;font-weight:600;background:var(--red-lt);color:var(--red);border:1px solid #dbb2b2;padding:2px 9px;border-radius:20px;">⏳ ${mancanti} mancanti</span>
+          </div>
           <div class="sett-date-admin">${esc(s.date_info||'')}</div>
           <div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorni.join(', ')}</div>
           <div class="disp-lock-badge ${chiusa?'locked':'open'}">${chiusa?'🔒 Disponibilità chiuse':'🔓 Disponibilità aperte'}</div>
