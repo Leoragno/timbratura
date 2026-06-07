@@ -172,6 +172,18 @@
     .toast.error { background: var(--red); }
 
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
+    /* QR Code */
+    .qr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+    @media (max-width: 600px) { .qr-grid { grid-template-columns: 1fr; } }
+    .qr-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 32px 24px; text-align: center; }
+    .qr-card.ingresso { border-top: 4px solid var(--green); }
+    .qr-card.uscita   { border-top: 4px solid var(--red); }
+    .qr-label { font-family: var(--font-serif); font-size: 22px; margin-bottom: 6px; }
+    .qr-sublabel { font-size: 11px; color: var(--ink3); margin-bottom: 20px; }
+    .qr-box { display: inline-block; padding: 16px; background: #fff; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 18px; }
+    .qr-url { font-size: 10px; color: var(--ink3); word-break: break-all; margin-bottom: 16px; font-family: var(--font-mono); background: var(--bg2); padding: 6px 10px; border-radius: 3px; }
+    .qr-url-input { width: 100%; margin-bottom: 16px; font-size: 12px; }
+    .qr-hint { font-size: 11px; color: var(--ink3); line-height: 1.6; background: var(--bg2); border-radius: 3px; padding: 10px 14px; margin-top: 8px; text-align: left; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
   </style>
 </head>
@@ -209,6 +221,7 @@
     <button class="tab-btn" data-tab="tab-animatori"><span class="tab-icon">👤</span>Animatori</button>
     <button class="tab-btn" data-tab="tab-timbrature"><span class="tab-icon">⏱</span>Timbrature</button>
     <button class="tab-btn" data-tab="tab-disponibilita"><span class="tab-icon">📅</span>Disponibilità</button>
+    <button class="tab-btn" data-tab="tab-qr"><span class="tab-icon">🔲</span>QR Code</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════════ TAB: DASHBOARD -->
@@ -296,6 +309,48 @@
             <button class="btn btn-ghost" id="export-disp-btn" style="width:100%; justify-content:center; border-color:var(--accent); color:var(--accent);">📋 Scarica Disponibilità Excel</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ TAB: QR CODE -->
+  <div class="tab-panel" id="tab-qr">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">QR Code timbratura</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label>🌐 URL base del sito animatori</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="qr-base-url" placeholder="https://tuosito.vercel.app/animatori.html" style="margin-bottom:0; flex:1;" />
+          <button class="btn btn-primary btn-sm" id="qr-genera-btn">Genera QR</button>
+        </div>
+        <div style="font-size:11px; color:var(--ink3); margin-top:6px;">Inserisci l'URL completo della pagina animatori, poi premi Genera QR.</div>
+      </div>
+
+      <div class="qr-grid" id="qr-grid" style="display:none;">
+        <div class="qr-card ingresso">
+          <div class="qr-label">⬆ Ingresso</div>
+          <div class="qr-sublabel">Scansiona per timbrare l'entrata</div>
+          <div class="qr-box"><div id="qr-ingresso"></div></div>
+          <div class="qr-url" id="qr-url-ingresso">—</div>
+          <button class="btn btn-green btn-sm" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="window.stampaQR('ingresso')">🖨️ Stampa QR Ingresso</button>
+        </div>
+        <div class="qr-card uscita">
+          <div class="qr-label">⬇ Uscita</div>
+          <div class="qr-sublabel">Scansiona per timbrare l'uscita</div>
+          <div class="qr-box"><div id="qr-uscita"></div></div>
+          <div class="qr-url" id="qr-url-uscita">—</div>
+          <button class="btn btn-red btn-sm" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="window.stampaQR('uscita')">🖨️ Stampa QR Uscita</button>
+        </div>
+      </div>
+
+      <div class="qr-hint">
+        <strong>Come usarlo:</strong><br>
+        1. Stampa i due QR Code e appendili all'ingresso dell'oratorio<br>
+        2. Gli animatori scansionano il QR con la fotocamera del telefono<br>
+        3. La timbratura parte automaticamente se sono già loggati<br>
+        4. Se non sono loggati, la pagina li porta al login e poi timbra
       </div>
     </div>
   </div>
@@ -391,6 +446,7 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (function() {
@@ -1014,6 +1070,87 @@
       if (el) el.textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     }, 1000);
   }
+
+  // ── QR CODE ───────────────────────────────────────────────────────────────────
+  let qrIngresso = null, qrUscita = null;
+
+  document.getElementById('qr-genera-btn').onclick = () => {
+    const base = document.getElementById('qr-base-url').value.trim();
+    if (!base) return toast('Inserisci l\'URL del sito animatori', 'error');
+
+    const urlIn  = base + (base.includes('?') ? '&' : '?') + 'qa=in';
+    const urlOut = base + (base.includes('?') ? '&' : '?') + 'qa=out';
+
+    document.getElementById('qr-url-ingresso').textContent = urlIn;
+    document.getElementById('qr-url-uscita').textContent   = urlOut;
+
+    // Pulisci QR precedenti
+    const elIn  = document.getElementById('qr-ingresso');
+    const elOut = document.getElementById('qr-uscita');
+    elIn.innerHTML  = '';
+    elOut.innerHTML = '';
+
+    qrIngresso = new QRCode(elIn,  { text: urlIn,  width: 200, height: 200, colorDark: '#1a1714', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    qrUscita   = new QRCode(elOut, { text: urlOut, width: 200, height: 200, colorDark: '#8b2e2e', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+
+    document.getElementById('qr-grid').style.display = '';
+    toast('QR Code generati!', 'success');
+
+    // Salva URL per riutilizzo
+    localStorage.setItem('qr_base_url', base);
+  };
+
+  window.stampaQR = (tipo) => {
+    const label     = tipo === 'ingresso' ? '⬆ INGRESSO' : '⬇ USCITA';
+    const sublabel  = tipo === 'ingresso' ? 'Scansiona per timbrare l\'entrata' : 'Scansiona per timbrare l\'uscita';
+    const color     = tipo === 'ingresso' ? '#2d5a3d' : '#8b2e2e';
+    const elId      = tipo === 'ingresso' ? 'qr-ingresso' : 'qr-uscita';
+    const urlId     = tipo === 'ingresso' ? 'qr-url-ingresso' : 'qr-url-uscita';
+    const qrEl      = document.getElementById(elId);
+    const url       = document.getElementById(urlId).textContent;
+
+    // Ottieni immagine QR
+    const img = qrEl.querySelector('img') || qrEl.querySelector('canvas');
+    let imgSrc = '';
+    if (img && img.tagName === 'IMG') imgSrc = img.src;
+    else if (img && img.tagName === 'CANVAS') imgSrc = img.toDataURL();
+
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>QR ${label}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;600&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Geist Mono', monospace; background: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .print-card { text-align: center; padding: 48px; border: 3px solid ${color}; border-radius: 12px; max-width: 340px; }
+    .print-title { font-family: 'Instrument Serif', serif; font-size: 36px; color: ${color}; margin-bottom: 6px; }
+    .print-sub { font-size: 13px; color: #666; margin-bottom: 28px; }
+    .print-qr { width: 240px; height: 240px; margin: 0 auto 24px; }
+    .print-url { font-size: 9px; color: #999; word-break: break-all; margin-bottom: 20px; }
+    .print-hint { font-size: 11px; color: #666; line-height: 1.6; border-top: 1px solid #eee; padding-top: 16px; }
+    @media print { body { min-height: auto; } }
+  </style>
+</head>
+<body>
+  <div class="print-card">
+    <div class="print-title">${label}</div>
+    <div class="print-sub">${sublabel}</div>
+    <img class="print-qr" src="${imgSrc}" />
+    <div class="print-url">${url}</div>
+    <div class="print-hint">📱 Scansiona con la fotocamera del telefono</div>
+  </div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`);
+    win.document.close();
+  };
+
+  // Ripristina URL salvato
+  const savedUrl = localStorage.getItem('qr_base_url');
+  if (savedUrl) document.getElementById('qr-base-url').value = savedUrl;
 
   // ── INIT ───────────────────────────────────────────────────────────────────
   if (sessionStorage.getItem('admin_auth') === '1') {
