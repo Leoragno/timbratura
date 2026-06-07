@@ -491,10 +491,12 @@
   // ── STATS ──────────────────────────────────────────────────────────────────
   function updateStats() {
     document.getElementById('stat-total').textContent = allAnimators.length;
+    // allLog è ordinato per id DESC → la prima occorrenza per nome è la più recente
     const lastMap = {};
     allLog.forEach(l => { if (!lastMap[l.nome]) lastMap[l.nome] = l; });
+    // Conta solo animatori registrati (ignora timbrature di nomi non più presenti)
     let inside = 0;
-    for (let n in lastMap) if (lastMap[n].tipo === 'Ingresso') inside++;
+    allAnimators.forEach(a => { if (lastMap[a.nome] && lastMap[a.nome].tipo === 'Ingresso') inside++; });
     document.getElementById('stat-in').textContent  = inside;
     document.getElementById('stat-out').textContent = allAnimators.length - inside;
     const oggi = new Date();
