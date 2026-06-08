@@ -99,6 +99,13 @@
     .toast.error   { background: var(--red); }
     .toast.info    { background: var(--accent); }
     .empty-state { text-align: center; padding: 36px 16px; color: var(--ink3); font-size: 12px; line-height: 1.7; }
+    .privacy-wall-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(26,23,20,.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .privacy-wall { background: #fff; border-radius: 6px; padding: 32px 28px; width: 100%; max-width: 480px; text-align: center; }
+    .privacy-wall h2 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 10px; }
+    .privacy-wall p { font-size: 12px; color: var(--ink2); line-height: 1.7; margin-bottom: 16px; }
+    .privacy-wall .consent-row { text-align: left; margin-bottom: 16px; }
+    .privacy-wall-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .privacy-wall-btn:disabled { opacity: .4; cursor: not-allowed; }
     .privacy-modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(26,23,20,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
     .privacy-modal { background: #fff; border-radius: 6px; padding: 28px 24px; width: 100%; max-width: 540px; max-height: 85vh; overflow-y: auto; font-size: 12px; line-height: 1.8; color: #1a1714; }
     .privacy-modal h2 { font-family: var(--font-serif); font-size: 20px; margin-bottom: 14px; }
@@ -221,6 +228,21 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- PRIVACY WALL per utenti già registrati -->
+<div class="privacy-wall-overlay" id="privacy-wall" style="display:none;">
+  <div class="privacy-wall">
+    <h2>🔒 Informativa Privacy</h2>
+    <p>Prima di continuare, la Parrocchia San Giorgio di Jerago ti chiede di leggere e accettare l&#39;informativa sul trattamento dei dati personali.</p>
+    <div class="consent-row">
+      <input type="checkbox" id="wall-consent" onchange="document.getElementById('wall-accept-btn').disabled=!this.checked" />
+      <label for="wall-consent" style="font-size:11px; color:var(--ink2); line-height:1.6; text-transform:none; letter-spacing:0; margin-bottom:0; cursor:pointer;">
+        Ho letto e accetto l&#39;<a onclick="document.getElementById(&apos;privacy-modal&apos;).style.display=&apos;flex&apos;" style="color:var(--accent);text-decoration:underline;cursor:pointer;">informativa sul trattamento dei dati personali</a> della Parrocchia San Giorgio di Jerago.
+      </label>
+    </div>
+    <button class="privacy-wall-btn" id="wall-accept-btn" disabled onclick="accettaPrivacyWall()">Accetto e continuo →</button>
+  </div>
+</div>
 
 <!-- MODAL PRIVACY POLICY -->
 <div class="privacy-modal-overlay" id="privacy-modal" style="display:none;">
@@ -509,6 +531,16 @@
     }
   }
 
+  async function accettaPrivacyWall() {
+    // Salva accettazione su Supabase
+    const { error } = await sb.from('utenti').update({ privacy_accepted: true }).eq('id', currentUser.id);
+    if (error) { toast('Errore salvataggio consenso', 'error'); return; }
+    currentUser.privacy_accepted = true;
+    sessionStorage.setItem('cu', JSON.stringify(currentUser));
+    document.getElementById('privacy-wall').style.display = 'none';
+    toast('Consenso registrato. Benvenuto!', 'success');
+  }
+
   async function mostraApp() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
@@ -519,6 +551,10 @@
     await aggiornaStatoUI();
     document.getElementById('btn-in').onclick = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
+    // Mostra privacy wall se non ancora accettata
+    if (!currentUser.privacy_accepted) {
+      document.getElementById('privacy-wall').style.display = 'flex';
+    }
     // Se c'era una timbratura QR pendente dal login, eseguila ora e pulisci
     const pendingQa = sessionStorage.getItem('pqa');
     if (pendingQa) {
