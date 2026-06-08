@@ -99,6 +99,17 @@
     .toast.error   { background: var(--red); }
     .toast.info    { background: var(--accent); }
     .empty-state { text-align: center; padding: 36px 16px; color: var(--ink3); font-size: 12px; line-height: 1.7; }
+    .privacy-modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(26,23,20,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .privacy-modal { background: #fff; border-radius: 6px; padding: 28px 24px; width: 100%; max-width: 540px; max-height: 85vh; overflow-y: auto; font-size: 12px; line-height: 1.8; color: #1a1714; }
+    .privacy-modal h2 { font-family: var(--font-serif); font-size: 20px; margin-bottom: 14px; }
+    .privacy-modal h3 { font-size: 13px; font-weight: 600; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: .5px; color: #2d4a3e; }
+    .privacy-modal p { margin-bottom: 8px; }
+    .privacy-modal-close { margin-top: 20px; width: 100%; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; cursor: pointer; }
+    .consent-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; margin-bottom: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 10px 12px; }
+    .consent-row input[type=checkbox] { width: auto; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent); }
+    .consent-row label { font-size: 11px; color: var(--ink2); line-height: 1.6; text-transform: none; letter-spacing: 0; margin-bottom: 0; cursor: pointer; }
+    .consent-row a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+    .minori-notice { background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 3px; padding: 10px 13px; font-size: 11px; color: #7a5c1e; line-height: 1.6; margin-top: 10px; }
 
     /* Stato dentro/fuori */
     .stato-banner { border-radius: 4px; padding: 16px 18px; margin-bottom: 16px; text-align: center; transition: all .4s; }
@@ -151,7 +162,12 @@
     <input type="password" id="reg-password" />
     <div class="error-msg" id="reg-error"></div>
     <div class="success-msg" id="reg-success"></div>
-    <button class="btn btn-primary" id="register-btn">Registrati</button>
+
+    <div class="consent-row">
+      <input type="checkbox" id="consent-privacy" />
+      <label for="consent-privacy">Ho letto e accetto l'<a onclick="document.getElementById('privacy-modal').style.display='flex'">informativa sul trattamento dei dati personali</a> della Parrocchia San Giorgio di Jerago.</label>
+    </div>
+    <button class="btn btn-primary" id="register-btn" style="margin-top:14px;">Registrati</button>
     <div class="auth-toggle" onclick="toggleAuth(false)">Hai un account? <span>Accedi</span></div>
   </div>
 </div>
@@ -205,6 +221,38 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL PRIVACY POLICY -->
+<div class="privacy-modal-overlay" id="privacy-modal" style="display:none;">
+  <div class="privacy-modal">
+    <h2>Informativa sul trattamento dei dati personali</h2>
+    <p>Ai sensi dell'art. 13 del Regolamento UE 2016/679 (GDPR), la Parrocchia San Giorgio di Jerago con Orago, in qualità di <strong>Titolare del trattamento</strong>, fornisce le seguenti informazioni.</p>
+
+    <h3>Titolare del trattamento</h3>
+    <p>Parrocchia San Giorgio – Jerago con Orago (VA)<br>
+    Sito web: <a href="https://parrocchiasangiorgio.it/" target="_blank">parrocchiasangiorgio.it</a></p>
+
+    <h3>Dati raccolti</h3>
+    <p>Nome e cognome, anno di nascita, password, orari di ingresso e uscita dall'oratorio, posizione geografica (solo al momento della timbratura di ingresso), disponibilità settimanali.</p>
+
+    <h3>Finalità e base giuridica</h3>
+    <p>I dati sono trattati esclusivamente per la gestione delle presenze degli animatori durante l'oratorio estivo, sulla base del <strong>legittimo interesse</strong> dell'organizzazione e del <strong>consenso</strong> dell'interessato (o del genitore/tutore per i minorenni).</p>
+
+    <h3>Conservazione dei dati</h3>
+    <p>I dati saranno conservati per la durata dell'oratorio estivo e cancellati entro 30 giorni dalla sua conclusione.</p>
+
+    <h3>Comunicazione a terzi</h3>
+    <p>I dati non vengono ceduti a terzi. Il servizio utilizza Supabase (infrastruttura cloud con server in EU) come sistema di archiviazione.</p>
+
+    <h3>Diritti dell'interessato</h3>
+    <p>Hai il diritto di accedere, rettificare, cancellare i tuoi dati e opporti al trattamento in qualsiasi momento, contattando la parrocchia tramite il sito <a href="https://parrocchiasangiorgio.it/" target="_blank">parrocchiasangiorgio.it</a>.</p>
+
+    <h3>Minori</h3>
+    <p>Per gli animatori di età inferiore ai 18 anni, il consenso al trattamento dei dati viene espresso direttamente dall'interessato spuntando l'apposita casella al momento della registrazione.</p>
+
+    <button class="privacy-modal-close" onclick="document.getElementById('privacy-modal').style.display='none'">Ho letto — Chiudi</button>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -380,6 +428,8 @@
     const nome = document.getElementById('reg-nome').value.trim();
     const anno = parseInt(document.getElementById('reg-anno').value);
     const pw = document.getElementById('reg-password').value;
+    const consenso = document.getElementById('consent-privacy').checked;
+    if (!consenso) { toast('Devi accettare l'informativa privacy per registrarti', 'error'); return; }
     if (!nome || !pw) { toast('Compila tutti i campi', 'error'); return; }
     if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; }
     const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
