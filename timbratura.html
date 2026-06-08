@@ -165,7 +165,7 @@
 
     <div class="consent-row">
       <input type="checkbox" id="consent-privacy" />
-      <label for="consent-privacy">Ho letto e accetto l'<a onclick="document.getElementById('privacy-modal').style.display='flex'">informativa sul trattamento dei dati personali</a> della Parrocchia San Giorgio di Jerago.</label>
+      <label for="consent-privacy">Ho letto e accetto l&#39;<a onclick="document.getElementById(&apos;privacy-modal&apos;).style.display=&apos;flex&apos;">informativa sul trattamento dei dati personali</a> della Parrocchia San Giorgio di Jerago.</label>
     </div>
     <button class="btn btn-primary" id="register-btn" style="margin-top:14px;">Registrati</button>
     <div class="auth-toggle" onclick="toggleAuth(false)">Hai un account? <span>Accedi</span></div>
@@ -250,7 +250,7 @@
     <h3>Minori</h3>
     <p>Per gli animatori di età inferiore ai 18 anni, il consenso al trattamento dei dati viene espresso direttamente dall'interessato spuntando l'apposita casella al momento della registrazione.</p>
 
-    <button class="privacy-modal-close" onclick="document.getElementById('privacy-modal').style.display='none'">Ho letto — Chiudi</button>
+    <button class="privacy-modal-close" onclick="document.getElementById(&apos;privacy-modal&apos;).style.display=&apos;none&apos;">Ho letto — Chiudi</button>
   </div>
 </div>
 
@@ -429,7 +429,7 @@
     const anno = parseInt(document.getElementById('reg-anno').value);
     const pw = document.getElementById('reg-password').value;
     const consenso = document.getElementById('consent-privacy').checked;
-    if (!consenso) { toast('Devi accettare l'informativa privacy per registrarti', 'error'); return; }
+    if (!consenso) { toast('Devi accettare l\'informativa privacy per registrarti', 'error'); return; }
     if (!nome || !pw) { toast('Compila tutti i campi', 'error'); return; }
     if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; }
     const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
