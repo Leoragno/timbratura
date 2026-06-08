@@ -106,7 +106,7 @@
     .privacy-wall .consent-row { text-align: left; margin-bottom: 16px; }
     .privacy-wall-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; cursor: pointer; }
     .privacy-wall-btn:disabled { opacity: .4; cursor: not-allowed; }
-    .privacy-modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(26,23,20,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .privacy-modal-overlay { position: fixed; inset: 0; z-index: 700; background: rgba(26,23,20,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
     .privacy-modal { background: #fff; border-radius: 6px; padding: 28px 24px; width: 100%; max-width: 540px; max-height: 85vh; overflow-y: auto; font-size: 12px; line-height: 1.8; color: #1a1714; }
     .privacy-modal h2 { font-family: var(--font-serif); font-size: 20px; margin-bottom: 14px; }
     .privacy-modal h3 { font-size: 13px; font-weight: 600; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: .5px; color: #2d4a3e; }
@@ -531,7 +531,7 @@
     }
   }
 
-  async function accettaPrivacyWall() {
+  window.accettaPrivacyWall = async function() {
     // Salva accettazione su Supabase
     const { error } = await sb.from('utenti').update({ privacy_accepted: true }).eq('id', currentUser.id);
     if (error) { toast('Errore salvataggio consenso', 'error'); return; }
