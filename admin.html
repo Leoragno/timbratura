@@ -322,7 +322,7 @@
       <div style="margin-bottom:16px;">
         <label>🌐 URL base del sito animatori</label>
         <div style="display:flex; gap:8px; align-items:center;">
-          <input type="text" id="qr-base-url" placeholder="https://tuosito.vercel.app/animatori.html" style="margin-bottom:0; flex:1;" />
+          <input type="text" id="qr-base-url" placeholder="https://tuosito.vercel.app/animatori.html" style="margin-bottom:0; flex:1; background:#fff; color:#1a1714; border:2px solid #2d4a3e; font-size:13px;" />
           <button class="btn btn-primary btn-sm" id="qr-genera-btn">Genera QR</button>
         </div>
         <div style="font-size:11px; color:var(--ink3); margin-top:6px;">Inserisci l'URL completo della pagina animatori, poi premi Genera QR.</div>
@@ -331,14 +331,14 @@
       <div class="qr-grid" id="qr-grid" style="display:none;">
         <div class="qr-card ingresso">
           <div class="qr-label">⬆ Ingresso</div>
-          <div class="qr-sublabel">Scansiona per timbrare l'entrata</div>
+          <div class="qr-sublabel">Scansiona per timbrare l&#39;entrata</div>
           <div class="qr-box"><div id="qr-ingresso"></div></div>
           <div class="qr-url" id="qr-url-ingresso">—</div>
           <button class="btn btn-green btn-sm" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="window.stampaQR('ingresso')">🖨️ Stampa QR Ingresso</button>
         </div>
         <div class="qr-card uscita">
           <div class="qr-label">⬇ Uscita</div>
-          <div class="qr-sublabel">Scansiona per timbrare l'uscita</div>
+          <div class="qr-sublabel">Scansiona per timbrare l&#39;uscita</div>
           <div class="qr-box"><div id="qr-uscita"></div></div>
           <div class="qr-url" id="qr-url-uscita">—</div>
           <button class="btn btn-red btn-sm" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="window.stampaQR('uscita')">🖨️ Stampa QR Uscita</button>
@@ -1076,7 +1076,7 @@
 
   document.getElementById('qr-genera-btn').onclick = () => {
     const base = document.getElementById('qr-base-url').value.trim();
-    if (!base) return toast('Inserisci l\'URL del sito animatori', 'error');
+    if (!base) return toast('Inserisci URL del sito animatori', 'error');
 
     const urlIn  = base + (base.includes('?') ? '&' : '?') + 'qa=in';
     const urlOut = base + (base.includes('?') ? '&' : '?') + 'qa=out';
@@ -1102,7 +1102,7 @@
 
   window.stampaQR = (tipo) => {
     const label     = tipo === 'ingresso' ? '⬆ INGRESSO' : '⬇ USCITA';
-    const sublabel  = tipo === 'ingresso' ? 'Scansiona per timbrare l\'entrata' : 'Scansiona per timbrare l\'uscita';
+    const sublabel  = tipo === 'ingresso' ? 'Scansiona per timbrare entrata' : 'Scansiona per timbrare uscita';
     const color     = tipo === 'ingresso' ? '#2d5a3d' : '#8b2e2e';
     const elId      = tipo === 'ingresso' ? 'qr-ingresso' : 'qr-uscita';
     const urlId     = tipo === 'ingresso' ? 'qr-url-ingresso' : 'qr-url-uscita';
