@@ -469,6 +469,12 @@
     await aggiornaStatoUI();
     document.getElementById('btn-in').onclick = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
+    // Se c'era una timbratura QR pendente dal login, eseguila ora e pulisci
+    const pendingQa = sessionStorage.getItem('pqa');
+    if (pendingQa) {
+      sessionStorage.removeItem('pqa');
+      setTimeout(() => timbra(pendingQa), 600);
+    }
     // Polling ogni 30s: aggiorna impostazioni GPS/lock in background senza disturbare l'utente
     setInterval(async () => {
       if (!currentUser) return;
@@ -740,12 +746,23 @@
 
   const urlParams = new URLSearchParams(window.location.search);
   const qa = urlParams.get('qa');
-  if (qa && !currentUser) {
-    sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
-    document.getElementById('qr-alert-login').style.display = 'block';
-  } else if (qa && currentUser) {
-    setTimeout(() => timbra(qa === 'in' ? 'Ingresso' : 'Uscita'), 500);
+  if (qa) {
+    // Rimuove subito ?qa= dall'URL per evitare ri-timbrature al refresh
+    const cleanUrl = window.location.pathname + (window.location.search.replace(/[?&]qa=[^&]*/g, '').replace(/^&/, '?') || '');
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    if (!currentUser) {
+      // Non loggato: salva in sessionStorage e mostra avviso
+      sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
+      document.getElementById('qr-alert-login').style.display = 'block';
+    } else {
+      // Loggato: timbra subito
+      setTimeout(() => timbra(qa === 'in' ? 'Ingresso' : 'Uscita'), 500);
+    }
   }
+
+  // Dopo login, esegui eventuale timbratura QR pendente
+  // (gestito dentro mostraApp via pqa)
 })();
 </script>
 </body>
