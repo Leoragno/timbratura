@@ -63,8 +63,8 @@
     .topbar-clock { font-size: 12px; color: var(--ink3); }
 
     /* TAB NAV */
-    .tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; position: sticky; top: 54px; z-index: 40; }
-    .tab-btn { flex: 1; padding: 14px 8px 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; position: sticky; top: 54px; z-index: 40; overflow-x: auto; }
+    .tab-btn { flex: 1; min-width: 80px; padding: 14px 8px 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 3px; white-space: nowrap; }
     .tab-btn .tab-icon { font-size: 16px; }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-btn:hover:not(.active) { color: var(--ink2); background: var(--bg); }
@@ -174,6 +174,7 @@
     .toast.error { background: var(--red); }
 
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
+
     /* QR Code */
     .qr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
     @media (max-width: 600px) { .qr-grid { grid-template-columns: 1fr; } }
@@ -184,9 +185,54 @@
     .qr-sublabel { font-size: 11px; color: var(--ink3); margin-bottom: 20px; }
     .qr-box { display: inline-block; padding: 16px; background: #fff; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 18px; }
     .qr-url { font-size: 10px; color: var(--ink3); word-break: break-all; margin-bottom: 16px; font-family: var(--font-mono); background: var(--bg2); padding: 6px 10px; border-radius: 3px; }
-    .qr-url-input { width: 100%; margin-bottom: 16px; font-size: 12px; }
     .qr-hint { font-size: 11px; color: var(--ink3); line-height: 1.6; background: var(--bg2); border-radius: 3px; padding: 10px 14px; margin-top: 8px; text-align: left; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+    /* ═══════════════ STATISTICHE ═══════════════ */
+    .stat-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; position: relative; overflow: hidden; }
+    .stat-kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+    .stat-kpi.kpi-red::before { background: var(--red); }
+    .stat-kpi.kpi-amber::before { background: #c49a3c; }
+    .stat-kpi.kpi-blue::before { background: #3a5a8a; }
+    .stat-kpi-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
+    .stat-kpi-value { font-family: var(--font-serif); font-size: 44px; line-height: 1; margin-bottom: 2px; }
+    .stat-kpi-sub { font-size: 11px; color: var(--ink3); }
+
+    .stat-filters { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .stat-filters > div { flex: 1; min-width: 140px; }
+    .stat-filters label { margin-bottom: 5px; }
+    .stat-filters select, .stat-filters input { margin-bottom: 0; }
+
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 16px; }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .chart-title { font-family: var(--font-serif); font-size: 18px; font-style: italic; }
+    .chart-toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+    .chart-toggle button { padding: 5px 12px; font-family: var(--font-mono); font-size: 11px; border: none; background: transparent; cursor: pointer; color: var(--ink3); transition: all .12s; }
+    .chart-toggle button.active { background: var(--accent); color: #fff; }
+    .chart-wrap { position: relative; height: 200px; }
+    .chart-canvas { width: 100% !important; height: 100% !important; }
+
+    .rank-list { list-style: none; }
+    .rank-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bg2); }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-pos { font-family: var(--font-serif); font-size: 22px; color: var(--ink3); width: 32px; flex-shrink: 0; }
+    .rank-pos.top { color: var(--accent); }
+    .rank-nome { flex: 1; font-size: 13px; font-weight: 500; }
+    .rank-anno { font-size: 11px; color: var(--ink3); margin-left: 4px; }
+    .rank-bar-wrap { flex: 2; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+    .rank-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s cubic-bezier(.23,1,.32,1); }
+    .rank-ore { font-size: 12px; color: var(--ink2); white-space: nowrap; min-width: 60px; text-align: right; }
+
+    .det-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; }
+    .det-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    .det-table th { background: var(--bg2); padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
+    .det-table td { padding: 10px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
+    .det-table tr:last-child td { border-bottom: none; }
+    .det-table tr:hover td { background: var(--bg); }
+
+    .stat-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 900px) { .stat-charts-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -224,6 +270,7 @@
     <button class="tab-btn" data-tab="tab-timbrature"><span class="tab-icon">⏱</span>Timbrature</button>
     <button class="tab-btn" data-tab="tab-disponibilita"><span class="tab-icon">📅</span>Disponibilità</button>
     <button class="tab-btn" data-tab="tab-qr"><span class="tab-icon">🔲</span>QR Code</button>
+    <button class="tab-btn" data-tab="tab-statistiche"><span class="tab-icon">📈</span>Statistiche</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════════ TAB: DASHBOARD -->
@@ -370,7 +417,6 @@
         <select id="filter-sort2"><option value="alpha">Ordina: Alfabetico</option><option value="status">Ordina: Stato</option><option value="anno">Ordina: Anno</option></select>
       </div>
       <div class="status-grid" id="animators-grid2"><div class="empty">⏳ Caricamento…</div></div>
-
     </div>
   </div>
 
@@ -413,6 +459,133 @@
       <div id="admin-disp-container"><div class="empty">⏳ Caricamento…</div></div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════ TAB: STATISTICHE -->
+  <div class="tab-panel" id="tab-statistiche">
+    <div class="main">
+
+      <!-- Filtri -->
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">Statistiche presenze</div>
+        <button class="btn btn-sm btn-ghost" id="stat-refresh-btn">↻ Aggiorna</button>
+      </div>
+
+      <div class="stat-filters">
+        <div>
+          <label>📅 Dal</label>
+          <input type="date" id="stat-dal" />
+        </div>
+        <div>
+          <label>Al</label>
+          <input type="date" id="stat-al" />
+        </div>
+        <div>
+          <label>👤 Animatore</label>
+          <select id="stat-animatore">
+            <option value="">Tutti</option>
+          </select>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button class="btn btn-primary btn-sm" id="stat-applica-btn" style="width:auto;">Applica filtri</button>
+        </div>
+      </div>
+
+      <!-- KPI -->
+      <div class="stat-kpi-row">
+        <div class="stat-kpi">
+          <div class="stat-kpi-label">Animatori attivi</div>
+          <div class="stat-kpi-value" id="kpi-animatori">—</div>
+          <div class="stat-kpi-sub">nel periodo</div>
+        </div>
+        <div class="stat-kpi kpi-amber">
+          <div class="stat-kpi-label">Giorni con presenze</div>
+          <div class="stat-kpi-value" id="kpi-giorni">—</div>
+          <div class="stat-kpi-sub">giorni distinti</div>
+        </div>
+        <div class="stat-kpi kpi-blue">
+          <div class="stat-kpi-label">Timbrature totali</div>
+          <div class="stat-kpi-value" id="kpi-timbrature">—</div>
+          <div class="stat-kpi-sub">ingressi + uscite</div>
+        </div>
+        <div class="stat-kpi kpi-red">
+          <div class="stat-kpi-label">Ore lavorate</div>
+          <div class="stat-kpi-value" id="kpi-ore">—</div>
+          <div class="stat-kpi-sub">totale stimato</div>
+        </div>
+      </div>
+
+      <!-- Grafici fasce orarie ingresso/uscita -->
+      <div class="stat-charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Fascia oraria ingressi</div>
+            <div class="chart-toggle">
+              <button class="active" data-chart="chart-in" data-mode="bar">Barre</button>
+              <button data-chart="chart-in" data-mode="line">Linea</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-in" class="chart-canvas"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Fascia oraria uscite</div>
+            <div class="chart-toggle">
+              <button class="active" data-chart="chart-out" data-mode="bar">Barre</button>
+              <button data-chart="chart-out" data-mode="line">Linea</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-out" class="chart-canvas"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Grafico presenze per giorno -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Presenze per giorno</div>
+          <div class="chart-toggle">
+            <button class="active" data-chart="chart-giorni" data-mode="bar">Barre</button>
+            <button data-chart="chart-giorni" data-mode="line">Linea</button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="chart-giorni" class="chart-canvas"></canvas></div>
+      </div>
+
+      <!-- Classifica animatori -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Classifica per ore lavorate</div>
+        </div>
+        <ul class="rank-list" id="stat-rank-list">
+          <li class="rank-item"><span style="color:var(--ink3);font-size:12px;">⏳ Caricamento…</span></li>
+        </ul>
+      </div>
+
+      <!-- Tabella dettaglio per animatore -->
+      <div class="section-header">
+        <div class="section-title">Dettaglio per animatore</div>
+      </div>
+      <div class="det-table-wrap">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>Animatore</th>
+              <th>Anno</th>
+              <th>Giorni presenti</th>
+              <th>Ore totali</th>
+              <th>N° ingressi</th>
+              <th>N° uscite</th>
+              <th>Ultimo accesso</th>
+            </tr>
+          </thead>
+          <tbody id="stat-det-tbody">
+            <tr><td colspan="7" class="empty">⏳ Caricamento…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- MODALS -->
@@ -450,6 +623,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function() {
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
@@ -473,8 +647,8 @@
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
-      // lazy load per disponibilità
       if (btn.dataset.tab === 'tab-disponibilita') { loadSettimane(); loadDispRiepilogo(); }
+      if (btn.dataset.tab === 'tab-statistiche') { initStatistiche(); }
     };
   });
 
@@ -549,10 +723,8 @@
   // ── STATS ──────────────────────────────────────────────────────────────────
   function updateStats() {
     document.getElementById('stat-total').textContent = allAnimators.length;
-    // allLog è ordinato per id DESC → la prima occorrenza per nome è la più recente
     const lastMap = {};
     allLog.forEach(l => { if (!lastMap[l.nome]) lastMap[l.nome] = l; });
-    // Conta solo animatori registrati (ignora timbrature di nomi non più presenti)
     let inside = 0;
     allAnimators.forEach(a => { if (lastMap[a.nome] && lastMap[a.nome].tipo === 'Ingresso') inside++; });
     document.getElementById('stat-in').textContent  = inside;
@@ -562,7 +734,7 @@
     document.getElementById('stat-oggi').textContent = allLog.filter(l => l.data === oggiStr).length;
   }
 
-  // ── RENDER ANIMATORS (dashboard) ───────────────────────────────────────────
+  // ── RENDER ANIMATORS ───────────────────────────────────────────────────────
   function buildAnimatorList(searchId, statusId, sortId) {
     const search = document.getElementById(searchId).value.toLowerCase();
     const statusFilter = document.getElementById(statusId).value;
@@ -599,7 +771,7 @@
   function renderAnimators() {
     const list = buildAnimatorList('filter-name','filter-status','filter-sort');
     const grid = document.getElementById('animators-grid');
-    grid.innerHTML = list.length ? list.map(renderCard).join('') : '<div class="empty">👤 Nessun animatore trovato</div>';
+    if (grid) grid.innerHTML = list.length ? list.map(renderCard).join('') : '<div class="empty">👤 Nessun animatore trovato</div>';
   }
 
   function renderAnimators2() {
@@ -630,7 +802,6 @@
 
   // ── TIMBRATURA MANUALE ─────────────────────────────────────────────────────
   window._mt = function(nome, anno, tipo) {
-    // Trova user_id dall'elenco animatori caricato
     const utente = allAnimators.find(a => a.nome === nome);
     manualTarget = { nome, anno, userId: utente ? utente.id : null };
     document.getElementById('manual-name-label').textContent = nome;
@@ -865,7 +1036,6 @@
     return fn;
   }
 
-  // Converte DD/MM/YYYY in YYYY-MM-DD direttamente, senza Date (evita bug timezone)
   function dataLogToISO(str) {
     if (!str) return '';
     const p = str.split('/');
@@ -897,7 +1067,6 @@
     const filename = aggiornaPreview();
     const filtered = filtraLog();
     if (!filtered.length) return toast('⚠️ Nessun dato nel periodo selezionato','error');
-    // Costruisci righe
     const gruppi = {};
     filtered.forEach(r => {
       const k = r.nome+'||'+r.data;
@@ -944,7 +1113,6 @@
     const { data } = await sb.from('settimane').select('*').order('id');
     const sel = document.getElementById('export-disp-sett');
     if (!sel || !data) return;
-    // Mantieni opzione "tutte"
     sel.innerHTML = '<option value="tutte">Tutte le settimane</option>';
     data.forEach(s => {
       const opt = document.createElement('option');
@@ -957,29 +1125,18 @@
   document.getElementById('export-disp-btn').onclick = async () => {
     if (!window.XLSX) return toast('Libreria Excel non caricata','error');
     toast('Caricamento dati disponibilità...','');
-
     const settScelta = document.getElementById('export-disp-sett').value;
-
-    // Carica dati
     let settQuery = sb.from('settimane').select('*').order('id');
     const { data: settimane } = await settQuery;
     const { data: dispo }    = await sb.from('disponibilita').select('*');
     const { data: utenti }   = await sb.from('utenti').select('id, nome, anno').order('nome');
-
     if (!settimane || !settimane.length) return toast('Nessuna settimana trovata','error');
     if (!utenti || !utenti.length)       return toast('Nessun animatore trovato','error');
-
-    const settDaEsportare = settScelta === 'tutte'
-      ? settimane
-      : settimane.filter(s => String(s.id) === String(settScelta));
-
+    const settDaEsportare = settScelta === 'tutte' ? settimane : settimane.filter(s => String(s.id) === String(settScelta));
     if (!settDaEsportare.length) return toast('Settimana non trovata','error');
-
     const wb = XLSX.utils.book_new();
-
     for (const s of settDaEsportare) {
       const giorni = parseGiorniAttivi(s.giorni_attivi);
-      // Mappa user_id → array di stati per giorno
       const map = new Map();
       if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
         const gn = GIORNI_TUTTI[d.giorno_index];
@@ -988,8 +1145,6 @@
         if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(null));
         map.get(d.user_id)[idx] = { stato: d.stato, note: d.note || '' };
       });
-
-      // Costruisci righe (stato + note per ogni giorno)
       const rows = utenti.map(u => {
         const scelte = map.get(u.id) || Array(giorni.length).fill(null);
         const row = { 'Nome': u.nome, 'Anno': u.anno || '' };
@@ -1005,32 +1160,20 @@
         });
         return row;
       });
-
       if (!rows.length) continue;
-
       const ws = XLSX.utils.json_to_sheet(rows);
-      // Larghezze colonne
       ws['!cols'] = [{ wch: 22 }, { wch: 6 }, ...giorni.map(() => ({ wch: 12 }))];
-
-      // Nome foglio: max 31 caratteri (limite Excel)
       const nomeSheet = s.nome.substring(0, 31);
       XLSX.utils.book_append_sheet(wb, ws, nomeSheet);
     }
-
     if (!wb.SheetNames.length) return toast('Nessun dato da esportare','error');
-
-    const filename = settScelta === 'tutte'
-      ? 'Disponibilita_Tutte_Settimane.xlsx'
-      : 'Disponibilita_' + (settDaEsportare[0].nome.replace(/\s+/g,'_')) + '.xlsx';
-
+    const filename = settScelta === 'tutte' ? 'Disponibilita_Tutte_Settimane.xlsx' : 'Disponibilita_' + (settDaEsportare[0].nome.replace(/\s+/g,'_')) + '.xlsx';
     XLSX.writeFile(wb, filename);
     toast('✅ Disponibilità scaricata!','success');
   };
 
-  // Carica settimane nel select disponibilità all'avvio
   caricaSettimanePerExport();
 
-  // Export UI
   document.querySelectorAll('input[name="export-periodo"]').forEach(r => {
     r.addEventListener('change', () => {
       document.querySelectorAll('.periodo-option').forEach(el => el.classList.remove('selected'));
@@ -1044,7 +1187,6 @@
   ['export-tipo','export-giorno','export-week','export-dal','export-al'].forEach(id => {
     const el = document.getElementById(id); if (el) el.addEventListener('change', aggiornaPreview);
   });
-  // Usa data locale (non UTC) per evitare bug timezone
   const _now = new Date();
   const oggi = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
   document.getElementById('export-giorno').value = oggi;
@@ -1059,7 +1201,6 @@
   document.getElementById('log-search').addEventListener('input', renderLog);
   document.getElementById('log-date').addEventListener('change', renderLog);
   document.getElementById('log-tipo').addEventListener('change', renderLog);
-  document.getElementById('refreshAnimBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators2(); updateStats(); });
   document.getElementById('refreshAnimBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators2(); updateStats(); });
   document.getElementById('refreshLogBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); renderLog(); });
   document.getElementById('refresh-disp-btn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadDispRiepilogo(); });
@@ -1079,26 +1220,18 @@
   document.getElementById('qr-genera-btn').onclick = () => {
     const base = document.getElementById('qr-base-url').value.trim();
     if (!base) return toast('Inserisci URL del sito animatori', 'error');
-
     const urlIn  = base + (base.includes('?') ? '&' : '?') + 'qa=in';
     const urlOut = base + (base.includes('?') ? '&' : '?') + 'qa=out';
-
     document.getElementById('qr-url-ingresso').textContent = urlIn;
     document.getElementById('qr-url-uscita').textContent   = urlOut;
-
-    // Pulisci QR precedenti
     const elIn  = document.getElementById('qr-ingresso');
     const elOut = document.getElementById('qr-uscita');
     elIn.innerHTML  = '';
     elOut.innerHTML = '';
-
     qrIngresso = new QRCode(elIn,  { text: urlIn,  width: 400, height: 400, colorDark: '#1a1714', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
     qrUscita   = new QRCode(elOut, { text: urlOut, width: 400, height: 400, colorDark: '#8b2e2e', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-
     document.getElementById('qr-grid').style.display = '';
     toast('QR Code generati!', 'success');
-
-    // Salva URL per riutilizzo
     localStorage.setItem('qr_base_url', base);
   };
 
@@ -1110,13 +1243,10 @@
     const urlId     = tipo === 'ingresso' ? 'qr-url-ingresso' : 'qr-url-uscita';
     const qrEl      = document.getElementById(elId);
     const url       = document.getElementById(urlId).textContent;
-
-    // Ottieni immagine QR
     const img = qrEl.querySelector('img') || qrEl.querySelector('canvas');
     let imgSrc = '';
     if (img && img.tagName === 'IMG') imgSrc = img.src;
     else if (img && img.tagName === 'CANVAS') imgSrc = img.toDataURL();
-
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html>
 <html>
@@ -1151,17 +1281,285 @@
     win.document.close();
   };
 
-  // Ripristina URL salvato
   const savedUrl = localStorage.getItem('qr_base_url');
   const qrInput = document.getElementById('qr-base-url');
   if (savedUrl) qrInput.value = savedUrl;
-  // Forza stile visibile via JS
   qrInput.style.background = '#ffffff';
   qrInput.style.color = '#1a1714';
   qrInput.style.border = '2px solid #2d4a3e';
   qrInput.style.padding = '11px 13px';
   qrInput.style.fontSize = '13px';
   qrInput.style.borderRadius = '3px';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ── STATISTICHE ────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  let statCharts = {};
+  let statInited = false;
+
+  // Inizializza date di default (tutto il periodo disponibile)
+  function initStatDateRange() {
+    if (allLog.length === 0) return;
+    const dates = allLog.map(l => dataLogToISO(l.data)).filter(Boolean).sort();
+    const dal = document.getElementById('stat-dal');
+    const al  = document.getElementById('stat-al');
+    if (!dal.value) dal.value = dates[0];
+    if (!al.value)  al.value = dates[dates.length - 1];
+  }
+
+  function populateStatAnimatore() {
+    const sel = document.getElementById('stat-animatore');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Tutti</option>';
+    [...allAnimators].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.nome;
+      opt.textContent = a.nome + (a.anno ? ' ('+a.anno+')' : '');
+      if (a.nome === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function getStatFilters() {
+    return {
+      dal:      document.getElementById('stat-dal').value,
+      al:       document.getElementById('stat-al').value,
+      animatore: document.getElementById('stat-animatore').value
+    };
+  }
+
+  function filtraLogStat(filters) {
+    return allLog.filter(l => {
+      const iso = dataLogToISO(l.data);
+      if (filters.dal && iso < filters.dal) return false;
+      if (filters.al  && iso > filters.al)  return false;
+      if (filters.animatore && l.nome !== filters.animatore) return false;
+      return true;
+    });
+  }
+
+  // Calcola minuti lavorati per un animatore in un giorno (primo ingresso → ultimo uscita)
+  function calcolaOreAnimatore(logAnimatore) {
+    // Raggruppa per data
+    const perData = {};
+    logAnimatore.forEach(l => {
+      if (!perData[l.data]) perData[l.data] = { ingressi: [], uscite: [] };
+      if (l.tipo === 'Ingresso') perData[l.data].ingressi.push(l.ora);
+      if (l.tipo === 'Uscita')   perData[l.data].uscite.push(l.ora);
+    });
+    let totMin = 0;
+    Object.values(perData).forEach(g => {
+      g.ingressi.sort(); g.uscite.sort();
+      if (g.ingressi.length && g.uscite.length) {
+        const [ih,im] = g.ingressi[0].split(':').map(Number);
+        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
+        const diff = (oh*60+om)-(ih*60+im);
+        if (diff > 0) totMin += diff;
+      }
+    });
+    return totMin;
+  }
+
+  function minutiToLabel(m) {
+    if (!m) return '—';
+    const h = Math.floor(m/60), min = m%60;
+    return h + 'h ' + String(min).padStart(2,'0') + 'min';
+  }
+
+  function buildChartData_orario(log, tipo) {
+    // Barre per fascia oraria (ogni ora, 6-22)
+    const counts = {};
+    for (let h = 6; h <= 22; h++) counts[String(h).padStart(2,'0')] = 0;
+    log.filter(l => l.tipo === tipo).forEach(l => {
+      const h = l.ora ? l.ora.split(':')[0] : null;
+      if (h && counts[h] !== undefined) counts[h]++;
+    });
+    return {
+      labels: Object.keys(counts).map(h => h + ':00'),
+      data:   Object.values(counts)
+    };
+  }
+
+  function buildChartData_giorni(log) {
+    // Presenze (animatori unici) per data
+    const perData = {};
+    log.filter(l => l.tipo === 'Ingresso').forEach(l => {
+      if (!perData[l.data]) perData[l.data] = new Set();
+      perData[l.data].add(l.nome);
+    });
+    const sorted = Object.keys(perData).sort((a,b) => {
+      const pa = a.split('/'), pb = b.split('/');
+      return new Date(+pa[2],+pa[1]-1,+pa[0]) - new Date(+pb[2],+pb[1]-1,+pb[0]);
+    });
+    return {
+      labels: sorted.map(d => { const p=d.split('/'); return p[0]+'/'+p[1]; }),
+      data:   sorted.map(d => perData[d].size)
+    };
+  }
+
+  function destroyChart(id) {
+    if (statCharts[id]) { statCharts[id].destroy(); delete statCharts[id]; }
+  }
+
+  function renderChart(id, chartData, type, color) {
+    destroyChart(id);
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    statCharts[id] = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          data: chartData.data,
+          backgroundColor: type === 'bar' ? color + '55' : 'transparent',
+          borderColor: color,
+          borderWidth: type === 'line' ? 2 : 1,
+          fill: type === 'line',
+          tension: 0.35,
+          pointRadius: type === 'line' ? 3 : 0,
+          pointBackgroundColor: color
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#ede9df' }, ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72' } },
+          y: { grid: { color: '#ede9df' }, ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72' }, beginAtZero: true, precision: 0 }
+        }
+      }
+    });
+  }
+
+  // Stato tipo grafico per ogni canvas
+  const chartModes = { 'chart-in': 'bar', 'chart-out': 'bar', 'chart-giorni': 'bar' };
+
+  function renderAllStatCharts(log) {
+    const colorIn  = '#2d5a3d';
+    const colorOut = '#8b2e2e';
+    const colorDay = '#3a5a8a';
+
+    renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), chartModes['chart-in'],     colorIn);
+    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   chartModes['chart-out'],    colorOut);
+    renderChart('chart-giorni', buildChartData_giorni(log),             chartModes['chart-giorni'], colorDay);
+  }
+
+  function renderKPI(log) {
+    const animatoriAttivi = new Set(log.map(l => l.nome)).size;
+    const giorniAttivi    = new Set(log.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
+    const totTimbrature   = log.length;
+
+    // Ore totali: somma per tutti i nomi
+    const nomi = [...new Set(log.map(l => l.nome))];
+    let totMin = 0;
+    nomi.forEach(nome => { totMin += calcolaOreAnimatore(log.filter(l => l.nome === nome)); });
+
+    document.getElementById('kpi-animatori').textContent  = animatoriAttivi;
+    document.getElementById('kpi-giorni').textContent     = giorniAttivi;
+    document.getElementById('kpi-timbrature').textContent = totTimbrature;
+    document.getElementById('kpi-ore').textContent        = totMin ? Math.floor(totMin/60)+'h' : '—';
+  }
+
+  function renderRank(log) {
+    const nomi = [...new Set(log.map(l => l.nome))];
+    const rank = nomi.map(nome => {
+      const min = calcolaOreAnimatore(log.filter(l => l.nome === nome));
+      const anim = allAnimators.find(a => a.nome === nome);
+      return { nome, anno: anim ? anim.anno : '', min };
+    }).sort((a,b) => b.min - a.min);
+
+    const maxMin = rank[0] ? rank[0].min : 1;
+    const list = document.getElementById('stat-rank-list');
+
+    if (!rank.length) { list.innerHTML = '<li class="rank-item"><span style="color:var(--ink3);font-size:12px;">Nessun dato</span></li>'; return; }
+
+    list.innerHTML = rank.map((r, i) => `
+      <li class="rank-item">
+        <span class="rank-pos ${i<3?'top':''}">${i+1}</span>
+        <span class="rank-nome">${esc(r.nome)} <span class="rank-anno">${r.anno ? '('+r.anno+')' : ''}</span></span>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${maxMin?Math.round(r.min/maxMin*100):0}%"></div></div>
+        <span class="rank-ore">${minutiToLabel(r.min)}</span>
+      </li>
+    `).join('');
+  }
+
+  function renderDettaglio(log) {
+    const nomi = [...new Set(log.map(l => l.nome))].sort();
+    const tbody = document.getElementById('stat-det-tbody');
+
+    if (!nomi.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Nessun dato nel periodo</td></tr>'; return; }
+
+    tbody.innerHTML = nomi.map(nome => {
+      const nl = log.filter(l => l.nome === nome);
+      const anim = allAnimators.find(a => a.nome === nome);
+      const anno = anim ? anim.anno : (nl[0].anno || '—');
+      const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
+      const minuti = calcolaOreAnimatore(nl);
+      const nIn  = nl.filter(l=>l.tipo==='Ingresso').length;
+      const nOut = nl.filter(l=>l.tipo==='Uscita').length;
+      // Ultimo accesso: prima riga (log ordinato DESC)
+      const ultimo = nl[0];
+      return `<tr>
+        <td><strong>${esc(nome)}</strong></td>
+        <td>${anno}</td>
+        <td>${giorni}</td>
+        <td>${minutiToLabel(minuti)}</td>
+        <td>${nIn}</td>
+        <td>${nOut}</td>
+        <td>${ultimo ? esc(ultimo.data)+' '+esc(ultimo.ora) : '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderStatistiche() {
+    const filters = getStatFilters();
+    const log     = filtraLogStat(filters);
+    renderKPI(log);
+    renderAllStatCharts(log);
+    renderRank(log);
+    renderDettaglio(log);
+  }
+
+  function initStatistiche() {
+    if (!statInited) {
+      statInited = true;
+      initStatDateRange();
+      populateStatAnimatore();
+    }
+    renderStatistiche();
+  }
+
+  // Toggle barre/linea per ogni grafico
+  document.querySelectorAll('.chart-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const chartId = btn.dataset.chart;
+      const mode    = btn.dataset.mode;
+      chartModes[chartId] = mode;
+      // Aggiorna active
+      btn.closest('.chart-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Ridisegna
+      const filters = getStatFilters();
+      const log     = filtraLogStat(filters);
+      const colorIn  = '#2d5a3d';
+      const colorOut = '#8b2e2e';
+      const colorDay = '#3a5a8a';
+      if (chartId === 'chart-in')     renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), mode, colorIn);
+      if (chartId === 'chart-out')    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   mode, colorOut);
+      if (chartId === 'chart-giorni') renderChart('chart-giorni', buildChartData_giorni(log),             mode, colorDay);
+    });
+  });
+
+  document.getElementById('stat-applica-btn').addEventListener('click', renderStatistiche);
+  document.getElementById('stat-refresh-btn').addEventListener('click', async () => {
+    toast('Aggiornamento dati...');
+    await loadTimbrature();
+    await loadUsers();
+    populateStatAnimatore();
+    renderStatistiche();
+  });
 
   // ── INIT ───────────────────────────────────────────────────────────────────
   if (sessionStorage.getItem('admin_auth') === '1') {
