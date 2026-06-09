@@ -382,29 +382,56 @@
     if (debugDiv) debugDiv.style.display = 'block';
     toast('📍 Acquisizione posizione...', 'info');
 
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      const dist = distance(lat, lon, oratorioLat, oratorioLon);
-      if (debugDiv) debugDiv.innerHTML = `📍 Distanza: ${Math.round(dist)}m (limite ${maxDistanza}m)`;
-      if (dist > maxDistanza) {
-        toast(`❌ Sei a ${Math.round(dist)}m dall'oratorio (max ${maxDistanza}m)`, 'error');
+    // Strategia iOS-compatible:
+    // 1. Prima prova con alta precisione (timeout 10s)
+    // 2. Se fallisce, riprova con bassa precisione (timeout 20s) — più affidabile su iOS indoor
+    // 3. Se fallisce ancora, offre timbra comunque con nota
+    let tentativo = 0;
+
+    function tentaGPS() {
+      tentativo++;
+      const highAccuracy = tentativo === 1;
+      const timeoutMs = tentativo === 1 ? 10000 : 20000;
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const dist = distance(lat, lon, oratorioLat, oratorioLon);
+        if (debugDiv) debugDiv.innerHTML = '📍 Distanza: ' + Math.round(dist) + 'm (limite ' + maxDistanza + 'm)';
+        if (dist > maxDistanza) {
+          toast('❌ Sei a ' + Math.round(dist) + 'm dall\'oratorio (max ' + maxDistanza + 'm)', 'error');
+          stampBusy = false;
+          if (btn) btn.disabled = false;
+          return;
+        }
+        await salvaTimbratura(tipo);
         stampBusy = false;
         if (btn) btn.disabled = false;
-        return;
-      }
-      await salvaTimbratura(tipo);
-      stampBusy = false;
-      if (btn) btn.disabled = false;
-    }, (error) => {
-      let msg = 'Errore GPS';
-      if (error.code === 1) msg = 'Permesso GPS negato';
-      else if (error.code === 2) msg = 'Posizione non disponibile';
-      else if (error.code === 3) msg = 'Timeout GPS';
-      toast(msg, 'error');
-      stampBusy = false;
-      if (btn) btn.disabled = false;
-    }, { enableHighAccuracy: true, timeout: 15000 });
+      }, async (err) => {
+        if (tentativo === 1) {
+          // Primo tentativo fallito → riprova con bassa precisione
+          if (debugDiv) debugDiv.innerHTML = '📍 Riprovo con GPS standard...';
+          toast('📍 GPS lento, riprovo...', 'info');
+          tentaGPS();
+        } else {
+          // Secondo tentativo fallito → mostra errore dettagliato con opzione manuale
+          let msg = "❌ GPS non disponibile";
+          if (err.code === 1) msg = "❌ Permesso GPS negato. Vai in Impostazioni > Safari > Posizione > Consenti";
+          else if (err.code === 2) msg = "❌ Posizione non disponibile. Prova ad andare all esterno";
+          else if (err.code === 3) msg = "❌ GPS troppo lento. Prova ad uscire all'aperto e riprova";
+          if (debugDiv) debugDiv.innerHTML = msg;
+          toast(msg, 'error');
+          stampBusy = false;
+          if (btn) btn.disabled = false;
+        }
+      }, {
+        enableHighAccuracy: highAccuracy,
+        timeout: timeoutMs,
+        maximumAge: 30000  // Accetta posizione cached fino a 30s — aiuta su iOS
+      });
+    }
+
+    tentaGPS();
   }
 
   async function salvaTimbratura(tipo) {
