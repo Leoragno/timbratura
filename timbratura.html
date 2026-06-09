@@ -452,12 +452,29 @@
   }
 
   async function salvaTimbratura(tipo) {
+    // ★ Controllo duplicati: blocca se ultima timbratura è dello stesso tipo e < 5 minuti fa
+    const { data: ultima } = await sb.from('timbrature')
+      .select('tipo, id, created_at')
+      .eq('user_id', currentUser.id)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (ultima && ultima.tipo === tipo) {
+      const diffMs = Date.now() - new Date(ultima.created_at).getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMs < 5 * 60 * 1000) {
+        const quando = diffMin === 0 ? 'meno di un minuto fa' : diffMin + ' min fa';
+        toast('⚠️ Hai già timbrato ' + tipo + ' ' + quando, 'error');
+        await aggiornaStatoUI();
+        return;
+      }
+    }
     const now = new Date();
-    const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+    const data = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
     const ora = now.toTimeString().slice(0,5);
     const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data, ora, tipo, created_at: now.toISOString() });
-    if (error) toast(`Errore: ${error.message}`, 'error');
-    else { toast(`✅ ${tipo} alle ${ora}`, 'success'); window.burstParticles('stamp'); }
+    if (error) toast('Errore: ' + error.message, 'error');
+    else { toast('✅ ' + tipo + ' alle ' + ora, 'success'); window.burstParticles('stamp'); }
     await caricaImpostazioni(); await aggiornaStatoUI();
   }
 
