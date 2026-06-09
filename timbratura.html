@@ -350,7 +350,7 @@
 
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault(); deferredPrompt = e;
-    if (!isStandalone && !localStorage.getItem('pwa_dismissed')) {
+    if (!isStandalone) {
       setTimeout(() => document.getElementById('install-banner').classList.add('show'), 2000);
     }
   });
@@ -364,14 +364,12 @@
   };
   document.getElementById('install-close-btn').onclick = () => {
     document.getElementById('install-banner').classList.remove('show');
-    localStorage.setItem('pwa_dismissed', '1');
   };
-  if (isIOS && !isStandalone && !localStorage.getItem('ios_hint_dismissed')) {
-    setTimeout(() => document.getElementById('ios-hint').classList.add('show'), 3000);
+  if (isIOS && !isStandalone) {
+    setTimeout(() => document.getElementById('ios-hint').classList.add('show'), 2000);
   }
   document.getElementById('ios-hint-close').onclick = () => {
     document.getElementById('ios-hint').classList.remove('show');
-    localStorage.setItem('ios_hint_dismissed', '1');
   };
 
   // ── IMPOSTAZIONI ──────────────────────────────────────────────────────────
