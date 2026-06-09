@@ -118,6 +118,10 @@
     .consent-row a { color: var(--accent); text-decoration: underline; cursor: pointer; }
     .minori-notice { background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 3px; padding: 10px 13px; font-size: 11px; color: #7a5c1e; line-height: 1.6; margin-top: 10px; }
 
+    /* Banner QR tap-to-confirm */
+    .qr-confirm-banner { background: var(--accent); color: #fff; border-radius: 4px; padding: 18px 20px; margin-bottom: 16px; text-align: center; display: none; }
+    .qr-confirm-banner .qr-confirm-label { font-family: var(--font-serif); font-size: 18px; margin-bottom: 10px; display: block; }
+    .qr-confirm-btn { background: #fff; color: var(--accent); border: none; border-radius: 3px; padding: 12px 28px; font-family: var(--font-mono); font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
     /* Stato dentro/fuori */
     .stato-banner { border-radius: 4px; padding: 16px 18px; margin-bottom: 16px; text-align: center; transition: all .4s; }
     .stato-banner.dentro { background: var(--green-lt); border: 1px solid #b2d4bc; color: var(--green); }
@@ -199,6 +203,10 @@
       <div class="card">
         <div class="user-name" id="user-display-name">—</div>
         <div class="user-meta" id="user-display-meta">—</div>
+        <div class="qr-confirm-banner" id="qr-confirm-banner">
+          <span class="qr-confirm-label" id="qr-confirm-label">📱 QR rilevato</span>
+          <button class="qr-confirm-btn" id="qr-confirm-btn">Tocca per timbrare</button>
+        </div>
         <div class="stato-banner fuori" id="stato-banner">
           <span class="stato-icon">🔴</span>
           <span class="stato-label">Sei fuori</span>
@@ -582,11 +590,20 @@
     if (!currentUser.privacy_accepted) {
       document.getElementById('privacy-wall').style.display = 'flex';
     }
-    // Se c'era una timbratura QR pendente dal login, eseguila ora e pulisci
+    // Se c'era una timbratura QR pendente dal login, mostra banner invece di timbrare auto
     const pendingQa = sessionStorage.getItem('pqa');
     if (pendingQa) {
       sessionStorage.removeItem('pqa');
-      setTimeout(() => timbra(pendingQa), 600);
+      const tipo = pendingQa;
+      const qrBanner = document.getElementById('qr-confirm-banner');
+      const qrLabel  = document.getElementById('qr-confirm-label');
+      const qrBtn    = document.getElementById('qr-confirm-btn');
+      if (qrBanner && qrLabel && qrBtn) {
+        qrLabel.textContent = tipo === 'Ingresso' ? '📱 QR Ingresso rilevato' : '📱 QR Uscita rilevato';
+        qrBtn.textContent   = tipo === 'Ingresso' ? '⬆ Tocca per timbrare INGRESSO' : '⬇ Tocca per timbrare USCITA';
+        qrBtn.onclick = () => { qrBanner.style.display = 'none'; timbra(tipo); };
+        qrBanner.style.display = 'block';
+      }
     }
     // Polling ogni 30s: aggiorna impostazioni GPS/lock in background senza disturbare l'utente
     setInterval(async () => {
@@ -869,13 +886,21 @@
       sessionStorage.setItem('pqa', qa === 'in' ? 'Ingresso' : 'Uscita');
       document.getElementById('qr-alert-login').style.display = 'block';
     } else {
-      // Loggato: timbra subito
-      setTimeout(() => timbra(qa === 'in' ? 'Ingresso' : 'Uscita'), 500);
+      // Loggato: mostra banner tap-to-confirm (iOS richiede gesto diretto per il GPS)
+      const tipo = qa === 'in' ? 'Ingresso' : 'Uscita';
+      const qrBanner = document.getElementById('qr-confirm-banner');
+      const qrLabel  = document.getElementById('qr-confirm-label');
+      const qrBtn    = document.getElementById('qr-confirm-btn');
+      if (qrBanner && qrLabel && qrBtn) {
+        qrLabel.textContent = tipo === 'Ingresso' ? '📱 QR Ingresso rilevato' : '📱 QR Uscita rilevato';
+        qrBtn.textContent   = tipo === 'Ingresso' ? '⬆ Tocca per timbrare INGRESSO' : '⬇ Tocca per timbrare USCITA';
+        qrBtn.onclick = () => { qrBanner.style.display = 'none'; timbra(tipo); };
+        qrBanner.style.display = 'block';
+      }
     }
   }
 
-  // Dopo login, esegui eventuale timbratura QR pendente
-  // (gestito dentro mostraApp via pqa)
+  // Dopo login, timbratura QR pendente gestita via banner in mostraApp
 })();
 </script>
 </body>
