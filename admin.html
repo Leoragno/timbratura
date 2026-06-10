@@ -189,50 +189,89 @@
     .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
 
     /* ═══════════════ STATISTICHE ═══════════════ */
-    .stat-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
-    .stat-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; position: relative; overflow: hidden; }
-    .stat-kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
-    .stat-kpi.kpi-red::before { background: var(--red); }
-    .stat-kpi.kpi-amber::before { background: #c49a3c; }
-    .stat-kpi.kpi-blue::before { background: #3a5a8a; }
-    .stat-kpi-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
-    .stat-kpi-value { font-family: var(--font-serif); font-size: 44px; line-height: 1; margin-bottom: 2px; }
-    .stat-kpi-sub { font-size: 11px; color: var(--ink3); }
 
-    .stat-filters { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
-    .stat-filters > div { flex: 1; min-width: 140px; }
-    .stat-filters label { margin-bottom: 5px; }
-    .stat-filters select, .stat-filters input { margin-bottom: 0; }
+    /* Filtri in cima */
+    .stat-topbar { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .stat-topbar > div { flex: 1; min-width: 130px; }
+    .stat-topbar label { margin-bottom: 5px; font-size: 9px; letter-spacing: 1.8px; }
+    .stat-topbar select, .stat-topbar input { margin-bottom: 0; padding: 8px 10px; font-size: 12px; }
+    .stat-topbar-btn { display: flex; align-items: flex-end; gap: 6px; }
+    .stat-topbar-btn .btn { padding: 8px 16px; font-size: 11px; width: auto; }
 
-    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 16px; }
-    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
-    .chart-title { font-family: var(--font-serif); font-size: 18px; font-style: italic; }
-    .chart-toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
-    .chart-toggle button { padding: 5px 12px; font-family: var(--font-mono); font-size: 11px; border: none; background: transparent; cursor: pointer; color: var(--ink3); transition: all .12s; }
+    /* KPI row */
+    .stat-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+    @media (max-width: 820px) { .stat-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 460px) { .stat-kpi-row { grid-template-columns: 1fr 1fr; } }
+    .stat-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 18px 20px 16px; position: relative; overflow: hidden; }
+    .stat-kpi::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+    .stat-kpi.kpi-amber::after { background: #b8892a; }
+    .stat-kpi.kpi-blue::after  { background: #3a6ea8; }
+    .stat-kpi.kpi-red::after   { background: var(--red); }
+    .stat-kpi-eyebrow { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+    .stat-kpi-value { font-family: var(--font-serif); font-size: 44px; line-height: 1; color: var(--ink); margin-bottom: 4px; }
+    .stat-kpi-sub { font-size: 10px; color: var(--ink3); }
+
+    /* Sezione intestazione interna */
+    .stat-section-hdr { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin: 28px 0 16px; }
+    .stat-section-hdr:first-of-type { margin-top: 0; }
+    .stat-section-hdr-title { font-family: var(--font-serif); font-size: 18px; font-style: italic; }
+    .stat-section-hdr-meta { font-size: 10px; color: var(--ink3); letter-spacing: .5px; }
+
+    /* Griglia 2 col grafici orari */
+    .stat-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 860px) { .stat-charts-grid { grid-template-columns: 1fr; } }
+
+    /* Card grafico */
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; margin-bottom: 14px; }
+    .chart-card:last-child { margin-bottom: 0; }
+    .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; gap: 8px; flex-wrap: wrap; }
+    .chart-title-group { flex: 1; }
+    .chart-title { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--ink); line-height: 1.2; }
+    .chart-subtitle { font-size: 10px; color: var(--ink3); letter-spacing: .3px; margin-top: 2px; margin-bottom: 14px; }
+    .chart-toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; align-self: flex-start; }
+    .chart-toggle button { padding: 4px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .4px; border: none; background: transparent; cursor: pointer; color: var(--ink3); transition: background .12s, color .12s; }
     .chart-toggle button.active { background: var(--accent); color: #fff; }
-    .chart-wrap { position: relative; height: 200px; }
-    .chart-canvas { width: 100% !important; height: 100% !important; }
+    .chart-wrap { position: relative; }
+    .chart-wrap-sm { height: 170px; }
+    .chart-wrap-md { height: 210px; }
 
+    /* Classifica animatori */
+    .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    @media (max-width: 700px) { .rank-grid { grid-template-columns: 1fr; } }
     .rank-list { list-style: none; }
     .rank-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bg2); }
     .rank-item:last-child { border-bottom: none; }
-    .rank-pos { font-family: var(--font-serif); font-size: 22px; color: var(--ink3); width: 32px; flex-shrink: 0; }
-    .rank-pos.top { color: var(--accent); }
-    .rank-nome { flex: 1; font-size: 13px; font-weight: 500; }
-    .rank-anno { font-size: 11px; color: var(--ink3); margin-left: 4px; }
-    .rank-bar-wrap { flex: 2; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
-    .rank-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s cubic-bezier(.23,1,.32,1); }
-    .rank-ore { font-size: 12px; color: var(--ink2); white-space: nowrap; min-width: 60px; text-align: right; }
+    .rank-medal { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 12px; flex-shrink: 0; background: var(--bg2); color: var(--ink3); border: 1px solid var(--border); }
+    .rank-medal.gold   { background: #fdf3dc; color: #7a5c10; border-color: #e0cfa0; }
+    .rank-medal.silver { background: #f0eeea; color: #5a5148; border-color: #d0ccc4; }
+    .rank-medal.bronze { background: #f5ece4; color: #7a4a28; border-color: #dbb8a0; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-nome { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-anno { font-size: 10px; color: var(--ink3); }
+    .rank-bar-wrap { flex: 2; height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; min-width: 40px; }
+    .rank-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width .7s cubic-bezier(.23,1,.32,1); }
+    .rank-col-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+    .rank-ore { font-size: 12px; color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 500; }
+    .rank-giorni-tag { font-size: 10px; color: var(--ink3); white-space: nowrap; }
 
+    /* Tabella dettaglio */
     .det-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; }
-    .det-table { width: 100%; border-collapse: collapse; min-width: 560px; }
-    .det-table th { background: var(--bg2); padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
-    .det-table td { padding: 10px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
+    .det-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    .det-table th { background: var(--bg2); padding: 10px 16px; text-align: left; font-size: 9px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1.2px; white-space: nowrap; }
+    .det-table th.num { text-align: right; }
+    .det-table td { padding: 11px 16px; border-bottom: 1px solid var(--bg2); font-size: 12px; vertical-align: middle; }
+    .det-table td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink2); }
     .det-table tr:last-child td { border-bottom: none; }
     .det-table tr:hover td { background: var(--bg); }
-
-    .stat-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    @media (max-width: 900px) { .stat-charts-grid { grid-template-columns: 1fr; } }
+    .det-anim-name { font-weight: 500; font-size: 13px; }
+    .det-anim-anno { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+    .det-ore-pill { display: inline-block; background: var(--accent-lt); color: var(--accent); font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; border: 1px solid #b2ccbc; }
+    .det-giorni-num { font-family: var(--font-serif); font-size: 20px; color: var(--ink); line-height: 1; }
+    .det-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; }
+    .det-badge.in  { background: var(--green-lt); color: var(--green); }
+    .det-badge.out { background: var(--red-lt); color: var(--red); }
+    .det-last { font-size: 11px; color: var(--ink2); }
+    .det-last-ora { font-size: 10px; color: var(--ink3); margin-top: 1px; }
   </style>
 </head>
 <body>
@@ -464,15 +503,10 @@
   <div class="tab-panel" id="tab-statistiche">
     <div class="main">
 
-      <!-- Filtri -->
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Statistiche presenze</div>
-        <button class="btn btn-sm btn-ghost" id="stat-refresh-btn">↻ Aggiorna</button>
-      </div>
-
-      <div class="stat-filters">
+      <!-- ── Topbar filtri ── -->
+      <div class="stat-topbar">
         <div>
-          <label>📅 Dal</label>
+          <label>Dal</label>
           <input type="date" id="stat-dal" />
         </div>
         <div>
@@ -480,105 +514,126 @@
           <input type="date" id="stat-al" />
         </div>
         <div>
-          <label>👤 Animatore</label>
-          <select id="stat-animatore">
-            <option value="">Tutti</option>
-          </select>
+          <label>Animatore</label>
+          <select id="stat-animatore"><option value="">Tutti gli animatori</option></select>
         </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button class="btn btn-primary btn-sm" id="stat-applica-btn" style="width:auto;">Applica filtri</button>
+        <div class="stat-topbar-btn">
+          <button class="btn btn-primary" id="stat-applica-btn">Applica</button>
+          <button class="btn btn-ghost" id="stat-refresh-btn">↻</button>
         </div>
       </div>
 
-      <!-- KPI -->
+      <!-- ── KPI ── -->
       <div class="stat-kpi-row">
         <div class="stat-kpi">
-          <div class="stat-kpi-label">Animatori attivi</div>
+          <div class="stat-kpi-eyebrow">Animatori attivi</div>
           <div class="stat-kpi-value" id="kpi-animatori">—</div>
-          <div class="stat-kpi-sub">nel periodo</div>
+          <div class="stat-kpi-sub">nel periodo selezionato</div>
         </div>
         <div class="stat-kpi kpi-amber">
-          <div class="stat-kpi-label">Giorni con presenze</div>
+          <div class="stat-kpi-eyebrow">Giorni con presenze</div>
           <div class="stat-kpi-value" id="kpi-giorni">—</div>
           <div class="stat-kpi-sub">giorni distinti</div>
         </div>
         <div class="stat-kpi kpi-blue">
-          <div class="stat-kpi-label">Timbrature totali</div>
+          <div class="stat-kpi-eyebrow">Timbrature totali</div>
           <div class="stat-kpi-value" id="kpi-timbrature">—</div>
           <div class="stat-kpi-sub">ingressi + uscite</div>
         </div>
         <div class="stat-kpi kpi-red">
-          <div class="stat-kpi-label">Ore lavorate</div>
+          <div class="stat-kpi-eyebrow">Ore lavorate</div>
           <div class="stat-kpi-value" id="kpi-ore">—</div>
-          <div class="stat-kpi-sub">totale stimato</div>
+          <div class="stat-kpi-sub">stima totale</div>
         </div>
       </div>
 
-      <!-- Grafici fasce orarie ingresso/uscita -->
+      <!-- ── Sezione: Distribuzione oraria ── -->
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Distribuzione oraria</div>
+        <div class="stat-section-hdr-meta">A che ora entrano ed escono gli animatori</div>
+      </div>
+
       <div class="stat-charts-grid">
         <div class="chart-card">
           <div class="chart-header">
-            <div class="chart-title">Fascia oraria ingressi</div>
+            <div class="chart-title-group">
+              <div class="chart-title">Ingressi per fascia</div>
+              <div class="chart-subtitle">Orari di entrata nel periodo</div>
+            </div>
             <div class="chart-toggle">
               <button class="active" data-chart="chart-in" data-mode="bar">Barre</button>
               <button data-chart="chart-in" data-mode="line">Linea</button>
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="chart-in" class="chart-canvas"></canvas></div>
+          <div class="chart-wrap chart-wrap-sm"><canvas id="chart-in" role="img" aria-label="Grafico ingressi per fascia oraria"></canvas></div>
         </div>
         <div class="chart-card">
           <div class="chart-header">
-            <div class="chart-title">Fascia oraria uscite</div>
+            <div class="chart-title-group">
+              <div class="chart-title">Uscite per fascia</div>
+              <div class="chart-subtitle">Orari di uscita nel periodo</div>
+            </div>
             <div class="chart-toggle">
               <button class="active" data-chart="chart-out" data-mode="bar">Barre</button>
               <button data-chart="chart-out" data-mode="line">Linea</button>
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="chart-out" class="chart-canvas"></canvas></div>
+          <div class="chart-wrap chart-wrap-sm"><canvas id="chart-out" role="img" aria-label="Grafico uscite per fascia oraria"></canvas></div>
         </div>
       </div>
 
-      <!-- Grafico presenze per giorno -->
+      <!-- ── Sezione: Presenze per giorno ── -->
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Presenze giornaliere</div>
+        <div class="stat-section-hdr-meta">Quanti animatori distinti hanno timbrato ogni giorno</div>
+      </div>
+
       <div class="chart-card">
         <div class="chart-header">
-          <div class="chart-title">Presenze per giorno</div>
+          <div class="chart-title-group">
+            <div class="chart-title">Animatori presenti per giorno</div>
+            <div class="chart-subtitle">Basato sugli ingressi registrati</div>
+          </div>
           <div class="chart-toggle">
             <button class="active" data-chart="chart-giorni" data-mode="bar">Barre</button>
             <button data-chart="chart-giorni" data-mode="line">Linea</button>
           </div>
         </div>
-        <div class="chart-wrap" style="height:220px;"><canvas id="chart-giorni" class="chart-canvas"></canvas></div>
+        <div class="chart-wrap chart-wrap-md"><canvas id="chart-giorni" role="img" aria-label="Grafico presenze per giorno"></canvas></div>
       </div>
 
-      <!-- Classifica animatori -->
+      <!-- ── Sezione: Classifica ── -->
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Classifica animatori</div>
+        <div class="stat-section-hdr-meta">Per ore lavorate nel periodo</div>
+      </div>
+
       <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title">Classifica per ore lavorate</div>
-        </div>
         <ul class="rank-list" id="stat-rank-list">
           <li class="rank-item"><span style="color:var(--ink3);font-size:12px;">⏳ Caricamento…</span></li>
         </ul>
       </div>
 
-      <!-- Tabella dettaglio per animatore -->
-      <div class="section-header">
-        <div class="section-title">Dettaglio per animatore</div>
+      <!-- ── Sezione: Tabella dettaglio ── -->
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Dettaglio per animatore</div>
+        <div class="stat-section-hdr-meta" id="stat-det-meta"></div>
       </div>
+
       <div class="det-table-wrap">
         <table class="det-table">
           <thead>
             <tr>
               <th>Animatore</th>
-              <th>Anno</th>
-              <th>Giorni presenti</th>
-              <th>Ore totali</th>
-              <th>N° ingressi</th>
-              <th>N° uscite</th>
+              <th class="num">Giorni</th>
+              <th class="num">Ore lavorate</th>
+              <th class="num">Ingressi</th>
+              <th class="num">Uscite</th>
               <th>Ultimo accesso</th>
             </tr>
           </thead>
           <tbody id="stat-det-tbody">
-            <tr><td colspan="7" class="empty">⏳ Caricamento…</td></tr>
+            <tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr>
           </tbody>
         </table>
       </div>
@@ -1298,7 +1353,6 @@
   let statCharts = {};
   let statInited = false;
 
-  // Inizializza date di default (tutto il periodo disponibile)
   function initStatDateRange() {
     if (allLog.length === 0) return;
     const dates = allLog.map(l => dataLogToISO(l.data)).filter(Boolean).sort();
@@ -1311,7 +1365,7 @@
   function populateStatAnimatore() {
     const sel = document.getElementById('stat-animatore');
     const current = sel.value;
-    sel.innerHTML = '<option value="">Tutti</option>';
+    sel.innerHTML = '<option value="">Tutti gli animatori</option>';
     [...allAnimators].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(a => {
       const opt = document.createElement('option');
       opt.value = a.nome;
@@ -1323,8 +1377,8 @@
 
   function getStatFilters() {
     return {
-      dal:      document.getElementById('stat-dal').value,
-      al:       document.getElementById('stat-al').value,
+      dal:       document.getElementById('stat-dal').value,
+      al:        document.getElementById('stat-al').value,
       animatore: document.getElementById('stat-animatore').value
     };
   }
@@ -1339,9 +1393,7 @@
     });
   }
 
-  // Calcola minuti lavorati per un animatore in un giorno (primo ingresso → ultimo uscita)
   function calcolaOreAnimatore(logAnimatore) {
-    // Raggruppa per data
     const perData = {};
     logAnimatore.forEach(l => {
       if (!perData[l.data]) perData[l.data] = { ingressi: [], uscite: [] };
@@ -1368,9 +1420,8 @@
   }
 
   function buildChartData_orario(log, tipo) {
-    // Barre per fascia oraria (ogni ora, 6-22)
     const counts = {};
-    for (let h = 6; h <= 22; h++) counts[String(h).padStart(2,'0')] = 0;
+    for (let h = 7; h <= 21; h++) counts[String(h).padStart(2,'0')] = 0;
     log.filter(l => l.tipo === tipo).forEach(l => {
       const h = l.ora ? l.ora.split(':')[0] : null;
       if (h && counts[h] !== undefined) counts[h]++;
@@ -1382,7 +1433,6 @@
   }
 
   function buildChartData_giorni(log) {
-    // Presenze (animatori unici) per data
     const perData = {};
     log.filter(l => l.tipo === 'Ingresso').forEach(l => {
       if (!perData[l.data]) perData[l.data] = new Set();
@@ -1402,115 +1452,156 @@
     if (statCharts[id]) { statCharts[id].destroy(); delete statCharts[id]; }
   }
 
-  function renderChart(id, chartData, type, color) {
+  function renderChart(id, chartData, type, color, bgColor) {
     destroyChart(id);
     const ctx = document.getElementById(id);
     if (!ctx) return;
+    const isEmpty = chartData.data.every(v => v === 0);
     statCharts[id] = new Chart(ctx, {
       type: type,
       data: {
         labels: chartData.labels,
         datasets: [{
           data: chartData.data,
-          backgroundColor: type === 'bar' ? color + '55' : 'transparent',
+          backgroundColor: type === 'bar' ? (bgColor || color + '33') : 'transparent',
           borderColor: color,
           borderWidth: type === 'line' ? 2 : 1,
-          fill: type === 'line',
-          tension: 0.35,
-          pointRadius: type === 'line' ? 3 : 0,
-          pointBackgroundColor: color
+          fill: type === 'line' ? { target: 'origin', above: bgColor || color + '18' } : false,
+          tension: 0.4,
+          pointRadius: type === 'line' ? 4 : 0,
+          pointHoverRadius: type === 'line' ? 6 : 4,
+          pointBackgroundColor: color,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          borderRadius: type === 'bar' ? 3 : 0,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1714',
+            titleColor: '#f5f2eb',
+            bodyColor: '#ede9df',
+            padding: 10,
+            cornerRadius: 4,
+            titleFont: { family: "'Geist Mono', monospace", size: 11 },
+            bodyFont:  { family: "'Geist Mono', monospace", size: 12, weight: '500' },
+          }
+        },
         scales: {
-          x: { grid: { color: '#ede9df' }, ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72' } },
-          y: { grid: { color: '#ede9df' }, ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72' }, beginAtZero: true, precision: 0 }
+          x: {
+            grid: { color: '#ede9df', drawBorder: false },
+            ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72', maxRotation: 45 }
+          },
+          y: {
+            grid: { color: '#ede9df', drawBorder: false },
+            ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72', precision: 0 },
+            beginAtZero: true,
+            suggestedMax: isEmpty ? 5 : undefined
+          }
         }
       }
     });
   }
 
-  // Stato tipo grafico per ogni canvas
   const chartModes = { 'chart-in': 'bar', 'chart-out': 'bar', 'chart-giorni': 'bar' };
 
   function renderAllStatCharts(log) {
-    const colorIn  = '#2d5a3d';
-    const colorOut = '#8b2e2e';
-    const colorDay = '#3a5a8a';
-
-    renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), chartModes['chart-in'],     colorIn);
-    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   chartModes['chart-out'],    colorOut);
-    renderChart('chart-giorni', buildChartData_giorni(log),             chartModes['chart-giorni'], colorDay);
+    renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), chartModes['chart-in'],     '#2d5a3d', '#e5f2ea');
+    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   chartModes['chart-out'],    '#8b2e2e', '#f5e8e8');
+    renderChart('chart-giorni', buildChartData_giorni(log),             chartModes['chart-giorni'], '#3a6ea8', '#e8f0f8');
   }
 
   function renderKPI(log) {
     const animatoriAttivi = new Set(log.map(l => l.nome)).size;
     const giorniAttivi    = new Set(log.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
     const totTimbrature   = log.length;
-
-    // Ore totali: somma per tutti i nomi
     const nomi = [...new Set(log.map(l => l.nome))];
     let totMin = 0;
     nomi.forEach(nome => { totMin += calcolaOreAnimatore(log.filter(l => l.nome === nome)); });
-
-    document.getElementById('kpi-animatori').textContent  = animatoriAttivi;
-    document.getElementById('kpi-giorni').textContent     = giorniAttivi;
-    document.getElementById('kpi-timbrature').textContent = totTimbrature;
+    document.getElementById('kpi-animatori').textContent  = animatoriAttivi || '—';
+    document.getElementById('kpi-giorni').textContent     = giorniAttivi    || '—';
+    document.getElementById('kpi-timbrature').textContent = totTimbrature   || '—';
     document.getElementById('kpi-ore').textContent        = totMin ? Math.floor(totMin/60)+'h' : '—';
   }
 
   function renderRank(log) {
     const nomi = [...new Set(log.map(l => l.nome))];
     const rank = nomi.map(nome => {
-      const min = calcolaOreAnimatore(log.filter(l => l.nome === nome));
+      const nl = log.filter(l => l.nome === nome);
+      const min = calcolaOreAnimatore(nl);
+      const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
       const anim = allAnimators.find(a => a.nome === nome);
-      return { nome, anno: anim ? anim.anno : '', min };
+      return { nome, anno: anim ? anim.anno : '', min, giorni };
     }).sort((a,b) => b.min - a.min);
 
-    const maxMin = rank[0] ? rank[0].min : 1;
+    const maxMin = rank[0] ? rank[0].min || 1 : 1;
     const list = document.getElementById('stat-rank-list');
 
-    if (!rank.length) { list.innerHTML = '<li class="rank-item"><span style="color:var(--ink3);font-size:12px;">Nessun dato</span></li>'; return; }
+    if (!rank.length) {
+      list.innerHTML = '<li class="rank-item"><span style="color:var(--ink3);font-size:12px;">Nessun dato nel periodo selezionato</span></li>';
+      return;
+    }
+
+    const medalClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
 
     list.innerHTML = rank.map((r, i) => `
       <li class="rank-item">
-        <span class="rank-pos ${i<3?'top':''}">${i+1}</span>
-        <span class="rank-nome">${esc(r.nome)} <span class="rank-anno">${r.anno ? '('+r.anno+')' : ''}</span></span>
-        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${maxMin?Math.round(r.min/maxMin*100):0}%"></div></div>
-        <span class="rank-ore">${minutiToLabel(r.min)}</span>
+        <div class="rank-medal ${medalClass(i)}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-nome">${esc(r.nome)}</div>
+          <div class="rank-anno">${r.anno ? r.anno+' ·' : ''} ${r.giorni} giorn${r.giorni===1?'o':'i'}</div>
+        </div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(r.min/maxMin*100)}%"></div></div>
+        <div class="rank-col-right">
+          <div class="rank-ore">${minutiToLabel(r.min)}</div>
+        </div>
       </li>
     `).join('');
   }
 
   function renderDettaglio(log) {
-    const nomi = [...new Set(log.map(l => l.nome))].sort();
+    const nomi = [...new Set(log.map(l => l.nome))];
     const tbody = document.getElementById('stat-det-tbody');
+    const meta  = document.getElementById('stat-det-meta');
 
-    if (!nomi.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Nessun dato nel periodo</td></tr>'; return; }
+    if (!nomi.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Nessun dato nel periodo selezionato</td></tr>';
+      if (meta) meta.textContent = '';
+      return;
+    }
 
-    tbody.innerHTML = nomi.map(nome => {
+    // Ordina per ore desc
+    const rows = nomi.map(nome => {
       const nl = log.filter(l => l.nome === nome);
       const anim = allAnimators.find(a => a.nome === nome);
-      const anno = anim ? anim.anno : (nl[0].anno || '—');
+      const anno = anim ? anim.anno : (nl[0] ? nl[0].anno : '');
       const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
       const minuti = calcolaOreAnimatore(nl);
       const nIn  = nl.filter(l=>l.tipo==='Ingresso').length;
       const nOut = nl.filter(l=>l.tipo==='Uscita').length;
-      // Ultimo accesso: prima riga (log ordinato DESC)
       const ultimo = nl[0];
-      return `<tr>
-        <td><strong>${esc(nome)}</strong></td>
-        <td>${anno}</td>
-        <td>${giorni}</td>
-        <td>${minutiToLabel(minuti)}</td>
-        <td>${nIn}</td>
-        <td>${nOut}</td>
-        <td>${ultimo ? esc(ultimo.data)+' '+esc(ultimo.ora) : '—'}</td>
-      </tr>`;
-    }).join('');
+      return { nome, anno, giorni, minuti, nIn, nOut, ultimo };
+    }).sort((a,b) => b.minuti - a.minuti);
+
+    if (meta) meta.textContent = rows.length + ' animator' + (rows.length===1?'e':'i');
+
+    tbody.innerHTML = rows.map(r => `<tr>
+      <td>
+        <div class="det-anim-name">${esc(r.nome)}</div>
+        ${r.anno ? '<div class="det-anim-anno">'+r.anno+'</div>' : ''}
+      </td>
+      <td class="num"><div class="det-giorni-num">${r.giorni}</div></td>
+      <td class="num"><span class="det-ore-pill">${minutiToLabel(r.minuti)}</span></td>
+      <td class="num"><span class="det-badge in">${r.nIn}</span></td>
+      <td class="num"><span class="det-badge out">${r.nOut}</span></td>
+      <td>
+        ${r.ultimo ? `<div class="det-last">${esc(r.ultimo.data)}</div><div class="det-last-ora">${esc(r.ultimo.ora)}</div>` : '<span style="color:var(--ink3)">—</span>'}
+      </td>
+    </tr>`).join('');
   }
 
   function renderStatistiche() {
@@ -1531,24 +1622,18 @@
     renderStatistiche();
   }
 
-  // Toggle barre/linea per ogni grafico
   document.querySelectorAll('.chart-toggle button').forEach(btn => {
     btn.addEventListener('click', () => {
       const chartId = btn.dataset.chart;
       const mode    = btn.dataset.mode;
       chartModes[chartId] = mode;
-      // Aggiorna active
       btn.closest('.chart-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // Ridisegna
       const filters = getStatFilters();
       const log     = filtraLogStat(filters);
-      const colorIn  = '#2d5a3d';
-      const colorOut = '#8b2e2e';
-      const colorDay = '#3a5a8a';
-      if (chartId === 'chart-in')     renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), mode, colorIn);
-      if (chartId === 'chart-out')    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   mode, colorOut);
-      if (chartId === 'chart-giorni') renderChart('chart-giorni', buildChartData_giorni(log),             mode, colorDay);
+      if (chartId === 'chart-in')     renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), mode, '#2d5a3d', '#e5f2ea');
+      if (chartId === 'chart-out')    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   mode, '#8b2e2e', '#f5e8e8');
+      if (chartId === 'chart-giorni') renderChart('chart-giorni', buildChartData_giorni(log),             mode, '#3a6ea8', '#e8f0f8');
     });
   });
 
