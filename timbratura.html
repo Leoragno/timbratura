@@ -418,25 +418,29 @@
     if (debugDiv) debugDiv.style.display = 'block';
     toast('📍 Acquisizione posizione...', 'info');
 
-    // ★ GPS con watchPosition — aspetta lettura precisa (risolve imprecisione Android)
-    // getCurrentPosition su Android freddo usa celle telefoniche → errore di centinaia di metri.
-    // watchPosition continua ad aggiornare finché non ottiene una lettura con accuracy buona.
-    const MAX_ACCURACY = 80;    // accetta solo letture con precisione < 80m
-    const MAX_WAIT_MS  = 20000; // aspetta max 20 secondi
+    // ★ GPS ibrido: getCurrentPosition rapido + watchPosition di raffinamento
+    // Fase 1: prima lettura rapida (anche imprecisa) entro 8s
+    // Fase 2: watchPosition raffina per max 8s aggiuntivi
+    // Fase 3: usa la migliore posizione trovata comunque
+    // Questo risolve sia Android freddo che iPhone indoor
+
+    let bestPos  = null;
     let watchId  = null;
     let gpsTimer = null;
-    let bestPos  = null; // la posizione più precisa trovata finora
+    let usata    = false; // evita di timbrare due volte
 
-    function cleanupWatch() {
+    function cleanupGPS() {
       if (watchId  !== null) { navigator.geolocation.clearWatch(watchId); watchId  = null; }
       if (gpsTimer !== null) { clearTimeout(gpsTimer); gpsTimer = null; }
     }
 
-    function usaPositione(pos) {
-      cleanupWatch();
+    function usaPosizioneFinale(pos, motivo) {
+      if (usata) return;
+      usata = true;
+      cleanupGPS();
       const dist = distance(pos.coords.latitude, pos.coords.longitude, oratorioLat, oratorioLon);
       const acc  = Math.round(pos.coords.accuracy);
-      if (debugDiv) debugDiv.innerHTML = '📍 Distanza: ' + Math.round(dist) + 'm · Precisione: ±' + acc + 'm';
+      if (debugDiv) debugDiv.innerHTML = '📍 ' + motivo + ' · Distanza: ' + Math.round(dist) + 'm · Precisione: ±' + acc + 'm';
       if (dist > maxDistanza) {
         toast('❌ Sei a ' + Math.round(dist) + 'm dall\'oratorio (max ' + maxDistanza + 'm)', 'error');
         stampBusy = false; if (btn) btn.disabled = false; return;
@@ -444,38 +448,59 @@
       salvaTimbratura(tipo).then(() => { stampBusy = false; if (btn) btn.disabled = false; });
     }
 
-    // Timeout: se dopo MAX_WAIT_MS non arriva lettura precisa, usa la migliore disponibile
-    gpsTimer = setTimeout(() => {
-      cleanupWatch();
-      if (bestPos) {
-        if (debugDiv) debugDiv.innerHTML = '📍 GPS lento — uso posizione migliore disponibile (±' + Math.round(bestPos.coords.accuracy) + 'm)';
-        toast('📍 GPS lento, procedo con posizione disponibile...', 'info');
-        usaPositione(bestPos);
-      } else {
-        if (debugDiv) debugDiv.innerHTML = '❌ GPS non disponibile dopo ' + (MAX_WAIT_MS/1000) + 's';
-        toast('❌ GPS non disponibile. Controlla i permessi nelle impostazioni.', 'error');
-        stampBusy = false; if (btn) btn.disabled = false;
-      }
-    }, MAX_WAIT_MS);
+    function avviaRaffinamento() {
+      // Fase 2: watchPosition per max 8s per migliorare la precisione
+      gpsTimer = setTimeout(() => {
+        cleanupGPS();
+        if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Timeout raffinamento');
+      }, 8000);
 
-    watchId = navigator.geolocation.watchPosition(pos => {
-      const acc = pos.coords.accuracy;
-      if (debugDiv) debugDiv.innerHTML = '📍 Precisione: ±' + Math.round(acc) + 'm — attendo segnale migliore...';
-      // Salva sempre la posizione più precisa trovata finora
-      if (!bestPos || acc < bestPos.coords.accuracy) bestPos = pos;
-      // Appena otteniamo precisione sufficiente, procedi subito
-      if (acc <= MAX_ACCURACY) usaPositione(pos);
+      watchId = navigator.geolocation.watchPosition(pos => {
+        if (usata) return;
+        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) bestPos = pos;
+        if (debugDiv) debugDiv.innerHTML = '📍 Raffinamento: ±' + Math.round(pos.coords.accuracy) + 'm...';
+        // Se otteniamo precisione buona, procedi subito
+        if (pos.coords.accuracy <= 100) usaPosizioneFinale(pos, 'GPS preciso');
+      }, () => {
+        // watchPosition fallisce → usa getCurrentPosition come già salvata
+        if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Fallback');
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
+    }
+
+    // Fase 1: getCurrentPosition rapido (accetta anche letture da wifi/celle)
+    navigator.geolocation.getCurrentPosition(pos => {
+      bestPos = pos;
+      const acc = Math.round(pos.coords.accuracy);
+      if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura: ±' + acc + 'm — raffino...';
+      if (acc <= 100) {
+        // Già preciso → timbra subito
+        usaPosizioneFinale(pos, 'GPS preciso immediato');
+      } else {
+        // Impreciso → prova a raffinare con watchPosition
+        toast('📍 GPS in corso...', 'info');
+        avviaRaffinamento();
+      }
     }, err => {
-      cleanupWatch();
-      let msg = '❌ GPS non disponibile';
-      if (err.code === 1) msg = '❌ Permesso GPS negato. Vai in Impostazioni > App > Chrome > Posizione > Consenti';
-      else if (err.code === 2) msg = '❌ Posizione non disponibile. Prova ad andare all\'esterno';
-      else if (err.code === 3) msg = '❌ GPS timeout. Prova all\'aperto e riprova';
-      if (debugDiv) debugDiv.innerHTML = msg;
-      toast(msg, 'error');
-      stampBusy = false; if (btn) btn.disabled = false;
-    }, { enableHighAccuracy: true, timeout: MAX_WAIT_MS, maximumAge: 0 });
+      // Fase 1 fallita → tenta comunque con watchPosition
+      if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura fallita, riprovo...';
+      avviaRaffinamento();
+      // Se anche watchPosition non ha nulla entro 12s totali → errore
+      setTimeout(() => {
+        if (!bestPos && !usata) {
+          usata = true;
+          cleanupGPS();
+          let msg = '❌ GPS non disponibile';
+          if (err.code === 1) msg = '❌ Permesso GPS negato. Apri Impostazioni > App > Chrome > Posizione';
+          else if (err.code === 2) msg = '❌ Posizione non rilevata. Prova all\'aperto';
+          else if (err.code === 3) msg = '❌ GPS troppo lento. Prova all\'aperto e riprova';
+          if (debugDiv) debugDiv.innerHTML = msg;
+          toast(msg, 'error');
+          stampBusy = false; if (btn) btn.disabled = false;
+        }
+      }, 12000);
+    }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 });
   }
+
 
   async function salvaTimbratura(tipo) {
     // ★ Controllo duplicati: blocca se ultima timbratura è dello stesso tipo e < 5 minuti fa
