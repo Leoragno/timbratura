@@ -88,6 +88,9 @@
     .user-name { font-family: var(--font-serif); font-size: 26px; text-align: center; margin-bottom: 4px; }
     .user-meta { font-size: 11px; color: var(--ink3); text-align: center; margin-bottom: 20px; }
     .gps-banner { display: none; background: #fffbe6; border: 1px solid #e0cfa0; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: #7a5c1e; line-height: 1.6; }
+    .gps-tips { margin-top: 12px; font-size: 11px; color: var(--ink3); }
+    .gps-tips details summary { cursor: pointer; }
+    .gps-tips details div { padding: 8px; background: var(--bg); border-radius: 4px; margin-top: 6px; }
     .sett-block { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
     .sett-header { background: var(--accent); color: #fff; padding: 12px 16px; }
     .sett-header-nome { font-family: var(--font-serif); font-size: 16px; }
@@ -116,6 +119,7 @@
     .toast.success { background: var(--green); }
     .toast.error   { background: var(--red); }
     .toast.info    { background: var(--accent); }
+    .toast.warning { background: var(--amber); }
     .empty-state { text-align: center; padding: 36px 16px; color: var(--ink3); font-size: 12px; line-height: 1.7; }
 
     /* PRIVACY */
@@ -349,6 +353,16 @@
   let oratorioLat = 45.706869, oratorioLon = 8.800464, maxDistanza = 150;
   let stampBusy = false, dispChiuse = {};
 
+  // Configurazione GPS migliorata
+  const GPS_CONFIG = {
+    MAX_WAIT_TIME: 15000,
+    FIRST_READING_TIMEOUT: 5000,
+    REFINEMENT_TIMEOUT: 10000,
+    GOOD_ACCURACY_THRESHOLD: 50,
+    ACCEPTABLE_ACCURACY: 150,
+    DISTANCE_BUFFER: 30
+  };
+
   // Cache per preload
   window._cachedSettimane = null;
   window._cachedDisponibilita = null;
@@ -467,6 +481,29 @@
     }, 30000);
   }
 
+  // Funzione per aggiungere i suggerimenti GPS
+  function addGpsTips() {
+    const banner = document.getElementById('geo-banner');
+    if (!banner) return;
+    
+    const tips = document.createElement('div');
+    tips.className = 'gps-tips';
+    tips.innerHTML = `
+      <details>
+        <summary>💡 Problemi con il GPS? Clicca qui</summary>
+        <div>
+          <strong>Come migliorare la precisione:</strong><br>
+          • Esci all'aperto e attendi 5-10 secondi<br>
+          • Attiva il WiFi (anche senza connessione aiuta il GPS)<br>
+          • Disattiva e riattiva la modalità aereo<br>
+          • Su iPhone: Impostazioni > Privacy > Servizi di localizzazione > Attivo<br>
+          • Se il problema persiste, chiedi all'admin di aumentare il raggio
+        </div>
+      </details>
+    `;
+    banner.appendChild(tips);
+  }
+
   // ── PWA INSTALL ───────────────────────────────────────────────────────────
   let deferredPrompt = null;
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -526,7 +563,7 @@
     if (banner) banner.style.display = geoAbilitata ? 'block' : 'none';
   }
 
-  // ── TIMBRATURA con GPS doppio tentativo ───────────────────────────────────
+  // ── TIMBRATURA con GPS MIGLIORATO ─────────────────────────────────────────
   async function timbra(tipo) {
     if (!currentUser) { 
       toast('Devi effettuare il login', 'error');
@@ -557,6 +594,7 @@
     stampBusy = true;
     if (btn) btn.disabled = true;
     
+    // Se GPS disabilitato o è uscita, salta controllo posizione
     if (!geoAbilitata || tipo === 'Uscita') {
       await salvaTimbratura(tipo); 
       stampBusy = false; 
@@ -578,30 +616,94 @@
     if (debugDiv) debugDiv.style.display = 'block';
     toast('📍 Acquisizione posizione...', 'info');
 
-    let bestPos  = null;
-    let watchId  = null;
+    let bestPos = null;
+    let allPositions = [];
+    let watchId = null;
     let gpsTimer = null;
-    let usata    = false;
+    let refinementTimer = null;
+    let usata = false;
 
     function cleanupGPS() {
-      if (watchId  !== null) { navigator.geolocation.clearWatch(watchId); watchId  = null; }
-      if (gpsTimer !== null) { clearTimeout(gpsTimer); gpsTimer = null; }
+      if (watchId !== null) { 
+        navigator.geolocation.clearWatch(watchId); 
+        watchId = null; 
+      }
+      if (gpsTimer !== null) { 
+        clearTimeout(gpsTimer); 
+        gpsTimer = null; 
+      }
+      if (refinementTimer !== null) {
+        clearTimeout(refinementTimer);
+        refinementTimer = null;
+      }
+    }
+
+    // Calcola la migliore posizione da tutte le letture (media ponderata)
+    function getBestPosition() {
+      if (allPositions.length === 0) return bestPos;
+      
+      const goodPositions = allPositions.filter(p => p.coords.accuracy < 200);
+      if (goodPositions.length === 0) return bestPos;
+      
+      let totalWeight = 0;
+      let avgLat = 0, avgLon = 0;
+      
+      goodPositions.forEach(p => {
+        const weight = 1 / Math.max(p.coords.accuracy, 1);
+        totalWeight += weight;
+        avgLat += p.coords.latitude * weight;
+        avgLon += p.coords.longitude * weight;
+      });
+      
+      if (totalWeight > 0) {
+        return {
+          coords: {
+            latitude: avgLat / totalWeight,
+            longitude: avgLon / totalWeight,
+            accuracy: goodPositions.reduce((min, p) => Math.min(min, p.coords.accuracy), 999)
+          }
+        };
+      }
+      return bestPos;
     }
 
     function usaPosizioneFinale(pos, motivo) {
       if (usata) return;
       usata = true;
       cleanupGPS();
-      const dist = distance(pos.coords.latitude, pos.coords.longitude, oratorioLat, oratorioLon);
-      const acc  = Math.round(pos.coords.accuracy);
-      if (debugDiv) debugDiv.innerHTML = '📍 ' + motivo + ' · Distanza: ' + Math.round(dist) + 'm · Precisione: ±' + acc + 'm';
-      if (dist > maxDistanza) {
+      
+      const finalPos = getBestPosition() || pos;
+      const dist = distance(
+        finalPos.coords.latitude, 
+        finalPos.coords.longitude, 
+        oratorioLat, 
+        oratorioLon
+      );
+      const acc = Math.round(finalPos.coords.accuracy);
+      
+      const maxDistanzaConBuffer = maxDistanza + GPS_CONFIG.DISTANCE_BUFFER;
+      const isWithinRange = dist <= maxDistanzaConBuffer;
+      const isCloseEnough = dist <= maxDistanzaConBuffer + acc;
+      
+      if (debugDiv) {
+        debugDiv.innerHTML = `📍 ${motivo}<br>
+                           📍 Distanza: ${Math.round(dist)}m (max: ${maxDistanzaConBuffer}m)<br>
+                           🎯 Precisione: ±${acc}m<br>
+                           📊 Letture: ${allPositions.length}`;
+      }
+      
+      if (!isWithinRange && !isCloseEnough) {
         toast('❌ Sei a ' + Math.round(dist) + 'm dall\'oratorio (max ' + maxDistanza + 'm)', 'error');
         hapticFeedback('error');
         stampBusy = false; 
         if (btn) btn.disabled = false; 
         return;
       }
+      
+      if (!isWithinRange && isCloseEnough) {
+        toast(`⚠️ Posizione approssimativa (${Math.round(dist)}m). Timbratura consentita.`, 'warning');
+      }
+      
       salvaTimbratura(tipo).then(() => { 
         stampBusy = false; 
         if (btn) btn.disabled = false; 
@@ -609,50 +711,94 @@
     }
 
     function avviaRaffinamento() {
-      gpsTimer = setTimeout(() => {
-        cleanupGPS();
-        if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Timeout raffinamento');
-      }, 8000);
+      refinementTimer = setTimeout(() => {
+        if (!usata && bestPos) {
+          usaPosizioneFinale(bestPos, 'Tempo scaduto - uso migliore posizione');
+        } else if (!usata && allPositions.length > 0) {
+          usaPosizioneFinale(allPositions[allPositions.length - 1], 'Tempo scaduto - ultima lettura');
+        }
+      }, GPS_CONFIG.REFINEMENT_TIMEOUT);
 
       watchId = navigator.geolocation.watchPosition(pos => {
         if (usata) return;
-        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) bestPos = pos;
-        if (debugDiv) debugDiv.innerHTML = '📍 Raffinamento: ±' + Math.round(pos.coords.accuracy) + 'm...';
-        if (pos.coords.accuracy <= 100) usaPosizioneFinale(pos, 'GPS preciso');
-      }, () => {
-        if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Fallback');
-      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
+        
+        allPositions.push(pos);
+        
+        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) {
+          bestPos = pos;
+        }
+        
+        if (debugDiv) {
+          debugDiv.innerHTML = `📍 Raffinamento: ±${Math.round(pos.coords.accuracy)}m... (${allPositions.length} letture)`;
+        }
+        
+        if (pos.coords.accuracy <= GPS_CONFIG.GOOD_ACCURACY_THRESHOLD) {
+          usaPosizioneFinale(pos, 'GPS preciso');
+        } else if (allPositions.length >= 5 && pos.coords.accuracy <= GPS_CONFIG.ACCEPTABLE_ACCURACY) {
+          usaPosizioneFinale(pos, 'Precisione accettabile dopo ' + allPositions.length + ' letture');
+        }
+        
+      }, (err) => {
+        console.warn('WatchPosition error:', err);
+        if (bestPos && !usata) {
+          usaPosizioneFinale(bestPos, 'Fallback watch');
+        }
+      }, { 
+        enableHighAccuracy: true, 
+        maximumAge: 2000,
+        timeout: 8000 
+      });
     }
 
+    // Fase 1: getCurrentPosition
     navigator.geolocation.getCurrentPosition(pos => {
       bestPos = pos;
+      allPositions.push(pos);
       const acc = Math.round(pos.coords.accuracy);
-      if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura: ±' + acc + 'm — raffino...';
-      if (acc <= 100) {
+      
+      if (debugDiv) {
+        debugDiv.innerHTML = `📍 Prima lettura: ±${acc}m — raffino...`;
+      }
+      
+      if (acc <= GPS_CONFIG.GOOD_ACCURACY_THRESHOLD) {
         usaPosizioneFinale(pos, 'GPS preciso immediato');
       } else {
-        toast('📍 GPS in corso...', 'info');
+        toast('📍 Raffinamento GPS in corso...', 'info');
         avviaRaffinamento();
       }
-    }, err => {
-      if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura fallita, riprovo...';
+      
+    }, (err) => {
+      if (debugDiv) {
+        let errMsg = 'Prima lettura fallita';
+        if (err.code === 1) errMsg = 'Permesso GPS negato';
+        else if (err.code === 2) errMsg = 'Posizione non disponibile';
+        else if (err.code === 3) errMsg = 'Timeout GPS';
+        debugDiv.innerHTML = `📍 ${errMsg}, avvio raffinamento...`;
+      }
       avviaRaffinamento();
-      setTimeout(() => {
-        if (!bestPos && !usata) {
-          usata = true;
-          cleanupGPS();
-          let msg = '❌ GPS non disponibile';
-          if (err.code === 1) msg = '❌ Permesso GPS negato. Apri Impostazioni > App > Chrome > Posizione';
-          else if (err.code === 2) msg = '❌ Posizione non rilevata. Prova all\'aperto';
-          else if (err.code === 3) msg = '❌ GPS troppo lento. Prova all\'aperto e riprova';
-          if (debugDiv) debugDiv.innerHTML = msg;
-          toast(msg, 'error');
-          hapticFeedback('error');
-          stampBusy = false; 
-          if (btn) btn.disabled = false;
+      
+      gpsTimer = setTimeout(() => {
+        if (!usata) {
+          if (allPositions.length > 0) {
+            usaPosizioneFinale(allPositions[allPositions.length - 1], 'Fallback totale');
+          } else if (bestPos) {
+            usaPosizioneFinale(bestPos, 'Fallback totale');
+          } else {
+            usata = true;
+            cleanupGPS();
+            toast('❌ Impossibile ottenere posizione. Verifica connessione GPS.', 'error');
+            hapticFeedback('error');
+            stampBusy = false;
+            if (btn) btn.disabled = false;
+          }
         }
-      }, 12000);
-    }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 });
+      }, GPS_CONFIG.MAX_WAIT_TIME);
+      
+    }, { 
+      enableHighAccuracy: true, 
+      timeout: GPS_CONFIG.FIRST_READING_TIMEOUT, 
+      maximumAge: 5000 
+    });
   }
 
   // ── SALVATAGGIO TIMBRATURA con controlli anti-frode ───────────────────────
@@ -931,6 +1077,9 @@
     
     await caricaImpostazioni();
     await aggiornaStatoUI();
+    
+    // Aggiungi suggerimenti GPS
+    addGpsTips();
     
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
