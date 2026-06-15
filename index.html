@@ -2,58 +2,113 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login Animatori</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f5f2eb; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    #auth-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
+    h2 { color: #2d4a3e; margin-bottom: 24px; font-size: 24px; }
+    input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+    button { width: 100%; padding: 14px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; margin-bottom: 10px; }
+    #btn-accedi { background: #2d4a3e; color: white; }
+    #btn-registra { background: white; color: #2d4a3e; border: 1px solid #2d4a3e; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #msg { margin-top: 15px; font-size: 14px; min-height: 1.5em; text-align: center; }
+  </style>
 </head>
 <body>
-  <div id="auth-screen">
-    <h2>Accesso Animatore</h2>
+  <div id="auth-card">
+    <h2>Accesso <small style="font-size: 10px; opacity: 0.4;">v2.3</small></h2>
     <input type="text" id="nome" placeholder="Nome e Cognome">
     <input type="password" id="pass" placeholder="Password (PIN)">
-    <button onclick="accedi()">ENTRA</button>
-    <button onclick="registra()">REGISTRATI</button>
+    <button id="btn-accedi">ENTRA</button>
+    <button id="btn-registra">REGISTRATI</button>
+    <div id="msg"></div>
   </div>
 
-<script>
-  const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const supabase = window.supabase.createClient(SB_URL, SB_KEY);
-
-  async function registra() {
-    const nome = document.getElementById('nome').value.trim();
-    const pass = document.getElementById('pass').value.trim();
-    if (!nome || !pass) { alert("Inserisci nome e password"); return; }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
     
-    const { error } = await supabase.from('utenti').insert([{
-      nome,
-      password: pass,
-      privacy_accepted: true,
-      privacy_accepted_at: new Date().toISOString(),
-      privacy_version: '1.0'
-    }]);
-    if (error) alert("Errore: " + error.message);
-    else alert("Registrato con successo! Ora puoi entrare.");
-  }
-
-  async function accedi() {
-    const nome = document.getElementById('nome').value.trim();
-    const pass = document.getElementById('pass').value.trim();
-    if (!nome || !pass) { alert("Inserisci nome e password"); return; }
-
-    const { data, error } = await supabase
-      .from('utenti')
-      .select('*')
-      .eq('nome', nome)
-      .eq('password', pass)
-      .maybeSingle();
-
-    if (data) {
-      localStorage.setItem('cu', JSON.stringify(data));
-      window.location.href = 'timbratura.html';
-    } else {
-      alert("Credenziali errate.");
+    function showMsg(text, color = 'red') {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.style.color = color;
     }
-  }
-</script>
+
+    window.onload = function() {
+      const btnAccedi = document.getElementById('btn-accedi');
+      const btnRegistra = document.getElementById('btn-registra');
+      const inputNome = document.getElementById('nome');
+      const inputPass = document.getElementById('pass');
+
+      btnAccedi.onclick = async function() {
+        const nome = inputNome.value.trim();
+        const pass = inputPass.value.trim();
+        if (!nome || !pass) { showMsg("Inserisci nome e password"); return; }
+
+        btnAccedi.disabled = true;
+        showMsg("Accesso in corso...", "blue");
+
+        try {
+          if (!window.supabase) throw new Error("Connessione mancante (Supabase)");
+          const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
+          const { data, error } = await supabase
+            .from('utenti')
+            .select('*')
+            .eq('nome', nome)
+            .eq('password', pass)
+            .maybeSingle();
+
+          if (error) throw error;
+          if (!data) { showMsg("Credenziali errate o utente inesistente"); }
+          else {
+            localStorage.setItem('cu', JSON.stringify(data));
+            localStorage.setItem('animatore', JSON.stringify(data));
+            window.location.href = 'timbratura.html';
+          }
+        } catch (e) {
+          showMsg("Errore: " + e.message);
+        } finally {
+          btnAccedi.disabled = false;
+        }
+      };
+
+      btnRegistra.onclick = async function() {
+        const nome = inputNome.value.trim();
+        const pass = inputPass.value.trim();
+        if (!nome || !pass) { showMsg("Inserisci nome e password"); return; }
+        if (pass.length < 4) { showMsg("La password deve avere almeno 4 caratteri"); return; }
+
+        btnRegistra.disabled = true;
+        showMsg("Registrazione in corso...", "blue");
+
+        try {
+          if (!window.supabase) throw new Error("Connessione mancante (Supabase)");
+          const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
+          const { data: exist } = await supabase.from('utenti').select('nome').eq('nome', nome).maybeSingle();
+          if (exist) { showMsg("Nome già registrato. Prova ad entrare."); }
+          else {
+            const { error } = await supabase.from('utenti').insert([{
+              nome,
+              password: pass,
+              privacy_accepted: true,
+              privacy_accepted_at: new Date().toISOString(),
+              privacy_version: '1.2'
+            }]);
+            if (error) throw error;
+            showMsg("Registrato con successo! Ora puoi entrare.", "green");
+          }
+        } catch (e) {
+          showMsg("Errore: " + e.message);
+        } finally {
+          btnRegistra.disabled = false;
+        }
+      };
+    };
+  </script>
 </body>
 </html>

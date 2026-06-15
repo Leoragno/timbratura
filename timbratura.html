@@ -254,7 +254,7 @@
 <!-- APP -->
 <div id="app-screen">
   <div class="topbar">
-    <div class="topbar-title">tim<em>bratura</em></div>
+    <div class="topbar-title">tim<em>bratura</em> <small style="font-size: 8px; opacity: 0.5;">v2.2</small></div>
     <div class="topbar-right">
       <span id="sync-badge" style="display:none; font-size:10px; background:var(--amber-lt); color:var(--amber); border:1px solid #e0cfa0; padding:2px 6px; border-radius:10px; margin-right:5px; font-weight:600;">Sincronizzazione...</span>
       <button id="refresh-app-btn" style="background:transparent; border:none; cursor:pointer; font-size:16px; margin-right:5px;">↻</button>
@@ -1246,6 +1246,7 @@
   }
 
   async function mostraApp() {
+    console.log('📱 Caricamento interfaccia app...');
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display  = 'block';
     document.getElementById('user-display-name').textContent = currentUser.nome;
@@ -1432,10 +1433,18 @@
   }
 
   // ── INIT ──────────────────────────────────────────────────────────────────
-  const saved = localStorage.getItem('cu');
+  const saved = localStorage.getItem('cu') || localStorage.getItem('animatore');
   if (saved) {
-    try { currentUser = JSON.parse(saved); mostraApp(); }
-    catch(e) { localStorage.removeItem('cu'); }
+    try {
+      currentUser = JSON.parse(saved);
+      if (!localStorage.getItem('cu')) localStorage.setItem('cu', saved);
+      mostraApp();
+    }
+    catch(e) {
+      console.warn("Sessione corrotta");
+      localStorage.removeItem('cu');
+      localStorage.removeItem('animatore');
+    }
   }
 
   // Init connection indicator

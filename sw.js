@@ -1,4 +1,4 @@
-const CACHE_NAME = 'timbratura-v1';
+const CACHE_NAME = 'timbratura-v4';
 const ASSETS = [
   '/timbratura.html',
   '/manifest.json',
