@@ -439,12 +439,22 @@
       usata = true;
       cleanupGPS();
       const dist = distance(pos.coords.latitude, pos.coords.longitude, oratorioLat, oratorioLon);
-      const acc  = Math.round(pos.coords.accuracy);
-      if (debugDiv) debugDiv.innerHTML = '📍 ' + motivo + ' · Distanza: ' + Math.round(dist) + 'm · Precisione: ±' + acc + 'm';
-      if (dist > maxDistanza) {
-        toast('❌ Sei a ' + Math.round(dist) + 'm dall\'oratorio (max ' + maxDistanza + 'm)', 'error');
-        stampBusy = false; if (btn) btn.disabled = false; return;
-      }
+const acc  = Math.round(pos.coords.accuracy);
+
+const distanzaCorretta = dist - acc;
+
+if (distanzaCorretta > maxDistanza) {
+  toast(
+    '❌ Sei a ' + Math.round(dist) +
+    'm dall\'oratorio (precisione ±' + acc +
+    'm, max ' + maxDistanza + 'm)',
+    'error'
+  );
+
+  stampBusy = false;
+  if (btn) btn.disabled = false;
+  return;
+}
       salvaTimbratura(tipo).then(() => { stampBusy = false; if (btn) btn.disabled = false; });
     }
 
@@ -460,7 +470,7 @@
         if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) bestPos = pos;
         if (debugDiv) debugDiv.innerHTML = '📍 Raffinamento: ±' + Math.round(pos.coords.accuracy) + 'm...';
         // Se otteniamo precisione buona, procedi subito
-        if (pos.coords.accuracy <= 100) usaPosizioneFinale(pos, 'GPS preciso');
+        if (pos.coords.accuracy <= 50) usaPosizioneFinale(pos, 'GPS preciso');
       }, () => {
         // watchPosition fallisce → usa getCurrentPosition come già salvata
         if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Fallback');
@@ -472,7 +482,7 @@
       bestPos = pos;
       const acc = Math.round(pos.coords.accuracy);
       if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura: ±' + acc + 'm — raffino...';
-      if (acc <= 100) {
+      if (acc <= 50) {
         // Già preciso → timbra subito
         usaPosizioneFinale(pos, 'GPS preciso immediato');
       } else {
