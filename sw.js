@@ -71,6 +71,22 @@ self.addEventListener('fetch', event => {
   );
 });
 
+// Gestione Push Notification
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'Notifica Oratorio';
+  const options = {
+    body: data.body || 'Nuovo messaggio disponibile',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: data.url || '/timbratura.html'
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
 // Gestione click notifica
 self.addEventListener('notificationclick', event => {
   event.notification.close();

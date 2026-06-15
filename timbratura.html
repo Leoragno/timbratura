@@ -544,6 +544,9 @@
   function checkReminders(lastEntry) {
     const now = new Date();
 
+    // Controlla messaggi broadcast dall'admin
+    checkBroadcastNotifications();
+
     // 1. Promemoria USCITA (se dentro da più di 4 ore)
     if (lastEntry && lastEntry.tipo === 'Ingresso') {
       const entryTime = new Date(lastEntry.created_at);
@@ -579,6 +582,27 @@
     }
   }
 
+  async function checkBroadcastNotifications() {
+    if (!currentUser) return;
+    try {
+      // Cerchiamo nella tabella impostazioni un eventuale messaggio broadcast
+      // Usiamo una chiave 'broadcast_msg' per messaggi istantanei
+      const { data } = await sb.from('impostazioni').select('valore, updated_at').eq('chiave', 'broadcast_msg').maybeSingle();
+      if (data && data.valore) {
+        const lastRead = localStorage.getItem('last_broadcast_read');
+        const msgId = data.updated_at;
+
+        if (lastRead !== msgId) {
+          showNotification('Messaggio Oratorio', data.valore);
+          localStorage.setItem('last_broadcast_read', msgId);
+        }
+      }
+    } catch (e) {
+      console.warn('Broadcast check failed', e);
+    }
+  }
+
+  window.showNotification = showNotification;
   async function showNotification(title, body) {
     if (Notification.permission === 'granted') {
       const reg = await navigator.serviceWorker.ready;
