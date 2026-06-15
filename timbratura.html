@@ -157,12 +157,34 @@
     #particle-canvas { position: fixed; inset: 0; z-index: 99; pointer-events: none; opacity: 0; transition: opacity .3s; }
     #particle-canvas.active { opacity: 1; }
 
+    /* CONNECTION INDICATOR */
+    #connection-indicator {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1000;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      opacity: 0;
+    }
+
     @keyframes cardSlideUp   { from { opacity:0; transform:translateY(30px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
     @keyframes cardSlideDown { from { opacity:1; transform:translateY(0) scale(1); } to { opacity:0; transform:translateY(-24px) scale(.97); } }
     @keyframes cardPop       { 0%{transform:scale(1);} 40%{transform:scale(1.03);} 100%{transform:scale(1);} }
     .auth-card { animation: cardSlideUp .45s cubic-bezier(.23,1,.32,1) both; }
     .auth-card.exit  { animation: cardSlideDown .35s cubic-bezier(.55,0,1,.45) forwards; }
     .auth-card.pop   { animation: cardPop .4s cubic-bezier(.23,1,.32,1); }
+
+    /* Button animation */
+    .btn-press {
+      transform: scale(0.97);
+      transition: transform 0.12s ease;
+    }
   </style>
 </head>
 <body>
@@ -327,6 +349,12 @@
   let oratorioLat = 45.706869, oratorioLon = 8.800464, maxDistanza = 150;
   let stampBusy = false, dispChiuse = {};
 
+  // Cache per preload
+  window._cachedSettimane = null;
+  window._cachedDisponibilita = null;
+  window._cachedImpostazioni = null;
+  window._cachedRecentTimbrature = null;
+
   // ── UTILS ─────────────────────────────────────────────────────────────────
   function toast(m, t) {
     const el = document.getElementById('toast');
@@ -341,6 +369,102 @@
     const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
     const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+
+  // ── HAPTIC FEEDBACK (vibrazione mobile) ───────────────────────────────────
+  function hapticFeedback(type = 'light') {
+    if (!window.navigator?.vibrate) return;
+    
+    const patterns = {
+      'light': 20,
+      'medium': 50,
+      'heavy': 100,
+      'success': [50, 30, 50],
+      'error': [100, 50, 100]
+    };
+    
+    const pattern = patterns[type] || patterns.light;
+    window.navigator.vibrate(pattern);
+  }
+
+  function animateButton(button) {
+    if (!button) return;
+    button.style.transform = 'scale(0.97)';
+    setTimeout(() => {
+      button.style.transform = '';
+    }, 120);
+  }
+
+  // ── CONNECTION INDICATOR ──────────────────────────────────────────────────
+  let connectionIndicator = null;
+
+  function updateConnectionStatus(status) {
+    if (!connectionIndicator) return;
+    
+    let color, text, bgColor;
+    
+    if (status === 'online' || (status === undefined && navigator.onLine)) {
+      color = '#2d5a3d';
+      bgColor = '#e5f2ea';
+      text = '🟢 Connesso';
+    } else if (status === 'slow') {
+      color = '#7a5c1e';
+      bgColor = '#fdf3dc';
+      text = '🟡 Connessione lenta';
+    } else {
+      color = '#8b2e2e';
+      bgColor = '#f5e8e8';
+      text = '🔴 Offline';
+    }
+    
+    connectionIndicator.style.backgroundColor = bgColor;
+    connectionIndicator.style.color = color;
+    connectionIndicator.style.border = `1px solid ${color}40`;
+    connectionIndicator.textContent = text;
+    connectionIndicator.style.opacity = '1';
+    
+    if (status === 'online' || navigator.onLine) {
+      setTimeout(() => {
+        if (connectionIndicator && navigator.onLine) {
+          connectionIndicator.style.opacity = '0';
+        }
+      }, 3000);
+    }
+  }
+
+  function initConnectionIndicator() {
+    connectionIndicator = document.createElement('div');
+    connectionIndicator.id = 'connection-indicator';
+    document.body.appendChild(connectionIndicator);
+    
+    updateConnectionStatus();
+    
+    window.addEventListener('online', () => {
+      updateConnectionStatus('online');
+      toast('📶 Connessione ripristinata', 'success');
+    });
+    
+    window.addEventListener('offline', () => {
+      updateConnectionStatus('offline');
+      toast('⚠️ Sei offline. Le timbrature verranno salvate quando tornerai online.', 'error');
+    });
+    
+    setInterval(async () => {
+      if (navigator.onLine) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          await fetch('https://bbwozrlingsbjcawtval.supabase.co/rest/v1/', { 
+            signal: controller.signal,
+            method: 'HEAD'
+          });
+          clearTimeout(timeoutId);
+          updateConnectionStatus('online');
+        } catch (e) {
+          updateConnectionStatus('slow');
+        }
+      }
+    }, 30000);
   }
 
   // ── PWA INSTALL ───────────────────────────────────────────────────────────
@@ -374,7 +498,13 @@
 
   // ── IMPOSTAZIONI ──────────────────────────────────────────────────────────
   async function caricaImpostazioni() {
-    const { data } = await sb.from('impostazioni').select('*');
+    let data = window._cachedImpostazioni;
+    if (!data) {
+      const res = await sb.from('impostazioni').select('*');
+      data = res.data;
+      window._cachedImpostazioni = data;
+    }
+    
     dispChiuse = {};
     if (data) data.forEach(row => {
       if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore === true || row.valore === 'true';
@@ -396,38 +526,62 @@
     if (banner) banner.style.display = geoAbilitata ? 'block' : 'none';
   }
 
-  // ── TIMBRATURA con GPS doppio tentativo (★ tua logica iOS) ───────────────
+  // ── TIMBRATURA con GPS doppio tentativo ───────────────────────────────────
   async function timbra(tipo) {
-    if (!currentUser) { toast('Devi effettuare il login', 'error'); return; }
-    if (stampBusy) { toast('Attendi...', 'info'); return; }
-    await caricaImpostazioni();
-    if (tipo === 'Ingresso' && !ingressoAperto) { toast('❌ Ingresso bloccato', 'error'); return; }
-    if (tipo === 'Uscita'   && !uscitaAperta)   { toast('❌ Uscita bloccata',   'error'); return; }
-    stampBusy = true;
+    if (!currentUser) { 
+      toast('Devi effettuare il login', 'error');
+      hapticFeedback('error');
+      return; 
+    }
+    if (stampBusy) { 
+      toast('Attendi...', 'info');
+      hapticFeedback('light');
+      return; 
+    }
+    
+    hapticFeedback('light');
     const btn = document.getElementById(tipo === 'Ingresso' ? 'btn-in' : 'btn-out');
+    animateButton(btn);
+    
+    await caricaImpostazioni();
+    if (tipo === 'Ingresso' && !ingressoAperto) { 
+      toast('❌ Ingresso bloccato', 'error');
+      hapticFeedback('error');
+      return; 
+    }
+    if (tipo === 'Uscita' && !uscitaAperta) { 
+      toast('❌ Uscita bloccata', 'error');
+      hapticFeedback('error');
+      return; 
+    }
+    stampBusy = true;
     if (btn) btn.disabled = true;
+    
     if (!geoAbilitata || tipo === 'Uscita') {
-      await salvaTimbratura(tipo); stampBusy = false; if (btn) btn.disabled = false; return;
+      await salvaTimbratura(tipo); 
+      stampBusy = false; 
+      if (btn) btn.disabled = false; 
+      return;
     }
+    
     if (!navigator.geolocation) {
-      toast('Geolocalizzazione non supportata', 'error'); stampBusy = false; if (btn) btn.disabled = false; return;
+      toast('Geolocalizzazione non supportata', 'error');
+      hapticFeedback('error');
+      stampBusy = false; 
+      if (btn) btn.disabled = false; 
+      return;
     }
+    
     const banner = document.getElementById('geo-banner');
     const debugDiv = document.getElementById('gps-debug');
     if (banner) banner.style.display = 'block';
     if (debugDiv) debugDiv.style.display = 'block';
     toast('📍 Acquisizione posizione...', 'info');
 
-    // ★ GPS ibrido: getCurrentPosition rapido + watchPosition di raffinamento
-    // Fase 1: prima lettura rapida (anche imprecisa) entro 8s
-    // Fase 2: watchPosition raffina per max 8s aggiuntivi
-    // Fase 3: usa la migliore posizione trovata comunque
-    // Questo risolve sia Android freddo che iPhone indoor
-
     let bestPos  = null;
     let watchId  = null;
     let gpsTimer = null;
-    let usata    = false; // evita di timbrare due volte
+    let usata    = false;
 
     function cleanupGPS() {
       if (watchId  !== null) { navigator.geolocation.clearWatch(watchId); watchId  = null; }
@@ -439,27 +593,22 @@
       usata = true;
       cleanupGPS();
       const dist = distance(pos.coords.latitude, pos.coords.longitude, oratorioLat, oratorioLon);
-const acc  = Math.round(pos.coords.accuracy);
-
-const distanzaCorretta = dist - acc;
-
-if (distanzaCorretta > maxDistanza) {
-  toast(
-    '❌ Sei a ' + Math.round(dist) +
-    'm dall\'oratorio (precisione ±' + acc +
-    'm, max ' + maxDistanza + 'm)',
-    'error'
-  );
-
-  stampBusy = false;
-  if (btn) btn.disabled = false;
-  return;
-}
-      salvaTimbratura(tipo).then(() => { stampBusy = false; if (btn) btn.disabled = false; });
+      const acc  = Math.round(pos.coords.accuracy);
+      if (debugDiv) debugDiv.innerHTML = '📍 ' + motivo + ' · Distanza: ' + Math.round(dist) + 'm · Precisione: ±' + acc + 'm';
+      if (dist > maxDistanza) {
+        toast('❌ Sei a ' + Math.round(dist) + 'm dall\'oratorio (max ' + maxDistanza + 'm)', 'error');
+        hapticFeedback('error');
+        stampBusy = false; 
+        if (btn) btn.disabled = false; 
+        return;
+      }
+      salvaTimbratura(tipo).then(() => { 
+        stampBusy = false; 
+        if (btn) btn.disabled = false; 
+      });
     }
 
     function avviaRaffinamento() {
-      // Fase 2: watchPosition per max 8s per migliorare la precisione
       gpsTimer = setTimeout(() => {
         cleanupGPS();
         if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Timeout raffinamento');
@@ -469,32 +618,25 @@ if (distanzaCorretta > maxDistanza) {
         if (usata) return;
         if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) bestPos = pos;
         if (debugDiv) debugDiv.innerHTML = '📍 Raffinamento: ±' + Math.round(pos.coords.accuracy) + 'm...';
-        // Se otteniamo precisione buona, procedi subito
-        if (pos.coords.accuracy <= 50) usaPosizioneFinale(pos, 'GPS preciso');
+        if (pos.coords.accuracy <= 100) usaPosizioneFinale(pos, 'GPS preciso');
       }, () => {
-        // watchPosition fallisce → usa getCurrentPosition come già salvata
         if (bestPos && !usata) usaPosizioneFinale(bestPos, 'Fallback');
       }, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
     }
 
-    // Fase 1: getCurrentPosition rapido (accetta anche letture da wifi/celle)
     navigator.geolocation.getCurrentPosition(pos => {
       bestPos = pos;
       const acc = Math.round(pos.coords.accuracy);
       if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura: ±' + acc + 'm — raffino...';
-      if (acc <= 50) {
-        // Già preciso → timbra subito
+      if (acc <= 100) {
         usaPosizioneFinale(pos, 'GPS preciso immediato');
       } else {
-        // Impreciso → prova a raffinare con watchPosition
         toast('📍 GPS in corso...', 'info');
         avviaRaffinamento();
       }
     }, err => {
-      // Fase 1 fallita → tenta comunque con watchPosition
       if (debugDiv) debugDiv.innerHTML = '📍 Prima lettura fallita, riprovo...';
       avviaRaffinamento();
-      // Se anche watchPosition non ha nulla entro 12s totali → errore
       setTimeout(() => {
         if (!bestPos && !usata) {
           usata = true;
@@ -505,38 +647,83 @@ if (distanzaCorretta > maxDistanza) {
           else if (err.code === 3) msg = '❌ GPS troppo lento. Prova all\'aperto e riprova';
           if (debugDiv) debugDiv.innerHTML = msg;
           toast(msg, 'error');
-          stampBusy = false; if (btn) btn.disabled = false;
+          hapticFeedback('error');
+          stampBusy = false; 
+          if (btn) btn.disabled = false;
         }
       }, 12000);
     }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 });
   }
 
-
+  // ── SALVATAGGIO TIMBRATURA con controlli anti-frode ───────────────────────
   async function salvaTimbratura(tipo) {
-    // ★ Controllo duplicati: blocca se ultima timbratura è dello stesso tipo e < 5 minuti fa
-    const { data: ultima } = await sb.from('timbrature')
-      .select('tipo, id, created_at')
+    // 1. Controllo duplicati recenti
+    const { data: ultime } = await sb.from('timbrature')
+      .select('tipo, created_at')
       .eq('user_id', currentUser.id)
-      .order('id', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (ultima && ultima.tipo === tipo) {
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    if (ultime && ultime.length > 0) {
+      const ultima = ultime[0];
       const diffMs = Date.now() - new Date(ultima.created_at).getTime();
-      const diffMin = Math.floor(diffMs / 60000);
-      if (diffMs < 5 * 60 * 1000) {
-        const quando = diffMin === 0 ? 'meno di un minuto fa' : diffMin + ' min fa';
-        toast('⚠️ Hai già timbrato ' + tipo + ' ' + quando, 'error');
+      const diffSec = Math.floor(diffMs / 1000);
+      
+      // BLOCCO 1: stesso tipo in meno di 2 minuti
+      if (ultima.tipo === tipo && diffMs < 2 * 60 * 1000) {
+        toast(`⚠️ Hai già timbrato ${tipo} ${diffSec} secondi fa. Attendi 2 minuti.`, 'error');
+        hapticFeedback('error');
         await aggiornaStatoUI();
         return;
       }
+      
+      // BLOCCO 2: pattern sospetto (IN-OUT-IN in meno di 3 minuti)
+      if (ultime.length >= 3) {
+        const ultimiTre = ultime.slice(0, 3).map(t => t.tipo);
+        const pattern = ultimiTre.join('-');
+        
+        if (pattern === 'Uscita-Ingresso-Uscita' || pattern === 'Ingresso-Uscita-Ingresso') {
+          const timeSpan = new Date(ultime[0].created_at) - new Date(ultime[2].created_at);
+          if (Math.abs(timeSpan) < 5 * 60 * 1000) {
+            toast('⚠️ Pattern sospetto rilevato. Contatta l\'amministratore.', 'error');
+            hapticFeedback('heavy');
+            return;
+          }
+        }
+      }
     }
+    
+    // 2. Controllo sequenza logica
+    if (tipo === 'Ingresso') {
+      if (ultime[0]?.tipo === 'Ingresso') {
+        toast('❌ Sei già dentro! Fai USCITA prima di rientrare.', 'error');
+        hapticFeedback('error');
+        return;
+      }
+    } else if (tipo === 'Uscita') {
+      if (ultime[0]?.tipo !== 'Ingresso') {
+        toast('❌ Non puoi uscire senza essere entrato prima!', 'error');
+        hapticFeedback('error');
+        return;
+      }
+    }
+    
+    // 3. Procedi con il salvataggio
     const now = new Date();
     const data = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
     const ora = now.toTimeString().slice(0,5);
     const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data, ora, tipo, created_at: now.toISOString() });
-    if (error) toast('Errore: ' + error.message, 'error');
-    else { toast('✅ ' + tipo + ' alle ' + ora, 'success'); window.burstParticles('stamp'); }
-    await caricaImpostazioni(); await aggiornaStatoUI();
+    
+    if (error) {
+      toast('Errore: ' + error.message, 'error');
+      hapticFeedback('error');
+    } else { 
+      toast('✅ ' + tipo + ' alle ' + ora, 'success');
+      hapticFeedback('success');
+      window.burstParticles('stamp');
+    }
+    await caricaImpostazioni(); 
+    await aggiornaStatoUI();
   }
 
   // ── AUTH ──────────────────────────────────────────────────────────────────
@@ -546,13 +733,17 @@ if (distanzaCorretta > maxDistanza) {
   };
 
   document.getElementById('login-btn').onclick = async () => {
+    hapticFeedback('medium');
     const nome = document.getElementById('login-nome').value.trim();
     const pw   = document.getElementById('login-password').value;
     if (!nome || !pw) { toast('Inserisci nome e password', 'error'); return; }
     const { data, error } = await sb.from('utenti').select('*').eq('nome', nome).eq('password', pw).maybeSingle();
-    if (error || !data) { toast('Accesso fallito', 'error'); return; }
+    if (error || !data) { 
+      toast('Accesso fallito', 'error');
+      hapticFeedback('error');
+      return; 
+    }
     currentUser = data;
-    // ★ localStorage → login permanente
     localStorage.setItem('cu', JSON.stringify(data));
     window.burstParticles('login');
     const card = document.getElementById('login-card');
@@ -571,7 +762,7 @@ if (distanzaCorretta > maxDistanza) {
     if (pw.length < 4) { toast('Password min. 4 caratteri', 'error'); return; }
     const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
     if (exist) { toast('Nome già registrato', 'error'); return; }
-    const { error } = await sb.from('utenti').insert([{ nome, password: pw, anno: anno || null, privacy_accepted: true }]);
+    const { error } = await sb.from('utenti').insert([{ nome, password: pw, anno: anno || null, privacy_accepted: true, privacy_accepted_at: new Date().toISOString(), privacy_version: '1.0' }]);
     if (error) { toast('Errore registrazione', 'error'); return; }
     window.burstParticles('register');
     const regCard = document.getElementById('register-card');
@@ -587,17 +778,75 @@ if (distanzaCorretta > maxDistanza) {
     }, 380);
   };
 
-  // ★ Logout: rimuove da localStorage
-  document.getElementById('logout-btn').onclick = () => { localStorage.removeItem('cu'); location.reload(); };
+  document.getElementById('logout-btn').onclick = () => { 
+    localStorage.removeItem('cu');
+    window._cachedSettimane = null;
+    window._cachedDisponibilita = null;
+    window._cachedImpostazioni = null;
+    location.reload(); 
+  };
 
-  // ── PRIVACY WALL ──────────────────────────────────────────────────────────
+  // ── PRIVACY WALL con scadenza annuale ─────────────────────────────────────
+  async function checkAndRenewConsent() {
+    if (!currentUser) return true;
+    
+    const lastAccept = currentUser.privacy_accepted_at || localStorage.getItem('privacy_last_accept');
+    const now = new Date();
+    
+    if (!lastAccept) {
+      const today = now.toISOString();
+      await sb.from('utenti').update({ 
+        privacy_accepted_at: today,
+        privacy_version: '1.0'
+      }).eq('id', currentUser.id);
+      localStorage.setItem('privacy_last_accept', today);
+      return true;
+    }
+    
+    const acceptDate = new Date(lastAccept);
+    const oneYearLater = new Date(acceptDate);
+    oneYearLater.setFullYear(acceptDate.getFullYear() + 1);
+    
+    if (now > oneYearLater) {
+      const wall = document.getElementById('privacy-wall');
+      const wallTitle = wall.querySelector('h2');
+      const wallText = wall.querySelector('p');
+      
+      wallTitle.textContent = '🔒 Rinnovo Consenso Privacy';
+      wallText.innerHTML = `Il tuo consenso è scaduto (${acceptDate.toLocaleDateString()}). Per continuare a utilizzare l'app, devi riaccettare l'informativa sul trattamento dei dati personali.`;
+      
+      wall.style.display = 'flex';
+      return false;
+    }
+    
+    return true;
+  }
+
   window.accettaPrivacyWall = async function() {
-    const { error } = await sb.from('utenti').update({ privacy_accepted: true }).eq('id', currentUser.id);
-    if (error) { toast('Errore salvataggio consenso', 'error'); return; }
+    const now = new Date().toISOString();
+    
+    const { error } = await sb.from('utenti').update({ 
+      privacy_accepted: true,
+      privacy_accepted_at: now,
+      privacy_version: '1.0'
+    }).eq('id', currentUser.id);
+    
+    if (error) { 
+      toast('Errore salvataggio consenso', 'error');
+      return;
+    }
+    
     currentUser.privacy_accepted = true;
+    currentUser.privacy_accepted_at = now;
     localStorage.setItem('cu', JSON.stringify(currentUser));
+    localStorage.setItem('privacy_last_accept', now);
+    
     document.getElementById('privacy-wall').style.display = 'none';
-    toast('Consenso registrato. Benvenuto!', 'success');
+    toast('Consenso rinnovato. Grazie!', 'success');
+    
+    const wall = document.getElementById('privacy-wall');
+    wall.querySelector('h2').textContent = '🔒 Informativa Privacy';
+    wall.querySelector('p').innerHTML = 'Prima di continuare, la Parrocchia San Giorgio di Jerago ti chiede di leggere e accettare l\'informativa sul trattamento dei dati personali.';
   };
 
   // ── STATO UI ──────────────────────────────────────────────────────────────
@@ -627,6 +876,40 @@ if (distanzaCorretta > maxDistanza) {
     if (!uscitaAperta)   { btnOut.disabled=true; btnOut.style.opacity='0.35'; }
   }
 
+  // ── PRELOAD DATI (cache) ──────────────────────────────────────────────────
+  async function preloadUserData() {
+    console.log('🚀 Precaricamento dati in background...');
+    
+    const promises = [];
+    
+    promises.push(
+      sb.from('settimane').select('*').order('id')
+        .then(res => { if (res.data) window._cachedSettimane = res.data; })
+        .catch(e => console.warn('Preload settimane failed:', e))
+    );
+    
+    promises.push(
+      sb.from('disponibilita').select('*').eq('user_id', currentUser.id)
+        .then(res => { if (res.data) window._cachedDisponibilita = res.data; })
+        .catch(e => console.warn('Preload disponibilita failed:', e))
+    );
+    
+    promises.push(
+      sb.from('impostazioni').select('*')
+        .then(res => { if (res.data) window._cachedImpostazioni = res.data; })
+        .catch(e => console.warn('Preload impostazioni failed:', e))
+    );
+    
+    promises.push(
+      sb.from('timbrature').select('*').eq('user_id', currentUser.id).order('id', { ascending: false }).limit(20)
+        .then(res => { if (res.data) window._cachedRecentTimbrature = res.data; })
+        .catch(e => console.warn('Preload timbrature recenti failed:', e))
+    );
+    
+    await Promise.allSettled(promises);
+    console.log('✅ Precaricamento completato');
+  }
+
   // ── MOSTRA APP ────────────────────────────────────────────────────────────
   function mostraQRBanner(tipo) {
     const qrBanner = document.getElementById('qr-confirm-banner');
@@ -645,40 +928,73 @@ if (distanzaCorretta > maxDistanza) {
     document.getElementById('user-display-name').textContent = currentUser.nome;
     document.getElementById('topbar-user').textContent = currentUser.nome;
     document.getElementById('user-display-meta').textContent = 'Animatore — ' + (currentUser.anno || '?');
+    
     await caricaImpostazioni();
     await aggiornaStatoUI();
+    
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
-    if (!currentUser.privacy_accepted) {
+    
+    // Controlla scadenza consenso
+    if (currentUser && !currentUser.privacy_accepted) {
       document.getElementById('privacy-wall').style.display = 'flex';
+    } else if (currentUser) {
+      const isValid = await checkAndRenewConsent();
+      if (!isValid) return;
     }
-    // ★ QR pendente dal login → mostra banner tap-to-confirm
+    
+    // Preload dati in background
+    preloadUserData().catch(console.warn);
+    
     const pendingQa = localStorage.getItem('pqa');
     if (pendingQa) { localStorage.removeItem('pqa'); mostraQRBanner(pendingQa); }
-    // Polling 30s
+    
     setInterval(async () => { if (!currentUser) return; await caricaImpostazioni(); await aggiornaStatoUI(); }, 30000);
   }
 
-  // ── DISPONIBILITÀ ─────────────────────────────────────────────────────────
+  // ── DISPONIBILITÀ (con cache) ─────────────────────────────────────────────
   function parseGiorniAttivi(g) {
     if (!g || !String(g).trim()) return GIORNI_TUTTI;
     return String(g).split(',').map(x=>x.trim()).filter(x=>GIORNI_TUTTI.includes(x));
   }
+  
   async function caricaSettimane() {
     let res = await sb.from('settimane').select('*').order('ordine',{ascending:true});
     if (res.error) res = await sb.from('settimane').select('*').order('id',{ascending:true});
     settimane = res.data || [];
+    window._cachedSettimane = settimane;
   }
+  
   async function caricaDisponibilita() {
     const container = document.getElementById('disp-container');
     container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
-    await caricaImpostazioni(); await caricaSettimane();
-    if (!settimane.length) { container.innerHTML = '<div class="empty-state">Nessuna settimana trovata.</div>'; return; }
-    const { data: scelte } = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
+    await caricaImpostazioni(); 
+    await caricaSettimane();
+    
+    let settimaneData = window._cachedSettimane;
+    if (!settimaneData || !settimaneData.length) {
+      const res = await sb.from('settimane').select('*').order('id');
+      settimaneData = res.data || [];
+      window._cachedSettimane = settimaneData;
+    }
+    
+    if (!settimaneData.length) { 
+      container.innerHTML = '<div class="empty-state">Nessuna settimana trovata.</div>'; 
+      return; 
+    }
+    
+    let scelte = window._cachedDisponibilita;
+    if (!scelte) {
+      const { data } = await sb.from('disponibilita').select('*').eq('user_id', currentUser.id);
+      scelte = data || [];
+      window._cachedDisponibilita = scelte;
+    }
+    
     const dispMap = {};
     if (scelte) scelte.forEach(d => dispMap[d.settimana_id+'_'+d.giorno_index] = d);
     container.innerHTML = '';
-    for (const s of settimane) {
+    
+    for (const s of settimaneData) {
       const giorniAttivi = parseGiorniAttivi(s.giorni_attivi);
       const chiusa = !!dispChiuse[s.id];
       const block = document.createElement('div'); block.className = 'sett-block';
@@ -721,6 +1037,8 @@ if (distanzaCorretta > maxDistanza) {
       if (exist) await sb.from('disponibilita').update(payload).eq('id',exist.id);
       else await sb.from('disponibilita').insert([payload]);
     }
+    // Invalida cache
+    window._cachedDisponibilita = null;
     const saved=document.getElementById(`saved-${settId}`);
     if (saved) { saved.style.display='block'; setTimeout(()=>saved.style.display='none',2000); }
     toast('Disponibilità salvate!','success');
@@ -737,12 +1055,15 @@ if (distanzaCorretta > maxDistanza) {
     };
   });
 
-  // ── INIT ★ localStorage per login permanente ──────────────────────────────
+  // ── INIT ──────────────────────────────────────────────────────────────────
   const saved = localStorage.getItem('cu');
   if (saved) {
     try { currentUser = JSON.parse(saved); mostraApp(); }
     catch(e) { localStorage.removeItem('cu'); }
   }
+
+  // Init connection indicator
+  initConnectionIndicator();
 
   // ── QR CODE DAL LINK ──────────────────────────────────────────────────────
   const urlParams = new URLSearchParams(window.location.search);
@@ -751,11 +1072,9 @@ if (distanzaCorretta > maxDistanza) {
     const cleanUrl = window.location.pathname + (window.location.search.replace(/[?&]qa=[^&]*/g,'').replace(/^&/,'?')||'');
     window.history.replaceState({}, document.title, cleanUrl);
     if (!currentUser) {
-      // Non loggato: salva e mostra avviso
       localStorage.setItem('pqa', qa==='in'?'Ingresso':'Uscita');
       document.getElementById('qr-alert-login').style.display = 'block';
     } else {
-      // ★ Loggato: mostra banner tap-to-confirm (iOS richiede gesto utente per GPS)
       const tipo = qa==='in'?'Ingresso':'Uscita';
       mostraQRBanner(tipo);
     }
