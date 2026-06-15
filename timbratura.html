@@ -256,6 +256,7 @@
   <div class="topbar">
     <div class="topbar-title">tim<em>bratura</em></div>
     <div class="topbar-right">
+      <span id="sync-badge" style="display:none; font-size:10px; background:var(--amber-lt); color:var(--amber); border:1px solid #e0cfa0; padding:2px 6px; border-radius:10px; margin-right:5px; font-weight:600;">Sincronizzazione...</span>
       <button id="refresh-app-btn" style="background:transparent; border:none; cursor:pointer; font-size:16px; margin-right:5px;">↻</button>
       <span class="topbar-user" id="topbar-user"></span>
       <span class="topbar-stato fuori" id="topbar-stato">⚪ Fuori</span>
@@ -465,9 +466,10 @@
     
     updateConnectionStatus();
     
-    window.addEventListener('online', () => {
+    window.addEventListener('online', async () => {
       updateConnectionStatus('online');
       toast('📶 Connessione ripristinata', 'success');
+      await syncOfflineStamps();
     });
     
     window.addEventListener('offline', () => {
@@ -891,21 +893,96 @@
     }
     
     // 3. Procedi con il salvataggio
-    const now = new Date();
     const data = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
     const ora = now.toTimeString().slice(0,5);
-    const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data, ora, tipo, created_at: now.toISOString() });
-    
-    if (error) {
-      toast('Errore: ' + error.message, 'error');
-      hapticFeedback('error');
-    } else { 
+    const payload = { user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data, ora, tipo, created_at: now.toISOString() };
+
+    if (!navigator.onLine) {
+      salvaOffline(payload);
+      return;
+    }
+
+    try {
+      const { error } = await sb.from('timbrature').insert(payload);
+      if (error) throw error;
+
       toast('✅ ' + tipo + ' alle ' + ora, 'success');
       hapticFeedback('success');
       window.burstParticles('stamp');
+      if (tipo === 'Ingresso') {
+        localStorage.setItem('last_in_time', Date.now().toString());
+        checkNotificationPermission();
+      } else {
+        localStorage.removeItem('last_in_time');
+      }
+    } catch (err) {
+      console.warn('Errore salvataggio online, provo offline:', err);
+      salvaOffline(payload);
     }
+
     await caricaImpostazioni(); 
     await aggiornaStatoUI();
+  }
+
+  function salvaOffline(payload) {
+    const pending = JSON.parse(localStorage.getItem('pending_stamps') || '[]');
+    pending.push(payload);
+    localStorage.setItem('pending_stamps', JSON.stringify(pending));
+
+    toast('💾 Offline! Salvato sul telefono. Sincronizzerò appena torni online.', 'warning');
+    hapticFeedback('medium');
+    window.burstParticles('stamp');
+
+    if (payload.tipo === 'Ingresso') {
+      localStorage.setItem('last_in_time', Date.now().toString());
+      checkNotificationPermission();
+    } else {
+      localStorage.removeItem('last_in_time');
+    }
+
+    aggiornaStatoUI(); // Aggiorna UI basandosi su quello che abbiamo appena fatto
+    updateSyncBadge();
+  }
+
+  async function syncOfflineStamps() {
+    const pending = JSON.parse(localStorage.getItem('pending_stamps') || '[]');
+    if (pending.length === 0) return;
+
+    toast('🔄 Sincronizzazione timbrature offline...', 'info');
+    let successCount = 0;
+    const stillPending = [];
+
+    for (const payload of pending) {
+      try {
+        const { error } = await sb.from('timbrature').insert(payload);
+        if (error) throw error;
+        successCount++;
+      } catch (err) {
+        console.error('Errore sync stamp:', err);
+        stillPending.push(payload);
+      }
+    }
+
+    localStorage.setItem('pending_stamps', JSON.stringify(stillPending));
+    if (successCount > 0) {
+      toast(`✅ Sincronizzate ${successCount} timbrature!`, 'success');
+      hapticFeedback('success');
+      await aggiornaStatoUI();
+    }
+    updateSyncBadge();
+  }
+
+  function updateSyncBadge() {
+    const pending = JSON.parse(localStorage.getItem('pending_stamps') || '[]');
+    const badge = document.getElementById('sync-badge');
+    if (!badge) return;
+
+    if (pending.length > 0) {
+      badge.textContent = `⏳ ${pending.length} da sincr.`;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
   }
 
   // ── AUTH ──────────────────────────────────────────────────────────────────
@@ -1033,11 +1110,26 @@
 
   // ── STATO UI ──────────────────────────────────────────────────────────────
   async function aggiornaStatoUI() {
+    // Prima controlliamo se ci sono timbrature offline più recenti
+    const pending = JSON.parse(localStorage.getItem('pending_stamps') || '[]');
+    let lastOffline = null;
+    if (pending.length > 0) {
+      lastOffline = pending[pending.length - 1];
+    }
+
     const { data: byId }   = await sb.from('timbrature').select('tipo,ora,data,id').eq('user_id', currentUser.id).order('id',{ascending:false}).limit(1).maybeSingle();
     const { data: byNome } = await sb.from('timbrature').select('tipo,ora,data,id').eq('nome', currentUser.nome).is('user_id', null).order('id',{ascending:false}).limit(1).maybeSingle();
     let data = null;
     if (byId && byNome) data = byId.id >= byNome.id ? byId : byNome;
     else data = byId || byNome;
+
+    // Se abbiamo una timbratura offline più recente (per data/ora), usiamo quella per la UI
+    if (lastOffline) {
+      if (!data || new Date(lastOffline.created_at) > (data.id ? new Date(data.created_at || 0) : new Date(0))) {
+        data = lastOffline;
+      }
+    }
+
     const dentro   = data && data.tipo === 'Ingresso';
     const banner   = document.getElementById('stato-banner');
     const topbadge = document.getElementById('topbar-stato');
@@ -1092,6 +1184,55 @@
     console.log('✅ Precaricamento completato');
   }
 
+  // ── NOTIFICHE ─────────────────────────────────────────────────────────────
+  async function checkNotificationPermission() {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    }
+    return false;
+  }
+
+  function showNotification(title, body) {
+    if (Notification.permission === 'granted') {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification(title, {
+          body,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          vibrate: [200, 100, 200],
+          tag: 'timbratura-notif'
+        });
+      });
+    }
+  }
+
+  function checkReminder() {
+    const cu = JSON.parse(localStorage.getItem('cu'));
+    if (!cu) return;
+
+    // Controlliamo se siamo "dentro" da molto tempo
+    const lastStato = document.getElementById('topbar-stato');
+    if (lastStato && lastStato.classList.contains('dentro')) {
+      // Per semplicità usiamo l'ora di sistema se l'app è aperta
+      // o potremmo persistere l'ora di ingresso in localStorage
+      const oraIngresso = localStorage.getItem('last_in_time');
+      if (oraIngresso) {
+        const diff = Date.now() - parseInt(oraIngresso);
+        const ore = diff / (1000 * 60 * 60);
+
+        if (ore > 4 && !localStorage.getItem('reminder_sent')) {
+          showNotification('🔔 Sei ancora in oratorio?', 'Ricordati di segnare l\'uscita quando finisci il tuo turno!');
+          localStorage.setItem('reminder_sent', 'true');
+        }
+      }
+    } else {
+      localStorage.removeItem('reminder_sent');
+    }
+  }
+
   // ── MOSTRA APP ────────────────────────────────────────────────────────────
   function mostraQRBanner(tipo) {
     const qrBanner = document.getElementById('qr-confirm-banner');
@@ -1139,11 +1280,17 @@
     
     // Preload dati in background
     preloadUserData().catch(console.warn);
+    updateSyncBadge();
     
     const pendingQa = localStorage.getItem('pqa');
     if (pendingQa) { localStorage.removeItem('pqa'); mostraQRBanner(pendingQa); }
     
-    setInterval(async () => { if (!currentUser) return; await caricaImpostazioni(); await aggiornaStatoUI(); }, 30000);
+    setInterval(async () => {
+      if (!currentUser) return;
+      await caricaImpostazioni();
+      await aggiornaStatoUI();
+      checkReminder();
+    }, 30000);
   }
 
   // ── DISPONIBILITÀ (con cache) ─────────────────────────────────────────────
