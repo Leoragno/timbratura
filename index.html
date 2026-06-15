@@ -15,23 +15,31 @@
   </div>
 
 <script>
-  const supabase = window.supabase.createClient('TUA_URL_SUPABASE', 'TUA_ANON_KEY');
+  const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
   async function registra() {
     const nome = document.getElementById('nome').value.trim();
     const pass = document.getElementById('pass').value.trim();
+    if (!nome || !pass) { alert("Inserisci nome e password"); return; }
     
-    // Inseriamo direttamente nel database senza auth
-    const { error } = await supabase.from('utenti').insert([{ nome, password: pass }]);
+    const { error } = await supabase.from('utenti').insert([{
+      nome,
+      password: pass,
+      privacy_accepted: true,
+      privacy_accepted_at: new Date().toISOString(),
+      privacy_version: '1.0'
+    }]);
     if (error) alert("Errore: " + error.message);
-    else alert("Registrato con successo!");
+    else alert("Registrato con successo! Ora puoi entrare.");
   }
 
   async function accedi() {
     const nome = document.getElementById('nome').value.trim();
     const pass = document.getElementById('pass').value.trim();
+    if (!nome || !pass) { alert("Inserisci nome e password"); return; }
 
-    // Verifichiamo nel database
     const { data, error } = await supabase
       .from('utenti')
       .select('*')
@@ -40,7 +48,7 @@
       .maybeSingle();
 
     if (data) {
-      localStorage.setItem('animatore', JSON.stringify(data));
+      localStorage.setItem('cu', JSON.stringify(data));
       window.location.href = 'timbratura.html';
     } else {
       alert("Credenziali errate.");
