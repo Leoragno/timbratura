@@ -891,10 +891,8 @@
     }
     
     // 3. Procedi con il salvataggio
-    const now = new Date();
-    const data = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
     const ora = now.toTimeString().slice(0,5);
-    const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data, ora, tipo, created_at: now.toISOString() });
+    const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data: oggiStr, ora, tipo, created_at: now.toISOString() });
     
     if (error) {
       toast('Errore: ' + error.message, 'error');
