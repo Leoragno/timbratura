@@ -189,6 +189,11 @@
       transform: scale(0.97);
       transition: transform 0.12s ease;
     }
+
+    /* NOTIFICATION BANNER */
+    #notification-banner { display: none; background: var(--accent-lt); border: 1px solid #b2ccbc; border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; font-size: 11px; color: var(--accent); line-height: 1.6; }
+    #notification-banner.show { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .notif-btn { background: var(--accent); color: #fff; border: none; border-radius: 3px; padding: 6px 12px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -286,6 +291,13 @@
           <strong>📍 Posizione richiesta</strong><br>
           Per timbrare devi essere nei pressi dell'oratorio.<br>
           <small>Consenti la geolocalizzazione quando richiesto.</small>
+        </div>
+        <div id="notification-banner">
+          <div>
+            <strong>🔔 Attiva le notifiche</strong><br>
+            Per ricevere promemoria e avvisi importanti.
+          </div>
+          <button class="notif-btn" id="enable-notif-btn">Attiva</button>
         </div>
         <div style="display:flex; flex-direction:column; gap:10px;">
           <button class="btn btn-green" id="btn-in">⬆ INGRESSO</button>
@@ -491,6 +503,102 @@
         }
       }
     }, 30000);
+  }
+
+  // ── NOTIFICATIONS & BADGING ───────────────────────────────────────────────
+  window.requestNotificationPermission = requestNotificationPermission;
+  async function requestNotificationPermission() {
+    if (!('Notification' in window)) return;
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      toast('🔔 Notifiche attivate!', 'success');
+      document.getElementById('notification-banner').classList.remove('show');
+    }
+  }
+
+  window.updateAppBadge = updateAppBadge;
+  function updateAppBadge(count) {
+    if ('setAppBadge' in navigator) {
+      if (count > 0) navigator.setAppBadge(count).catch(console.error);
+      else navigator.clearAppBadge().catch(console.error);
+    }
+  }
+
+  let reminderInterval = null;
+
+  function startReminderChecks(lastEntry) {
+    stopReminderChecks();
+    // Controllo ogni minuto
+    reminderInterval = setInterval(() => checkReminders(lastEntry), 60000);
+    checkReminders(lastEntry);
+  }
+
+  function stopReminderChecks() {
+    if (reminderInterval) {
+      clearInterval(reminderInterval);
+      reminderInterval = null;
+    }
+  }
+
+  window.checkReminders = checkReminders;
+  function checkReminders(lastEntry) {
+    const now = new Date();
+
+    // 1. Promemoria USCITA (se dentro da più di 4 ore)
+    if (lastEntry && lastEntry.tipo === 'Ingresso') {
+      const entryTime = new Date(lastEntry.created_at);
+      const diffMs = now - entryTime;
+      const FOUR_HOURS = 4 * 60 * 60 * 1000;
+
+      if (diffMs > FOUR_HOURS) {
+        // Mostra notifica solo se non ne abbiamo mostrata una di recente (evita spam)
+        const lastNotif = localStorage.getItem('last_notif_uscita');
+        if (!lastNotif || (now - new Date(lastNotif) > 30 * 60 * 1000)) {
+          showNotification('Dimenticato di timbrare?', 'Sei ancora in oratorio? Ricordati di timbrare l\'uscita se hai finito!');
+          localStorage.setItem('last_notif_uscita', now.toISOString());
+        }
+      }
+    }
+
+    // 2. Promemoria INGRESSO (se mattina e non ancora entrato)
+    const ore = now.getHours();
+    const giornoSettimana = now.getDay(); // 0=Dom, 1=Lun, ..., 5=Ven, 6=Sab
+
+    // Solo dal lunedì al venerdì, tra le 8:30 e le 10:00
+    if (giornoSettimana >= 1 && giornoSettimana <= 5 && ore >= 8 && ore < 10) {
+      const oggiStr = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+      const giaEntratoOggi = lastEntry && lastEntry.data === oggiStr;
+
+      if (!giaEntratoOggi) {
+        const lastNotif = localStorage.getItem('last_notif_ingresso');
+        if (!lastNotif || (now - new Date(lastNotif) > 60 * 60 * 1000)) {
+          showNotification('Buongiorno!', 'Ricordati di timbrare l\'ingresso in oratorio!');
+          localStorage.setItem('last_notif_ingresso', now.toISOString());
+        }
+      }
+    }
+  }
+
+  async function showNotification(title, body) {
+    if (Notification.permission === 'granted') {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification(title, {
+        body: body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: 'reminder-uscita',
+        renotify: true
+      });
+    }
+  }
+
+  window.checkNotificationPermission = checkNotificationPermission;
+  function checkNotificationPermission() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      document.getElementById('notification-banner').classList.add('show');
+      document.getElementById('enable-notif-btn').onclick = requestNotificationPermission;
+    }
   }
 
   // Funzione per aggiungere i suggerimenti GPS
@@ -1046,12 +1154,15 @@
       if (topbadge) { topbadge.className='topbar-stato dentro'; topbadge.textContent='🟢 Dentro'; }
       if (btnIn)  { btnIn.disabled=true;  btnIn.style.opacity='0.35'; btnIn.title='Sei già dentro'; }
       if (btnOut) { btnOut.disabled=false; btnOut.style.opacity='1'; btnOut.title=''; }
+      updateAppBadge(1);
     } else {
       if (banner) { banner.className='stato-banner fuori'; const sub=data?'Ultima uscita: '+data.ora+' del '+data.data:'Nessuna timbratura'; banner.innerHTML='<span class="stato-icon">🔴</span><span class="stato-label">Sei fuori</span><span class="stato-sub">'+sub+'</span>'; }
       if (topbadge) { topbadge.className='topbar-stato fuori'; topbadge.textContent='🔴 Fuori'; }
       if (btnIn)  { btnIn.disabled=false;  btnIn.style.opacity='1'; btnIn.title=''; }
       if (btnOut) { btnOut.disabled=true;  btnOut.style.opacity='0.35'; btnOut.title='Devi prima entrare'; }
+      updateAppBadge(0);
     }
+    startReminderChecks(data);
     if (!ingressoAperto) { btnIn.disabled=true;  btnIn.style.opacity='0.35'; }
     if (!uscitaAperta)   { btnOut.disabled=true; btnOut.style.opacity='0.35'; }
   }
@@ -1114,7 +1225,9 @@
     
     // Aggiungi suggerimenti GPS
     addGpsTips();
-    
+
+    // Controlla permessi notifiche
+    checkNotificationPermission();
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
     document.getElementById('refresh-app-btn').onclick = async () => {
