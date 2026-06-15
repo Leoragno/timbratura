@@ -256,6 +256,7 @@
   <div class="topbar">
     <div class="topbar-title">tim<em>bratura</em></div>
     <div class="topbar-right">
+      <button id="refresh-app-btn" style="background:transparent; border:none; cursor:pointer; font-size:16px; margin-right:5px;">↻</button>
       <span class="topbar-user" id="topbar-user"></span>
       <span class="topbar-stato fuori" id="topbar-stato">⚪ Fuori</span>
       <button class="btn-primary" id="logout-btn" style="padding:4px 8px; font-size:10px; background:transparent; border:1px solid var(--border); color:var(--ink3);">Esci</button>
@@ -263,6 +264,7 @@
   </div>
   <div class="tab-nav">
     <button class="tab-btn active" data-tab="tab-timbratura">⏱ Timbratura</button>
+    <button class="tab-btn" data-tab="tab-storico">📜 Storico</button>
     <button class="tab-btn" data-tab="tab-disponibilita">📅 Disponibilità</button>
   </div>
   <div class="tab-panel active" id="tab-timbratura">
@@ -290,6 +292,16 @@
           <button class="btn btn-red" id="btn-out">⬇ USCITA</button>
         </div>
         <div id="gps-debug" style="margin-top:16px; font-size:10px; color:var(--ink3); border-top:1px solid var(--border); padding-top:12px; display:none;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-storico">
+    <div class="main-panel">
+      <div class="card">
+        <h3 style="font-family: var(--font-serif); font-size: 20px; margin-bottom: 16px;">Le tue ultime timbrature</h3>
+        <div id="storico-list">
+          <div class="empty-state">⏳ Caricamento storico...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -355,12 +367,12 @@
 
   // Configurazione GPS migliorata
   const GPS_CONFIG = {
-    MAX_WAIT_TIME: 15000,
-    FIRST_READING_TIMEOUT: 5000,
-    REFINEMENT_TIMEOUT: 10000,
-    GOOD_ACCURACY_THRESHOLD: 50,
-    ACCEPTABLE_ACCURACY: 150,
-    DISTANCE_BUFFER: 30
+    MAX_WAIT_TIME: 20000,
+    FIRST_READING_TIMEOUT: 6000,
+    REFINEMENT_TIMEOUT: 12000,
+    GOOD_ACCURACY_THRESHOLD: 40,
+    ACCEPTABLE_ACCURACY: 120,
+    DISTANCE_BUFFER: 40
   };
 
   // Cache per preload
@@ -682,18 +694,20 @@
       const acc = Math.round(finalPos.coords.accuracy);
       
       const maxDistanzaConBuffer = maxDistanza + GPS_CONFIG.DISTANCE_BUFFER;
+      // Se la precisione è scarsa (> 150m), siamo più flessibili ma avvisiamo
+      const precisioneScarsa = acc > 150;
       const isWithinRange = dist <= maxDistanzaConBuffer;
-      const isCloseEnough = dist <= maxDistanzaConBuffer + acc;
+      const isCloseEnough = dist <= maxDistanzaConBuffer + (precisioneScarsa ? acc * 0.7 : acc);
       
       if (debugDiv) {
         debugDiv.innerHTML = `📍 ${motivo}<br>
-                           📍 Distanza: ${Math.round(dist)}m (max: ${maxDistanzaConBuffer}m)<br>
+                           📍 Distanza: ${Math.round(dist)}m (limite: ${maxDistanza}m)<br>
                            🎯 Precisione: ±${acc}m<br>
                            📊 Letture: ${allPositions.length}`;
       }
       
       if (!isWithinRange && !isCloseEnough) {
-        toast('❌ Sei a ' + Math.round(dist) + 'm dall\'oratorio (max ' + maxDistanza + 'm)', 'error');
+        toast('❌ Sei troppo lontano (' + Math.round(dist) + 'm). Avvicinati all\'oratorio.', 'error');
         hapticFeedback('error');
         stampBusy = false; 
         if (btn) btn.disabled = false; 
@@ -701,7 +715,7 @@
       }
       
       if (!isWithinRange && isCloseEnough) {
-        toast(`⚠️ Posizione approssimativa (${Math.round(dist)}m). Timbratura consentita.`, 'warning');
+        toast(`⚠️ Posizione rilevata con bassa precisione. Timbratura accettata.`, 'warning');
       }
       
       salvaTimbratura(tipo).then(() => { 
@@ -803,9 +817,12 @@
 
   // ── SALVATAGGIO TIMBRATURA con controlli anti-frode ───────────────────────
   async function salvaTimbratura(tipo) {
+    const now = new Date();
+    const oggiStr = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+
     // 1. Controllo duplicati recenti
     const { data: ultime } = await sb.from('timbrature')
-      .select('tipo, created_at')
+      .select('tipo, created_at, data, ora')
       .eq('user_id', currentUser.id)
       .order('created_at', { ascending: false })
       .limit(5);
@@ -823,7 +840,7 @@
         return;
       }
       
-      // BLOCCO 2: pattern sospetto (IN-OUT-IN in meno di 3 minuti)
+      // BLOCCO 2: pattern sospetto (IN-OUT-IN in meno di 5 minuti)
       if (ultime.length >= 3) {
         const ultimiTre = ultime.slice(0, 3).map(t => t.tipo);
         const pattern = ultimiTre.join('-');
@@ -831,24 +848,43 @@
         if (pattern === 'Uscita-Ingresso-Uscita' || pattern === 'Ingresso-Uscita-Ingresso') {
           const timeSpan = new Date(ultime[0].created_at) - new Date(ultime[2].created_at);
           if (Math.abs(timeSpan) < 5 * 60 * 1000) {
-            toast('⚠️ Pattern sospetto rilevato. Contatta l\'amministratore.', 'error');
+            toast('⚠️ Operazioni troppo frequenti. Attendi qualche minuto.', 'warning');
             hapticFeedback('heavy');
-            return;
+            // Non blocchiamo necessariamente se è un errore genuino, ma avvisiamo
           }
         }
       }
     }
     
     // 2. Controllo sequenza logica
-    if (tipo === 'Ingresso') {
-      if (ultime[0]?.tipo === 'Ingresso') {
-        toast('❌ Sei già dentro! Fai USCITA prima di rientrare.', 'error');
-        hapticFeedback('error');
-        return;
+    if (ultime && ultime.length > 0) {
+      const ultima = ultime[0];
+      const stessaGiornata = ultima.data === oggiStr;
+
+      if (tipo === 'Ingresso') {
+        if (ultima.tipo === 'Ingresso' && stessaGiornata) {
+          toast('❌ Risulti già entrato oggi alle ' + ultima.ora, 'error');
+          hapticFeedback('error');
+          return;
+        }
+        // Se l'ultima timbratura era un Ingresso ma di un altro giorno, permettiamo il nuovo ingresso
+        // (l'animatore si è dimenticato di segnare l'uscita il giorno precedente)
+      } else if (tipo === 'Uscita') {
+        if (ultima.tipo === 'Uscita' && stessaGiornata) {
+          toast('❌ Risulti già uscito oggi alle ' + ultima.ora, 'error');
+          hapticFeedback('error');
+          return;
+        }
+        if (ultima.tipo !== 'Ingresso') {
+          toast('❌ Non puoi uscire senza essere entrato!', 'error');
+          hapticFeedback('error');
+          return;
+        }
       }
-    } else if (tipo === 'Uscita') {
-      if (ultime[0]?.tipo !== 'Ingresso') {
-        toast('❌ Non puoi uscire senza essere entrato prima!', 'error');
+    } else {
+      // Prima timbratura in assoluto: deve essere un Ingresso
+      if (tipo === 'Uscita') {
+        toast('❌ Prima di uscire devi effettuare il primo ingresso.', 'error');
         hapticFeedback('error');
         return;
       }
@@ -1083,6 +1119,15 @@
     
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
+    document.getElementById('refresh-app-btn').onclick = async () => {
+      hapticFeedback('light');
+      animateButton(document.getElementById('refresh-app-btn'));
+      toast('Aggiornamento dati...', 'info');
+      await caricaImpostazioni();
+      await aggiornaStatoUI();
+      if (document.getElementById('tab-storico').classList.contains('active')) caricaStorico();
+      if (document.getElementById('tab-disponibilita').classList.contains('active')) caricaDisponibilita();
+    };
     
     // Controlla scadenza consenso
     if (currentUser && !currentUser.privacy_accepted) {
@@ -1201,8 +1246,43 @@
       const target = b.dataset.tab;
       document.getElementById(target).classList.add('active');
       if (target === 'tab-disponibilita') caricaDisponibilita();
+      if (target === 'tab-storico') caricaStorico();
     };
   });
+
+  async function caricaStorico() {
+    const container = document.getElementById('storico-list');
+    container.innerHTML = '<div class="empty-state">⏳ Caricamento...</div>';
+
+    const { data, error } = await sb.from('timbrature')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (error) {
+      container.innerHTML = '<div class="empty-state">Errore nel caricamento dello storico.</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state">Non hai ancora effettuato timbrature.</div>';
+      return;
+    }
+
+    container.innerHTML = data.map(t => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 20px;">${t.tipo === 'Ingresso' ? '🟢' : '🔴'}</span>
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">${t.tipo}</div>
+            <div style="font-size: 11px; color: var(--ink3);">${t.data}</div>
+          </div>
+        </div>
+        <div style="font-family: var(--font-mono); font-weight: 600; color: var(--accent);">${t.ora}</div>
+      </div>
+    `).join('');
+  }
 
   // ── INIT ──────────────────────────────────────────────────────────────────
   const saved = localStorage.getItem('cu');
