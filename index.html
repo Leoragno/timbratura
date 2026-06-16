@@ -2,50 +2,241 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login Animatori</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#2d4a3e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Timbratura" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f2eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      max-width: 380px;
+      width: 100%;
+      border: 1px solid #d8d2c4;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #1a1714;
+    }
+    .sub {
+      color: #5a5148;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #5a5148;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d8d2c4;
+      border-radius: 6px;
+      font-size: 15px;
+      margin-bottom: 16px;
+      background: #f5f2eb;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #2d4a3e;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 10px;
+    }
+    .btn-primary {
+      background: #2d4a3e;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #1f3329;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #2d4a3e;
+      border: 1px solid #2d4a3e;
+    }
+    .btn-secondary:hover {
+      background: #e8f0ec;
+    }
+    .error {
+      color: #8b2e2e;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+    .toggle {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #5a5148;
+    }
+    .toggle a {
+      color: #2d4a3e;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <div id="auth-screen">
-    <h2>Accesso Animatore</h2>
-    <input type="text" id="nome" placeholder="Nome e Cognome">
-    <input type="password" id="pass" placeholder="Password (PIN)">
-    <button onclick="accedi()">ENTRA</button>
-    <button onclick="registra()">REGISTRATI</button>
+  <div class="container">
+    <h1>👋 Ciao!</h1>
+    <p class="sub">Accedi per timbrare la presenza</p>
+    
+    <div id="login-form">
+      <label>Nome e Cognome</label>
+      <input type="text" id="login-nome" placeholder="es. Mario Rossi" />
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" />
+      <button class="btn btn-primary" id="login-btn">Entra →</button>
+      <div class="error" id="login-error">Credenziali non valide. Riprova.</div>
+      <div class="toggle">Non hai un account? <a id="show-register">Registrati</a></div>
+    </div>
+
+    <div id="register-form" style="display:none;">
+      <label>Nome e Cognome</label>
+      <input type="text" id="reg-nome" placeholder="es. Mario Rossi" />
+      <label>Anno di nascita</label>
+      <input type="number" id="reg-anno" placeholder="2008" />
+      <label>Password (min. 4 caratteri)</label>
+      <input type="password" id="reg-pass" placeholder="••••••••" />
+      <div style="margin-bottom:12px;">
+        <input type="checkbox" id="reg-consent" />
+        <label for="reg-consent" style="display:inline;font-size:12px;">Accetto l'informativa privacy</label>
+      </div>
+      <button class="btn btn-primary" id="register-btn">Registrati</button>
+      <div class="error" id="register-error"></div>
+      <div class="toggle">Hai già un account? <a id="show-login">Accedi</a></div>
+    </div>
   </div>
 
-<script>
-  const supabase = window.supabase.createClient('TUA_URL_SUPABASE', 'TUA_ANON_KEY');
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function() {
+      const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
+      const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+      const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
-  async function registra() {
-    const nome = document.getElementById('nome').value.trim();
-    const pass = document.getElementById('pass').value.trim();
-    
-    // Inseriamo direttamente nel database senza auth
-    const { error } = await supabase.from('utenti').insert([{ nome, password: pass }]);
-    if (error) alert("Errore: " + error.message);
-    else alert("Registrato con successo!");
-  }
+      function showError(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+      }
 
-  async function accedi() {
-    const nome = document.getElementById('nome').value.trim();
-    const pass = document.getElementById('pass').value.trim();
+      document.getElementById('show-register').onclick = () => {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('register-form').style.display = 'block';
+      };
 
-    // Verifichiamo nel database
-    const { data, error } = await supabase
-      .from('utenti')
-      .select('*')
-      .eq('nome', nome)
-      .eq('password', pass)
-      .maybeSingle();
+      document.getElementById('show-login').onclick = () => {
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+      };
 
-    if (data) {
-      localStorage.setItem('animatore', JSON.stringify(data));
-      window.location.href = 'timbratura.html';
-    } else {
-      alert("Credenziali errate.");
-    }
-  }
-</script>
+      document.getElementById('login-btn').onclick = async () => {
+        const nome = document.getElementById('login-nome').value.trim();
+        const pass = document.getElementById('login-pass').value.trim();
+        if (!nome || !pass) { showError('login-error', 'Compila tutti i campi.'); return; }
+
+        const { data, error } = await sb.from('utenti').select('*').eq('nome', nome).eq('password', pass).maybeSingle();
+        if (error || !data) { showError('login-error', 'Credenziali non valide.'); return; }
+
+        localStorage.setItem('cu', JSON.stringify(data));
+        window.location.href = '/timbratura.html';
+      };
+
+      document.getElementById('register-btn').onclick = async () => {
+        const nome = document.getElementById('reg-nome').value.trim();
+        const anno = parseInt(document.getElementById('reg-anno').value);
+        const pass = document.getElementById('reg-pass').value.trim();
+        const consenso = document.getElementById('reg-consent').checked;
+
+        if (!consenso) { showError('register-error', 'Devi accettare l\'informativa privacy.'); return; }
+        if (!nome || !pass) { showError('register-error', 'Compila tutti i campi.'); return; }
+        if (pass.length < 4) { showError('register-error', 'La password deve avere almeno 4 caratteri.'); return; }
+
+        const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
+        if (exist) { showError('register-error', 'Questo nome è già registrato.'); return; }
+
+        const { error } = await sb.from('utenti').insert([{
+          nome,
+          password: pass,
+          anno: anno || null,
+          privacy_accepted: true,
+          privacy_accepted_at: new Date().toISOString(),
+          privacy_version: '1.0'
+        }]);
+
+        if (error) { showError('register-error', 'Errore durante la registrazione.'); return; }
+
+        alert('✅ Registrazione completata! Ora puoi accedere.');
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+        document.getElementById('login-nome').value = nome;
+        document.getElementById('login-pass').value = pass;
+      };
+
+      document.getElementById('login-pass').addEventListener('keypress', e => {
+        if (e.key === 'Enter') document.getElementById('login-btn').click();
+      });
+      document.getElementById('reg-pass').addEventListener('keypress', e => {
+        if (e.key === 'Enter') document.getElementById('register-btn').click();
+      });
+
+      // Se l'utente è già loggato, reindirizza
+      const saved = localStorage.getItem('cu');
+      if (saved) {
+        try {
+          const user = JSON.parse(saved);
+          if (user && user.nome) {
+            window.location.href = '/timbratura.html';
+          }
+        } catch(e) {}
+      }
+
+      // Controlla se c'è un QR in sospeso
+      const pendingQa = localStorage.getItem('pqa');
+      if (pendingQa) {
+        // Mostra un messaggio all'utente
+        const sub = document.querySelector('.sub');
+        const tipo = pendingQa === 'Ingresso' ? 'ingresso' : 'uscita';
+        sub.textContent = `📱 QR ${tipo} rilevato! Accedi per timbrare.`;
+        sub.style.color = '#2d4a3e';
+        sub.style.fontWeight = '600';
+      }
+    })();
+  </script>
 </body>
 </html>
