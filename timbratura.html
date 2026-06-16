@@ -227,7 +227,7 @@
 <div id="auth-screen">
   <div class="auth-card" id="login-card">
     <div class="auth-title">Accedi all'<em>Oratorio</em></div>
-    <div class="qr-alert" id="qr-alert-login" style="display:none; background:var(--accent-lt); color:var(--accent); border:1px solid #b2ccbc; padding:10px; border-radius:4px; margin-bottom:14px; text-align:center;">📱 QR Code rilevato! Accedi per timbrare.</div>
+    <div class="qr-alert" id="qr-alert-login" style="display:none; background:var(--accent-lt); color:var(--accent); border:1px solid #b2ccbc; padding:10px; border-radius:4px; margin-bottom:14px; text-align:center;"></div>
     <label>👤 Nome e Cognome</label>
     <input type="text" id="login-nome" placeholder="Mario Rossi" autocomplete="off" />
     <label>🔐 Password</label>
@@ -376,6 +376,8 @@
   let ingressoAperto = true, uscitaAperta = true, geoAbilitata = true;
   let oratorioLat = 45.706869, oratorioLon = 8.800464, maxDistanza = 150;
   let stampBusy = false, dispChiuse = {};
+  let qrModeActive = false;
+  let qrPendingTipo = null;
 
   // Configurazione GPS migliorata
   const GPS_CONFIG = {
@@ -409,18 +411,13 @@
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
 
-  // ── HAPTIC FEEDBACK (vibrazione mobile) ───────────────────────────────────
+  // ── HAPTIC FEEDBACK ───────────────────────────────────────────────────────
   function hapticFeedback(type = 'light') {
     if (!window.navigator?.vibrate) return;
-    
     const patterns = {
-      'light': 20,
-      'medium': 50,
-      'heavy': 100,
-      'success': [50, 30, 50],
-      'error': [100, 50, 100]
+      'light': 20, 'medium': 50, 'heavy': 100,
+      'success': [50, 30, 50], 'error': [100, 50, 100]
     };
-    
     const pattern = patterns[type] || patterns.light;
     window.navigator.vibrate(pattern);
   }
@@ -428,9 +425,7 @@
   function animateButton(button) {
     if (!button) return;
     button.style.transform = 'scale(0.97)';
-    setTimeout(() => {
-      button.style.transform = '';
-    }, 120);
+    setTimeout(() => { button.style.transform = ''; }, 120);
   }
 
   // ── CONNECTION INDICATOR ──────────────────────────────────────────────────
@@ -438,29 +433,19 @@
 
   function updateConnectionStatus(status) {
     if (!connectionIndicator) return;
-    
     let color, text, bgColor;
-    
     if (status === 'online' || (status === undefined && navigator.onLine)) {
-      color = '#2d5a3d';
-      bgColor = '#e5f2ea';
-      text = '🟢 Connesso';
+      color = '#2d5a3d'; bgColor = '#e5f2ea'; text = '🟢 Connesso';
     } else if (status === 'slow') {
-      color = '#7a5c1e';
-      bgColor = '#fdf3dc';
-      text = '🟡 Connessione lenta';
+      color = '#7a5c1e'; bgColor = '#fdf3dc'; text = '🟡 Connessione lenta';
     } else {
-      color = '#8b2e2e';
-      bgColor = '#f5e8e8';
-      text = '🔴 Offline';
+      color = '#8b2e2e'; bgColor = '#f5e8e8'; text = '🔴 Offline';
     }
-    
     connectionIndicator.style.backgroundColor = bgColor;
     connectionIndicator.style.color = color;
     connectionIndicator.style.border = `1px solid ${color}40`;
     connectionIndicator.textContent = text;
     connectionIndicator.style.opacity = '1';
-    
     if (status === 'online' || navigator.onLine) {
       setTimeout(() => {
         if (connectionIndicator && navigator.onLine) {
@@ -474,19 +459,15 @@
     connectionIndicator = document.createElement('div');
     connectionIndicator.id = 'connection-indicator';
     document.body.appendChild(connectionIndicator);
-    
     updateConnectionStatus();
-    
     window.addEventListener('online', () => {
       updateConnectionStatus('online');
       toast('📶 Connessione ripristinata', 'success');
     });
-    
     window.addEventListener('offline', () => {
       updateConnectionStatus('offline');
       toast('⚠️ Sei offline. Le timbrature verranno salvate quando tornerai online.', 'error');
     });
-    
     setInterval(async () => {
       if (navigator.onLine) {
         try {
@@ -505,7 +486,7 @@
     }, 30000);
   }
 
-  // ── NOTIFICATIONS & BADGING ───────────────────────────────────────────────
+  // ── NOTIFICATIONS & BADGING ──────────────────────────────────────────────
   const VAPID_PUBLIC_KEY = 'BJJ7e6fpdULY2kA_Fm-pD95CLSE2uqclhPsJPvFtzz55pYjmqOW1Pn1buihWjmntsUPG9YkQbCei0Hu-n21DBx0';
 
   function urlBase64ToUint8Array(base64String) {
@@ -533,14 +514,12 @@
   async function subscribeUserToPush() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     if (!currentUser) return;
-
     try {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-
       console.log('Push Subscription:', subscription);
       await savePushSubscription(subscription);
     } catch (error) {
@@ -551,12 +530,10 @@
   async function savePushSubscription(subscription) {
     if (!currentUser) return;
     try {
-      // Invia la sottoscrizione a Supabase
       const { error } = await sb.from('push_subscriptions').upsert({
         user_id: currentUser.id,
         subscription_json: subscription
       }, { onConflict: 'user_id' });
-
       if (error) throw error;
       console.log('Sottoscrizione push salvata con successo');
     } catch (error) {
@@ -576,7 +553,6 @@
 
   function startReminderChecks(lastEntry) {
     stopReminderChecks();
-    // Controllo ogni minuto
     reminderInterval = setInterval(() => checkReminders(lastEntry), 60000);
     checkReminders(lastEntry);
   }
@@ -591,18 +567,12 @@
   window.checkReminders = checkReminders;
   function checkReminders(lastEntry) {
     const now = new Date();
-
-    // Controlla messaggi broadcast dall'admin
     checkBroadcastNotifications();
-
-    // 1. Promemoria USCITA (se dentro da più di 4 ore)
     if (lastEntry && lastEntry.tipo === 'Ingresso') {
       const entryTime = new Date(lastEntry.created_at);
       const diffMs = now - entryTime;
       const FOUR_HOURS = 4 * 60 * 60 * 1000;
-
       if (diffMs > FOUR_HOURS) {
-        // Mostra notifica solo se non ne abbiamo mostrata una di recente (evita spam)
         const lastNotif = localStorage.getItem('last_notif_uscita');
         if (!lastNotif || (now - new Date(lastNotif) > 30 * 60 * 1000)) {
           showNotification('Dimenticato di timbrare?', 'Sei ancora in oratorio? Ricordati di timbrare l\'uscita se hai finito!');
@@ -610,16 +580,11 @@
         }
       }
     }
-
-    // 2. Promemoria INGRESSO (se mattina e non ancora entrato)
     const ore = now.getHours();
-    const giornoSettimana = now.getDay(); // 0=Dom, 1=Lun, ..., 5=Ven, 6=Sab
-
-    // Solo dal lunedì al venerdì, tra le 8:30 e le 10:00
+    const giornoSettimana = now.getDay();
     if (giornoSettimana >= 1 && giornoSettimana <= 5 && ore >= 8 && ore < 10) {
       const oggiStr = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
       const giaEntratoOggi = lastEntry && lastEntry.data === oggiStr;
-
       if (!giaEntratoOggi) {
         const lastNotif = localStorage.getItem('last_notif_ingresso');
         if (!lastNotif || (now - new Date(lastNotif) > 60 * 60 * 1000)) {
@@ -633,13 +598,10 @@
   async function checkBroadcastNotifications() {
     if (!currentUser) return;
     try {
-      // Cerchiamo nella tabella impostazioni un eventuale messaggio broadcast
-      // Usiamo una chiave 'broadcast_msg' per messaggi istantanei
       const { data } = await sb.from('impostazioni').select('valore, updated_at').eq('chiave', 'broadcast_msg').maybeSingle();
       if (data && data.valore) {
         const lastRead = localStorage.getItem('last_broadcast_read');
         const msgId = data.updated_at;
-
         if (lastRead !== msgId) {
           showNotification('Messaggio Oratorio', data.valore);
           localStorage.setItem('last_broadcast_read', msgId);
@@ -673,11 +635,9 @@
     }
   }
 
-  // Funzione per aggiungere i suggerimenti GPS
   function addGpsTips() {
     const banner = document.getElementById('geo-banner');
     if (!banner) return;
-    
     const tips = document.createElement('div');
     tips.className = 'gps-tips';
     tips.innerHTML = `
@@ -733,7 +693,6 @@
       data = res.data;
       window._cachedImpostazioni = data;
     }
-    
     dispChiuse = {};
     if (data) data.forEach(row => {
       if (row.chiave === 'ingresso_aperto') ingressoAperto = row.valore === true || row.valore === 'true';
@@ -786,7 +745,6 @@
     stampBusy = true;
     if (btn) btn.disabled = true;
     
-    // Se GPS disabilitato o è uscita, salta controllo posizione
     if (!geoAbilitata || tipo === 'Uscita') {
       await salvaTimbratura(tipo); 
       stampBusy = false; 
@@ -830,23 +788,18 @@
       }
     }
 
-    // Calcola la migliore posizione da tutte le letture (media ponderata)
     function getBestPosition() {
       if (allPositions.length === 0) return bestPos;
-      
       const goodPositions = allPositions.filter(p => p.coords.accuracy < 200);
       if (goodPositions.length === 0) return bestPos;
-      
       let totalWeight = 0;
       let avgLat = 0, avgLon = 0;
-      
       goodPositions.forEach(p => {
         const weight = 1 / Math.max(p.coords.accuracy, 1);
         totalWeight += weight;
         avgLat += p.coords.latitude * weight;
         avgLon += p.coords.longitude * weight;
       });
-      
       if (totalWeight > 0) {
         return {
           coords: {
@@ -872,18 +825,13 @@
         oratorioLon
       );
       const acc = Math.round(finalPos.coords.accuracy);
-      
       const maxDistanzaConBuffer = maxDistanza + GPS_CONFIG.DISTANCE_BUFFER;
-      // Se la precisione è scarsa (> 150m), siamo più flessibili ma avvisiamo
       const precisioneScarsa = acc > 150;
       const isWithinRange = dist <= maxDistanzaConBuffer;
       const isCloseEnough = dist <= maxDistanzaConBuffer + (precisioneScarsa ? acc * 0.7 : acc);
       
       if (debugDiv) {
-        debugDiv.innerHTML = `📍 ${motivo}<br>
-                           📍 Distanza: ${Math.round(dist)}m (limite: ${maxDistanza}m)<br>
-                           🎯 Precisione: ±${acc}m<br>
-                           📊 Letture: ${allPositions.length}`;
+        debugDiv.innerHTML = `📍 ${motivo}<br>📍 Distanza: ${Math.round(dist)}m (limite: ${maxDistanza}m)<br>🎯 Precisione: ±${acc}m<br>📊 Letture: ${allPositions.length}`;
       }
       
       if (!isWithinRange && !isCloseEnough) {
@@ -915,23 +863,18 @@
 
       watchId = navigator.geolocation.watchPosition(pos => {
         if (usata) return;
-        
         allPositions.push(pos);
-        
         if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) {
           bestPos = pos;
         }
-        
         if (debugDiv) {
           debugDiv.innerHTML = `📍 Raffinamento: ±${Math.round(pos.coords.accuracy)}m... (${allPositions.length} letture)`;
         }
-        
         if (pos.coords.accuracy <= GPS_CONFIG.GOOD_ACCURACY_THRESHOLD) {
           usaPosizioneFinale(pos, 'GPS preciso');
         } else if (allPositions.length >= 5 && pos.coords.accuracy <= GPS_CONFIG.ACCEPTABLE_ACCURACY) {
           usaPosizioneFinale(pos, 'Precisione accettabile dopo ' + allPositions.length + ' letture');
         }
-        
       }, (err) => {
         console.warn('WatchPosition error:', err);
         if (bestPos && !usata) {
@@ -944,23 +887,19 @@
       });
     }
 
-    // Fase 1: getCurrentPosition
     navigator.geolocation.getCurrentPosition(pos => {
       bestPos = pos;
       allPositions.push(pos);
       const acc = Math.round(pos.coords.accuracy);
-      
       if (debugDiv) {
         debugDiv.innerHTML = `📍 Prima lettura: ±${acc}m — raffino...`;
       }
-      
       if (acc <= GPS_CONFIG.GOOD_ACCURACY_THRESHOLD) {
         usaPosizioneFinale(pos, 'GPS preciso immediato');
       } else {
         toast('📍 Raffinamento GPS in corso...', 'info');
         avviaRaffinamento();
       }
-      
     }, (err) => {
       if (debugDiv) {
         let errMsg = 'Prima lettura fallita';
@@ -970,7 +909,6 @@
         debugDiv.innerHTML = `📍 ${errMsg}, avvio raffinamento...`;
       }
       avviaRaffinamento();
-      
       gpsTimer = setTimeout(() => {
         if (!usata) {
           if (allPositions.length > 0) {
@@ -987,7 +925,6 @@
           }
         }
       }, GPS_CONFIG.MAX_WAIT_TIME);
-      
     }, { 
       enableHighAccuracy: true, 
       timeout: GPS_CONFIG.FIRST_READING_TIMEOUT, 
@@ -1000,7 +937,6 @@
     const now = new Date();
     const oggiStr = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
 
-    // 1. Controllo duplicati recenti
     const { data: ultime } = await sb.from('timbrature')
       .select('tipo, created_at, data, ora')
       .eq('user_id', currentUser.id)
@@ -1012,7 +948,6 @@
       const diffMs = Date.now() - new Date(ultima.created_at).getTime();
       const diffSec = Math.floor(diffMs / 1000);
       
-      // BLOCCO 1: stesso tipo in meno di 2 minuti
       if (ultima.tipo === tipo && diffMs < 2 * 60 * 1000) {
         toast(`⚠️ Hai già timbrato ${tipo} ${diffSec} secondi fa. Attendi 2 minuti.`, 'error');
         hapticFeedback('error');
@@ -1020,23 +955,19 @@
         return;
       }
       
-      // BLOCCO 2: pattern sospetto (IN-OUT-IN in meno di 5 minuti)
       if (ultime.length >= 3) {
         const ultimiTre = ultime.slice(0, 3).map(t => t.tipo);
         const pattern = ultimiTre.join('-');
-        
         if (pattern === 'Uscita-Ingresso-Uscita' || pattern === 'Ingresso-Uscita-Ingresso') {
           const timeSpan = new Date(ultime[0].created_at) - new Date(ultime[2].created_at);
           if (Math.abs(timeSpan) < 5 * 60 * 1000) {
             toast('⚠️ Operazioni troppo frequenti. Attendi qualche minuto.', 'warning');
             hapticFeedback('heavy');
-            // Non blocchiamo necessariamente se è un errore genuino, ma avvisiamo
           }
         }
       }
     }
     
-    // 2. Controllo sequenza logica
     if (ultime && ultime.length > 0) {
       const ultima = ultime[0];
       const stessaGiornata = ultima.data === oggiStr;
@@ -1047,8 +978,6 @@
           hapticFeedback('error');
           return;
         }
-        // Se l'ultima timbratura era un Ingresso ma di un altro giorno, permettiamo il nuovo ingresso
-        // (l'animatore si è dimenticato di segnare l'uscita il giorno precedente)
       } else if (tipo === 'Uscita') {
         if (ultima.tipo === 'Uscita' && stessaGiornata) {
           toast('❌ Risulti già uscito oggi alle ' + ultima.ora, 'error');
@@ -1062,7 +991,6 @@
         }
       }
     } else {
-      // Prima timbratura in assoluto: deve essere un Ingresso
       if (tipo === 'Uscita') {
         toast('❌ Prima di uscire devi effettuare il primo ingresso.', 'error');
         hapticFeedback('error');
@@ -1070,7 +998,6 @@
       }
     }
     
-    // 3. Procedi con il salvataggio
     const ora = now.toTimeString().slice(0,5);
     const { error } = await sb.from('timbrature').insert({ user_id: currentUser.id, nome: currentUser.nome, anno: currentUser.anno || null, data: oggiStr, ora, tipo, created_at: now.toISOString() });
     
@@ -1149,10 +1076,8 @@
   // ── PRIVACY WALL con scadenza annuale ─────────────────────────────────────
   async function checkAndRenewConsent() {
     if (!currentUser) return true;
-    
     const lastAccept = currentUser.privacy_accepted_at || localStorage.getItem('privacy_last_accept');
     const now = new Date();
-    
     if (!lastAccept) {
       const today = now.toISOString();
       await sb.from('utenti').update({ 
@@ -1162,48 +1087,38 @@
       localStorage.setItem('privacy_last_accept', today);
       return true;
     }
-    
     const acceptDate = new Date(lastAccept);
     const oneYearLater = new Date(acceptDate);
     oneYearLater.setFullYear(acceptDate.getFullYear() + 1);
-    
     if (now > oneYearLater) {
       const wall = document.getElementById('privacy-wall');
       const wallTitle = wall.querySelector('h2');
       const wallText = wall.querySelector('p');
-      
       wallTitle.textContent = '🔒 Rinnovo Consenso Privacy';
       wallText.innerHTML = `Il tuo consenso è scaduto (${acceptDate.toLocaleDateString()}). Per continuare a utilizzare l'app, devi riaccettare l'informativa sul trattamento dei dati personali.`;
-      
       wall.style.display = 'flex';
       return false;
     }
-    
     return true;
   }
 
   window.accettaPrivacyWall = async function() {
     const now = new Date().toISOString();
-    
     const { error } = await sb.from('utenti').update({ 
       privacy_accepted: true,
       privacy_accepted_at: now,
       privacy_version: '1.0'
     }).eq('id', currentUser.id);
-    
     if (error) { 
       toast('Errore salvataggio consenso', 'error');
       return;
     }
-    
     currentUser.privacy_accepted = true;
     currentUser.privacy_accepted_at = now;
     localStorage.setItem('cu', JSON.stringify(currentUser));
     localStorage.setItem('privacy_last_accept', now);
-    
     document.getElementById('privacy-wall').style.display = 'none';
     toast('Consenso rinnovato. Grazie!', 'success');
-    
     const wall = document.getElementById('privacy-wall');
     wall.querySelector('h2').textContent = '🔒 Informativa Privacy';
     wall.querySelector('p').innerHTML = 'Prima di continuare, la Parrocchia San Giorgio di Jerago ti chiede di leggere e accettare l\'informativa sul trattamento dei dati personali.';
@@ -1242,49 +1157,103 @@
   // ── PRELOAD DATI (cache) ──────────────────────────────────────────────────
   async function preloadUserData() {
     console.log('🚀 Precaricamento dati in background...');
-    
     const promises = [];
-    
     promises.push(
       sb.from('settimane').select('*').order('id')
         .then(res => { if (res.data) window._cachedSettimane = res.data; })
         .catch(e => console.warn('Preload settimane failed:', e))
     );
-    
     promises.push(
       sb.from('disponibilita').select('*').eq('user_id', currentUser.id)
         .then(res => { if (res.data) window._cachedDisponibilita = res.data; })
         .catch(e => console.warn('Preload disponibilita failed:', e))
     );
-    
     promises.push(
       sb.from('impostazioni').select('*')
         .then(res => { if (res.data) window._cachedImpostazioni = res.data; })
         .catch(e => console.warn('Preload impostazioni failed:', e))
     );
-    
     promises.push(
       sb.from('timbrature').select('*').eq('user_id', currentUser.id).order('id', { ascending: false }).limit(20)
         .then(res => { if (res.data) window._cachedRecentTimbrature = res.data; })
         .catch(e => console.warn('Preload timbrature recenti failed:', e))
     );
-    
     await Promise.allSettled(promises);
     console.log('✅ Precaricamento completato');
   }
 
-  // ── MOSTRA APP ────────────────────────────────────────────────────────────
+  // ── MOSTRA QR BANNER ──────────────────────────────────────────────────────
   function mostraQRBanner(tipo) {
+    qrModeActive = true;
+    qrPendingTipo = tipo;
+    
     const qrBanner = document.getElementById('qr-confirm-banner');
     const qrLabel  = document.getElementById('qr-confirm-label');
     const qrBtn    = document.getElementById('qr-confirm-btn');
     if (!qrBanner || !qrLabel || !qrBtn) return;
+    
     qrLabel.textContent = tipo === 'Ingresso' ? '📱 QR Ingresso rilevato' : '📱 QR Uscita rilevato';
     qrBtn.textContent   = tipo === 'Ingresso' ? '⬆ Tocca per timbrare INGRESSO' : '⬇ Tocca per timbrare USCITA';
-    qrBtn.onclick = () => { qrBanner.style.display = 'none'; timbra(tipo); };
+    
+    // Rimuovi vecchi listener e aggiungi nuovo
+    const newBtn = qrBtn.cloneNode(true);
+    qrBtn.parentNode.replaceChild(newBtn, qrBtn);
+    
+    newBtn.addEventListener('click', () => {
+      qrBanner.style.display = 'none';
+      qrModeActive = false;
+      timbra(tipo);
+    });
+    
     qrBanner.style.display = 'block';
   }
 
+  // ── GESTIONE QR CODE ──────────────────────────────────────────────────────
+  function handleQRCode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const qa = urlParams.get('qa');
+    const cleanUrl = window.location.pathname + (window.location.search.replace(/[?&]qa=[^&]*/g,'').replace(/^&/,'?')||'');
+    window.history.replaceState({}, document.title, cleanUrl);
+    
+    if (qa) {
+      const tipo = qa === 'in' ? 'Ingresso' : 'Uscita';
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           window.navigator.standalone === true;
+      
+      if (!currentUser) {
+        localStorage.setItem('pqa', tipo);
+        const alertEl = document.getElementById('qr-alert-login');
+        alertEl.style.display = 'block';
+        alertEl.innerHTML = `
+          📱 QR Code ${tipo} rilevato!<br>
+          <span style="font-size:12px;">Accedi per timbrare automaticamente</span>
+        `;
+        document.getElementById('login-nome').focus();
+        
+        // Se l'utente è già loggato ma la pagina è stata ricaricata
+        const saved = localStorage.getItem('cu');
+        if (saved) {
+          try {
+            currentUser = JSON.parse(saved);
+            mostraApp();
+            setTimeout(() => {
+              const pendingQa = localStorage.getItem('pqa');
+              if (pendingQa) {
+                localStorage.removeItem('pqa');
+                setTimeout(() => timbra(pendingQa), 500);
+              }
+            }, 1000);
+          } catch(e) {
+            localStorage.removeItem('cu');
+          }
+        }
+      } else {
+        mostraQRBanner(tipo);
+      }
+    }
+  }
+
+  // ── MOSTRA APP ────────────────────────────────────────────────────────────
   async function mostraApp() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display  = 'block';
@@ -1295,10 +1264,8 @@
     await caricaImpostazioni();
     await aggiornaStatoUI();
     
-    // Aggiungi suggerimenti GPS
     addGpsTips();
 
-    // Controlla permessi notifiche
     checkNotificationPermission();
     if (Notification.permission === 'granted') {
       subscribeUserToPush();
@@ -1315,7 +1282,6 @@
       if (document.getElementById('tab-disponibilita').classList.contains('active')) caricaDisponibilita();
     };
     
-    // Controlla scadenza consenso
     if (currentUser && !currentUser.privacy_accepted) {
       document.getElementById('privacy-wall').style.display = 'flex';
     } else if (currentUser) {
@@ -1323,11 +1289,13 @@
       if (!isValid) return;
     }
     
-    // Preload dati in background
     preloadUserData().catch(console.warn);
     
     const pendingQa = localStorage.getItem('pqa');
-    if (pendingQa) { localStorage.removeItem('pqa'); mostraQRBanner(pendingQa); }
+    if (pendingQa) {
+      localStorage.removeItem('pqa');
+      mostraQRBanner(pendingQa);
+    }
     
     setInterval(async () => { if (!currentUser) return; await caricaImpostazioni(); await aggiornaStatoUI(); }, 30000);
   }
@@ -1417,7 +1385,6 @@
       if (exist) await sb.from('disponibilita').update(payload).eq('id',exist.id);
       else await sb.from('disponibilita').insert([payload]);
     }
-    // Invalida cache
     window._cachedDisponibilita = null;
     const saved=document.getElementById(`saved-${settId}`);
     if (saved) { saved.style.display='block'; setTimeout(()=>saved.style.display='none',2000); }
@@ -1477,23 +1444,8 @@
     catch(e) { localStorage.removeItem('cu'); }
   }
 
-  // Init connection indicator
   initConnectionIndicator();
-
-  // ── QR CODE DAL LINK ──────────────────────────────────────────────────────
-  const urlParams = new URLSearchParams(window.location.search);
-  const qa = urlParams.get('qa');
-  if (qa) {
-    const cleanUrl = window.location.pathname + (window.location.search.replace(/[?&]qa=[^&]*/g,'').replace(/^&/,'?')||'');
-    window.history.replaceState({}, document.title, cleanUrl);
-    if (!currentUser) {
-      localStorage.setItem('pqa', qa==='in'?'Ingresso':'Uscita');
-      document.getElementById('qr-alert-login').style.display = 'block';
-    } else {
-      const tipo = qa==='in'?'Ingresso':'Uscita';
-      mostraQRBanner(tipo);
-    }
-  }
+  handleQRCode();
 
   // ── PARTICLE SYSTEM ───────────────────────────────────────────────────────
   (function() {
