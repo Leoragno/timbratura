@@ -473,12 +473,20 @@
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
-          await fetch('https://bbwozrlingsbjcawtval.supabase.co/rest/v1/', { 
+          const response = await fetch('https://bbwozrlingsbjcawtval.supabase.co/rest/v1/', { 
             signal: controller.signal,
-            method: 'HEAD'
+            method: 'HEAD',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': 'Bearer ' + SB_KEY
+            }
           });
           clearTimeout(timeoutId);
-          updateConnectionStatus('online');
+          if (response.ok) {
+            updateConnectionStatus('online');
+          } else {
+            updateConnectionStatus('slow');
+          }
         } catch (e) {
           updateConnectionStatus('slow');
         }
@@ -508,36 +516,69 @@
       toast('🔔 Notifiche attivate!', 'success');
       document.getElementById('notification-banner').classList.remove('show');
       await subscribeUserToPush();
+    } else if (permission === 'denied') {
+      toast('⚠️ Notifiche bloccate. Abilita dalle impostazioni del browser.', 'warning');
     }
   }
 
   async function subscribeUserToPush() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    if (!currentUser) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn('⚠️ Push non supportato');
+      return;
+    }
+    if (!currentUser) {
+      console.warn('⚠️ Nessun utente loggato');
+      return;
+    }
+
     try {
       const registration = await navigator.serviceWorker.ready;
+      
+      // Controlla se esiste già una sottoscrizione
+      const existingSub = await registration.pushManager.getSubscription();
+      if (existingSub) {
+        console.log('✅ Sottoscrizione già esistente');
+        return existingSub;
+      }
+      
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-      console.log('Push Subscription:', subscription);
+
+      console.log('✅ Push Subscription creata:', subscription);
       await savePushSubscription(subscription);
+      return subscription;
     } catch (error) {
-      console.error('Errore durante la sottoscrizione push:', error);
+      console.error('❌ Errore durante la sottoscrizione push:', error);
+      if (error.message && error.message.includes('permission')) {
+        toast('⚠️ Devi attivare le notifiche nelle impostazioni del browser', 'warning');
+      }
     }
   }
 
   async function savePushSubscription(subscription) {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.warn('⚠️ Nessun utente loggato per salvare sottoscrizione');
+      return;
+    }
+    
     try {
-      const { error } = await sb.from('push_subscriptions').upsert({
+      console.log('💾 Salvataggio sottoscrizione per:', currentUser.nome);
+      
+      const { data, error } = await sb.from('push_subscriptions').upsert({
         user_id: currentUser.id,
         subscription_json: subscription
       }, { onConflict: 'user_id' });
-      if (error) throw error;
-      console.log('Sottoscrizione push salvata con successo');
+
+      if (error) {
+        console.error('❌ Errore salvataggio:', error);
+        throw error;
+      }
+      
+      console.log('✅ Sottoscrizione salvata con successo!');
     } catch (error) {
-      console.warn('Salvataggio sottoscrizione push fallito:', error);
+      console.warn('❌ Salvataggio sottoscrizione push fallito:', error);
     }
   }
 
@@ -598,42 +639,77 @@
   async function checkBroadcastNotifications() {
     if (!currentUser) return;
     try {
-      const { data } = await sb.from('impostazioni').select('valore, updated_at').eq('chiave', 'broadcast_msg').maybeSingle();
+      const { data, error } = await sb
+        .from('impostazioni')
+        .select('valore, updated_at')
+        .eq('chiave', 'broadcast_msg')
+        .maybeSingle();
+      
+      if (error) {
+        console.warn('Errore broadcast check:', error);
+        return;
+      }
+      
       if (data && data.valore) {
         const lastRead = localStorage.getItem('last_broadcast_read');
         const msgId = data.updated_at;
+
         if (lastRead !== msgId) {
-          showNotification('Messaggio Oratorio', data.valore);
-          localStorage.setItem('last_broadcast_read', msgId);
+          const notifShown = localStorage.getItem('broadcast_shown_' + msgId);
+          if (!notifShown) {
+            showNotification('📢 Messaggio Oratorio', data.valore);
+            localStorage.setItem('last_broadcast_read', msgId);
+            localStorage.setItem('broadcast_shown_' + msgId, 'true');
+          }
         }
       }
     } catch (e) {
-      console.warn('Broadcast check failed', e);
+      console.warn('Broadcast check failed:', e);
     }
   }
 
   window.showNotification = showNotification;
   async function showNotification(title, body) {
     if (Notification.permission === 'granted') {
-      const reg = await navigator.serviceWorker.ready;
-      reg.showNotification(title, {
-        body: body,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        tag: 'reminder-uscita',
-        renotify: true
-      });
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        reg.showNotification(title, {
+          body: body,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: 'reminder-uscita',
+          renotify: true
+        });
+      } catch (e) {
+        console.warn('Errore mostra notifica:', e);
+      }
     }
   }
 
-  window.checkNotificationPermission = checkNotificationPermission;
-  function checkNotificationPermission() {
+  window.checkNotificationPermission = function() {
     if (!('Notification' in window)) return;
+    
+    if (Notification.permission === 'denied') {
+      const banner = document.getElementById('notification-banner');
+      if (banner) {
+        banner.classList.add('show');
+        banner.innerHTML = `
+          <div>
+            <strong>🔕 Notifiche bloccate</strong><br>
+            Per ricevere notifiche, vai su: 
+            <strong>Impostazioni browser > Privacy > Notifiche</strong>
+            e abilita per questo sito.
+          </div>
+        `;
+      }
+      return;
+    }
+    
     if (Notification.permission === 'default') {
       document.getElementById('notification-banner').classList.add('show');
       document.getElementById('enable-notif-btn').onclick = requestNotificationPermission;
     }
-  }
+  };
 
   function addGpsTips() {
     const banner = document.getElementById('geo-banner');
@@ -1195,7 +1271,6 @@
     qrLabel.textContent = tipo === 'Ingresso' ? '📱 QR Ingresso rilevato' : '📱 QR Uscita rilevato';
     qrBtn.textContent   = tipo === 'Ingresso' ? '⬆ Tocca per timbrare INGRESSO' : '⬇ Tocca per timbrare USCITA';
     
-    // Rimuovi vecchi listener e aggiungi nuovo
     const newBtn = qrBtn.cloneNode(true);
     qrBtn.parentNode.replaceChild(newBtn, qrBtn);
     
@@ -1217,8 +1292,6 @@
     
     if (qa) {
       const tipo = qa === 'in' ? 'Ingresso' : 'Uscita';
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                           window.navigator.standalone === true;
       
       if (!currentUser) {
         localStorage.setItem('pqa', tipo);
@@ -1230,7 +1303,6 @@
         `;
         document.getElementById('login-nome').focus();
         
-        // Se l'utente è già loggato ma la pagina è stata ricaricata
         const saved = localStorage.getItem('cu');
         if (saved) {
           try {
@@ -1473,7 +1545,11 @@
 
   // ── SERVICE WORKER ────────────────────────────────────────────────────────
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW:', e)));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('✅ Service Worker registrato:', reg.scope))
+        .catch(err => console.error('❌ Service Worker fallito:', err));
+    });
   }
 })();
 </script>
