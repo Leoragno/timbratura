@@ -506,6 +506,19 @@
   }
 
   // ── NOTIFICATIONS & BADGING ───────────────────────────────────────────────
+  const VAPID_PUBLIC_KEY = 'BJJ7e6fpdULY2kA_Fm-pD95CLSE2uqclhPsJPvFtzz55pYjmqOW1Pn1buihWjmntsUPG9YkQbCei0Hu-n21DBx0';
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
   window.requestNotificationPermission = requestNotificationPermission;
   async function requestNotificationPermission() {
     if (!('Notification' in window)) return;
@@ -513,6 +526,41 @@
     if (permission === 'granted') {
       toast('🔔 Notifiche attivate!', 'success');
       document.getElementById('notification-banner').classList.remove('show');
+      await subscribeUserToPush();
+    }
+  }
+
+  async function subscribeUserToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!currentUser) return;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+
+      console.log('Push Subscription:', subscription);
+      await savePushSubscription(subscription);
+    } catch (error) {
+      console.error('Errore durante la sottoscrizione push:', error);
+    }
+  }
+
+  async function savePushSubscription(subscription) {
+    if (!currentUser) return;
+    try {
+      // Invia la sottoscrizione a Supabase
+      const { error } = await sb.from('push_subscriptions').upsert({
+        user_id: currentUser.id,
+        subscription_json: subscription
+      }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+      console.log('Sottoscrizione push salvata con successo');
+    } catch (error) {
+      console.warn('Salvataggio sottoscrizione push fallito:', error);
     }
   }
 
@@ -1252,6 +1300,9 @@
 
     // Controlla permessi notifiche
     checkNotificationPermission();
+    if (Notification.permission === 'granted') {
+      subscribeUserToPush();
+    }
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
     document.getElementById('refresh-app-btn').onclick = async () => {
