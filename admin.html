@@ -1672,10 +1672,10 @@
 
     if (!confirm('Inviare questo messaggio a tutti gli animatori?')) return;
 
-    const { error } = await sb.from('impostazioni').upsert({
-      chiave: 'broadcast_msg',
-      valore: msg
-    }, { onConflict: 'chiave' });
+    const { error } = await sb.from('notifiche').insert({
+      messaggio: msg,
+      created_at: new Date().toISOString()
+    });
 
     if (error) {
       toast('Errore invio: ' + error.message, 'error');

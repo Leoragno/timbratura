@@ -302,6 +302,7 @@
         <div style="display:flex; flex-direction:column; gap:10px;">
           <button class="btn btn-green" id="btn-in">⬆ INGRESSO</button>
           <button class="btn btn-red" id="btn-out">⬇ USCITA</button>
+          <button id="test-notif-btn" style="background:transparent; border:1px solid var(--border); color:var(--ink3); padding:8px; border-radius:3px; font-size:10px; cursor:pointer; margin-top:5px;">🔔 Test Notifica</button>
         </div>
         <div id="gps-debug" style="margin-top:16px; font-size:10px; color:var(--ink3); border-top:1px solid var(--border); padding-top:12px; display:none;"></div>
       </div>
@@ -585,16 +586,15 @@
   async function checkBroadcastNotifications() {
     if (!currentUser) return;
     try {
-      // Cerchiamo nella tabella impostazioni un eventuale messaggio broadcast
-      // Usiamo una chiave 'broadcast_msg' per messaggi istantanei
-      const { data } = await sb.from('impostazioni').select('valore, updated_at').eq('chiave', 'broadcast_msg').maybeSingle();
-      if (data && data.valore) {
-        const lastRead = localStorage.getItem('last_broadcast_read');
-        const msgId = data.updated_at;
+      // Cerchiamo l'ultimo messaggio nella tabella notifiche
+      const { data } = await sb.from('notifiche').select('id, messaggio, created_at').order('id', { ascending: false }).limit(1).maybeSingle();
+      if (data && data.messaggio) {
+        const lastRead = localStorage.getItem('last_notif_id');
+        const msgId = String(data.id);
 
         if (lastRead !== msgId) {
-          showNotification('Messaggio Oratorio', data.valore);
-          localStorage.setItem('last_broadcast_read', msgId);
+          showNotification('Messaggio Oratorio', data.messaggio);
+          localStorage.setItem('last_notif_id', msgId);
         }
       }
     } catch (e) {
@@ -1254,6 +1254,14 @@
     checkNotificationPermission();
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
     document.getElementById('btn-out').onclick = () => timbra('Uscita');
+    document.getElementById('test-notif-btn').onclick = () => {
+      if (Notification.permission === 'granted') {
+        showNotification('Test Notifica', 'Se vedi questo messaggio, le notifiche funzionano correttamente! 🎉');
+      } else {
+        toast('Per favore, attiva prima le notifiche dal banner in alto.', 'warning');
+        checkNotificationPermission();
+      }
+    };
     document.getElementById('refresh-app-btn').onclick = async () => {
       hapticFeedback('light');
       animateButton(document.getElementById('refresh-app-btn'));
