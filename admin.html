@@ -514,6 +514,10 @@
         <div style="font-size:11px; color:var(--ink3); margin-top:10px;">
           Il messaggio apparirà come una notifica push (se abilitate) o come avviso all'apertura dell'app per tutti gli animatori.
         </div>
+        <div style="margin-top:16px; padding:12px; background:var(--amber-lt); border:1px solid #e0cfa0; border-radius:4px; font-size:11px; color:var(--amber);">
+          <strong>🚀 Notifiche in Background</strong><br>
+          Per far sì che le notifiche arrivino anche quando gli animatori hanno l'app chiusa, è necessario configurare la Supabase Edge Function seguendo le istruzioni nel file <code>PUSH_NOTIFICATIONS_SETUP.md</code> nel repository.
+        </div>
       </div>
     </div>
   </div>
@@ -1680,7 +1684,29 @@
     if (error) {
       toast('Errore invio: ' + error.message, 'error');
     } else {
-      toast('✅ Messaggio inviato con successo!', 'success');
+      toast('✅ Messaggio salvato!', 'success');
+
+      // Tenta di inviare la notifica push tramite Edge Function
+      try {
+        fetch(SB_URL + '/functions/v1/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SB_KEY
+          },
+          body: JSON.stringify({
+            title: 'Messaggio Oratorio',
+            body: msg,
+            url: '/timbratura.html'
+          })
+        }).then(res => {
+          if (res.ok) toast('🔔 Notifiche inviate a tutti!', 'success');
+          else console.warn('Edge Function non configurata o errore.');
+        });
+      } catch (e) {
+        console.warn('Invio push fallito:', e);
+      }
+
       document.getElementById('notif-broadcast-msg').value = '';
     }
   };
