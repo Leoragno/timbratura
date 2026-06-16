@@ -411,7 +411,7 @@
       <div style="margin-bottom:16px;">
         <label>🌐 URL base del sito animatori</label>
         <div style="display:flex; gap:8px; align-items:center;">
-          <input type="text" id="qr-base-url" placeholder="https://tuosito.vercel.app/animatori.html" style="margin-bottom:0; flex:1; background:#fff; color:#1a1714; border:2px solid #2d4a3e; font-size:13px;" />
+          <input type="text" id="qr-base-url" placeholder="https://tuosito.vercel.app/timbratura.html" style="margin-bottom:0; flex:1; background:#fff; color:#1a1714; border:2px solid #2d4a3e; font-size:13px;" />
           <button class="btn btn-primary btn-sm" id="qr-genera-btn">Genera QR</button>
         </div>
         <div style="font-size:11px; color:var(--ink3); margin-top:6px;">Inserisci l'URL completo della pagina animatori, poi premi Genera QR.</div>
@@ -501,27 +501,6 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════ TAB: STATISTICHE -->
-  <!-- ═══════════════════════════════════════════════════ TAB: NOTIFICHE -->
-  <div class="tab-panel" id="tab-notifiche">
-    <div class="main">
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Invia Notifica agli Animatori</div>
-      </div>
-      <div class="card">
-        <label>Messaggio Broadcast</label>
-        <textarea id="notif-broadcast-msg" style="width:100%; height:80px; background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:10px; font-family:var(--font-mono); font-size:13px; margin-bottom:12px;" placeholder="Scrivi qui il messaggio per tutti gli animatori..."></textarea>
-        <button class="btn btn-primary" id="notif-broadcast-btn">Invia a tutti gli animatori</button>
-        <div style="font-size:11px; color:var(--ink3); margin-top:10px;">
-          Il messaggio apparirà come una notifica push (se abilitate) o come avviso all'apertura dell'app per tutti gli animatori.
-        </div>
-        <div style="margin-top:16px; padding:12px; background:var(--amber-lt); border:1px solid #e0cfa0; border-radius:4px; font-size:11px; color:var(--amber);">
-          <strong>🚀 Notifiche in Background</strong><br>
-          Per far sì che le notifiche arrivino anche quando gli animatori hanno l'app chiusa, è necessario configurare la Supabase Edge Function seguendo le istruzioni nel file <code>PUSH_NOTIFICATIONS_SETUP.md</code> nel repository.
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="tab-panel" id="tab-statistiche">
     <div class="main">
 
@@ -660,6 +639,27 @@
         </table>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ TAB: NOTIFICHE -->
+  <div class="tab-panel" id="tab-notifiche">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">Invia Notifica agli Animatori</div>
+      </div>
+      <div class="card">
+        <label>Messaggio Broadcast</label>
+        <textarea id="notif-broadcast-msg" style="width:100%; height:80px; background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:10px; font-family:var(--font-mono); font-size:13px; margin-bottom:12px;" placeholder="Scrivi qui il messaggio per tutti gli animatori..."></textarea>
+        <button class="btn btn-primary" id="notif-broadcast-btn">Invia a tutti gli animatori</button>
+        <div style="font-size:11px; color:var(--ink3); margin-top:10px;">
+          Il messaggio apparirà come una notifica push (se abilitate) o come avviso all'apertura dell'app per tutti gli animatori.
+        </div>
+        <div style="margin-top:16px; padding:12px; background:var(--amber-lt); border:1px solid #e0cfa0; border-radius:4px; font-size:11px; color:var(--amber);">
+          <strong>🚀 Notifiche in Background</strong><br>
+          Per far sì che le notifiche arrivino anche quando gli animatori hanno l'app chiusa, è necessario configurare la Supabase Edge Function seguendo le istruzioni nel file <code>PUSH_NOTIFICATIONS_SETUP.md</code> nel repository.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -845,12 +845,6 @@
     </div>`;
   }
 
-  function renderAnimators() {
-    const list = buildAnimatorList('filter-name','filter-status','filter-sort');
-    const grid = document.getElementById('animators-grid');
-    if (grid) grid.innerHTML = list.length ? list.map(renderCard).join('') : '<div class="empty">👤 Nessun animatore trovato</div>';
-  }
-
   function renderAnimators2() {
     const list = buildAnimatorList('filter-name2','filter-status2','filter-sort2');
     const grid = document.getElementById('animators-grid2');
@@ -897,14 +891,14 @@
     const p = dRaw.split('-');
     const { error } = await sb.from('timbrature').insert([{ nome: manualTarget.nome, anno: manualTarget.anno, user_id: manualTarget.userId || null, tipo, data: p[2]+'/'+p[1]+'/'+p[0], ora: oRaw }]);
     if (error) toast('Errore salvataggio','error');
-    else { toast('Timbratura manuale salvata','success'); closeAllModals(); await loadTimbrature(); renderAnimators(); renderAnimators2(); renderLog(); updateStats(); }
+    else { toast('Timbratura manuale salvata','success'); closeAllModals(); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats(); }
   };
 
   window._dl = async (id) => {
     if (!confirm('Eliminare questa timbratura?')) return;
     const { error } = await sb.from('timbrature').delete().eq('id', id);
     if (error) toast('Errore','error');
-    else { toast('Eliminata','success'); await loadTimbrature(); renderAnimators(); renderAnimators2(); renderLog(); updateStats(); }
+    else { toast('Eliminata','success'); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats(); }
   };
 
   window._ea = function(nome, anno) {
@@ -924,7 +918,7 @@
     if (error) return toast('Errore modifica','error');
     if (newNome !== oldNome) await sb.from('timbrature').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
     toast('Profilo aggiornato','success'); closeAllModals();
-    await loadUsers(); await loadTimbrature(); renderAnimators(); renderAnimators2(); renderLog(); updateStats();
+    await loadUsers(); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats();
   };
 
   // ── TOGGLE LOCKS & GEO ────────────────────────────────────────────────────
@@ -1596,7 +1590,6 @@
       return;
     }
 
-    // Ordina per ore desc
     const rows = nomi.map(nome => {
       const nl = log.filter(l => l.nome === nome);
       const anim = allAnimators.find(a => a.nome === nome);
@@ -1668,7 +1661,6 @@
     renderStatistiche();
   });
 
-  // ── INIT ───────────────────────────────────────────────────────────────────
   // ── NOTIFICHE ──────────────────────────────────────────────────────────────
   document.getElementById('notif-broadcast-btn').onclick = async () => {
     const msg = document.getElementById('notif-broadcast-msg').value.trim();
@@ -1686,7 +1678,6 @@
     } else {
       toast('✅ Messaggio salvato!', 'success');
 
-      // Tenta di inviare la notifica push tramite Edge Function
       try {
         fetch(SB_URL + '/functions/v1/send-push', {
           method: 'POST',
