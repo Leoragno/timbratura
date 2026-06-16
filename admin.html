@@ -310,6 +310,7 @@
     <button class="tab-btn" data-tab="tab-disponibilita"><span class="tab-icon">📅</span>Disponibilità</button>
     <button class="tab-btn" data-tab="tab-qr"><span class="tab-icon">🔲</span>QR Code</button>
     <button class="tab-btn" data-tab="tab-statistiche"><span class="tab-icon">📈</span>Statistiche</button>
+    <button class="tab-btn" data-tab="tab-notifiche"><span class="tab-icon">🔔</span>Notifiche</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════════ TAB: DASHBOARD -->
@@ -500,6 +501,23 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════ TAB: STATISTICHE -->
+  <!-- ═══════════════════════════════════════════════════ TAB: NOTIFICHE -->
+  <div class="tab-panel" id="tab-notifiche">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">Invia Notifica agli Animatori</div>
+      </div>
+      <div class="card">
+        <label>Messaggio Broadcast</label>
+        <textarea id="notif-broadcast-msg" style="width:100%; height:80px; background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:10px; font-family:var(--font-mono); font-size:13px; margin-bottom:12px;" placeholder="Scrivi qui il messaggio per tutti gli animatori..."></textarea>
+        <button class="btn btn-primary" id="notif-broadcast-btn">Invia a tutti gli animatori</button>
+        <div style="font-size:11px; color:var(--ink3); margin-top:10px;">
+          Il messaggio apparirà come una notifica push (se abilitate) o come avviso all'apertura dell'app per tutti gli animatori.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-panel" id="tab-statistiche">
     <div class="main">
 
@@ -1645,6 +1663,27 @@
     populateStatAnimatore();
     renderStatistiche();
   });
+
+  // ── INIT ───────────────────────────────────────────────────────────────────
+  // ── NOTIFICHE ──────────────────────────────────────────────────────────────
+  document.getElementById('notif-broadcast-btn').onclick = async () => {
+    const msg = document.getElementById('notif-broadcast-msg').value.trim();
+    if (!msg) return toast('Inserisci un messaggio', 'error');
+
+    if (!confirm('Inviare questo messaggio a tutti gli animatori?')) return;
+
+    const { error } = await sb.from('impostazioni').upsert({
+      chiave: 'broadcast_msg',
+      valore: msg
+    }, { onConflict: 'chiave' });
+
+    if (error) {
+      toast('Errore invio: ' + error.message, 'error');
+    } else {
+      toast('✅ Messaggio inviato con successo!', 'success');
+      document.getElementById('notif-broadcast-msg').value = '';
+    }
+  };
 
   // ── INIT ───────────────────────────────────────────────────────────────────
   if (sessionStorage.getItem('admin_auth') === '1') {
