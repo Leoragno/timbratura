@@ -6,19 +6,18 @@ const ASSETS = [
   '/icon-512.png'
 ];
 
-// Installa e pre-carica le risorse essenziali
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS).catch(() => {
-        // Se alcune risorse non ci sono ancora, ignora l'errore
+      return cache.addAll(ASSETS).catch((err) => {
+        console.warn('⚠️ Alcune risorse non sono state cache:', err);
+        // Non fallire l'installazione per errori di cache
       });
     })
   );
   self.skipWaiting();
 });
 
-// Attiva e pulisce cache vecchie
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -30,18 +29,28 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Strategia: Network First (sempre dati freschi da Supabase)
-// Fallback sulla cache se offline
+// Strategia: Network First
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Le chiamate Supabase vanno sempre in rete (dati live)
-  if (url.hostname.includes('supabase.co')) {
-    event.respondWith(fetch(event.request));
+  // Ignora richieste a estensioni Chrome
+  if (url.protocol === 'chrome-extension:' || url.protocol === 'chrome:' || url.protocol === 'about:') {
     return;
   }
 
-  // CDN (font, librerie) → cache first
+  // Le chiamate Supabase vanno sempre in rete
+  if (url.hostname.includes('supabase.co')) {
+    event.respondWith(fetch(event.request).catch(err => {
+      console.warn('⚠️ Fetch Supabase fallito:', err);
+      return new Response(JSON.stringify({ error: 'Offline' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+    return;
+  }
+
+  // CDN → cache first
   if (url.hostname.includes('fonts.googleapis.com') ||
       url.hostname.includes('fonts.gstatic.com') ||
       url.hostname.includes('cdn.jsdelivr.net')) {
@@ -57,7 +66,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Pagine app → network first, cache come fallback offline
+  // Pagine app → network first, cache fallback
   event.respondWith(
     fetch(event.request)
       .then(res => {
