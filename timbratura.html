@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Oratorio Timbratura</title>
 
   <!-- PWA -->
@@ -646,7 +647,7 @@
         .maybeSingle();
       
       if (error) {
-        console.warn('Errore broadcast check:', error);
+        console.warn('⚠️ Errore broadcast check:', error.message);
         return;
       }
       
@@ -677,7 +678,7 @@
           body: body,
           icon: '/icon-192.png',
           badge: '/icon-192.png',
-          tag: 'reminder-uscita',
+          tag: 'oratorio-notification',
           renotify: true
         });
       } catch (e) {
@@ -738,11 +739,13 @@
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
   window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); deferredPrompt = e;
+    e.preventDefault(); 
+    deferredPrompt = e;
     if (!isStandalone) {
       setTimeout(() => document.getElementById('install-banner').classList.add('show'), 2000);
     }
   });
+  
   document.getElementById('install-btn').onclick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -751,12 +754,15 @@
     document.getElementById('install-banner').classList.remove('show');
     if (outcome === 'accepted') toast('✅ App installata!', 'success');
   };
+  
   document.getElementById('install-close-btn').onclick = () => {
     document.getElementById('install-banner').classList.remove('show');
   };
+  
   if (isIOS && !isStandalone) {
     setTimeout(() => document.getElementById('ios-hint').classList.add('show'), 2000);
   }
+  
   document.getElementById('ios-hint-close').onclick = () => {
     document.getElementById('ios-hint').classList.remove('show');
   };
