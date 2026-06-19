@@ -671,6 +671,7 @@
 
   window.showNotification = showNotification;
   async function showNotification(title, body) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     if (Notification.permission === 'granted') {
       try {
         const reg = await navigator.serviceWorker.ready;
@@ -1208,8 +1209,8 @@
 
   // ── STATO UI ──────────────────────────────────────────────────────────────
   async function aggiornaStatoUI() {
-    const { data: byId }   = await sb.from('timbrature').select('tipo,ora,data,id').eq('user_id', currentUser.id).order('id',{ascending:false}).limit(1).maybeSingle();
-    const { data: byNome } = await sb.from('timbrature').select('tipo,ora,data,id').eq('nome', currentUser.nome).is('user_id', null).order('id',{ascending:false}).limit(1).maybeSingle();
+    const { data: byId }   = await sb.from('timbrature').select('tipo,ora,data,id,created_at').eq('user_id', currentUser.id).order('id',{ascending:false}).limit(1).maybeSingle();
+    const { data: byNome } = await sb.from('timbrature').select('tipo,ora,data,id,created_at').eq('nome', currentUser.nome).is('user_id', null).order('id',{ascending:false}).limit(1).maybeSingle();
     let data = null;
     if (byId && byNome) data = byId.id >= byNome.id ? byId : byNome;
     else data = byId || byNome;
@@ -1345,7 +1346,7 @@
     addGpsTips();
 
     checkNotificationPermission();
-    if (Notification.permission === 'granted') {
+    if ('Notification' in window && Notification.permission === 'granted') {
       subscribeUserToPush();
     }
     document.getElementById('btn-in').onclick  = () => timbra('Ingresso');
