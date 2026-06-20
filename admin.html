@@ -1804,11 +1804,17 @@
         body: JSON.stringify({ title: payload.title, body: payload.message, url: '/timbratura.html', target_type: payload.target_type, target_value: payload.target_value })
       });
       if (res.ok) {
-        toast('🔔 Push immediata inviata', 'success');
+        const data = await res.json().catch(() => ({}));
+        console.log('Risposta send-push:', data);
+        if (data.sent > 0) {
+          toast(`🔔 Push inviata (${data.sent}/${data.total ?? data.sent})`, 'success');
+        } else {
+          toast('⚠️ Funzione OK ma 0 push inviate' + (data.reason ? ': ' + data.reason : ' (nessuna subscription trovata)'), 'error');
+        }
       } else {
         const errText = await res.text().catch(() => '');
         console.warn('Edge Function non configurata o errore:', res.status, errText);
-        toast('⚠️ Push NON inviata (Edge Function: ' + res.status + ')', 'error');
+        toast('⚠️ Push NON inviata (Edge Function: ' + res.status + ' — ' + errText.slice(0, 80) + ')', 'error');
       }
     } catch (e) {
       console.warn('Invio push fallito:', e);
