@@ -636,11 +636,13 @@
     try {
       const registration = await navigator.serviceWorker.ready;
 
-      // Controlla se esiste già una sottoscrizione
+      // Annulla sempre l'eventuale sottoscrizione precedente prima di crearne una nuova:
+      // se la chiave VAPID lato server è cambiata, una sottoscrizione legata alla chiave
+      // vecchia non potrà mai ricevere notifiche valide, e il browser impedisce comunque
+      // di sottoscriversi con una chiave diversa senza prima rimuovere quella esistente.
       const existingSub = await registration.pushManager.getSubscription();
       if (existingSub) {
-        console.log('✅ Sottoscrizione già esistente');
-        return existingSub;
+        await existingSub.unsubscribe();
       }
 
       const subscription = await registration.pushManager.subscribe({
