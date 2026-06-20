@@ -1826,7 +1826,8 @@
         if (data.sent > 0) {
           toast(`🔔 Push inviata (${data.sent}/${data.total ?? data.sent})`, 'success');
         } else {
-          toast('⚠️ Funzione OK ma 0 push inviate' + (data.reason ? ': ' + data.reason : ' (nessuna subscription trovata)'), 'error');
+          toast('⚠️ 0 push inviate — dettagli in console (F12)', 'error');
+          if (data.debug) console.log('DEBUG send-push:', JSON.stringify(data.debug, null, 2));
         }
       } else {
         const errText = await res.text().catch(() => '');
