@@ -1825,6 +1825,9 @@
         console.log('Risposta send-push:', data);
         if (data.sent > 0) {
           toast(`🔔 Push inviata (${data.sent}/${data.total ?? data.sent})`, 'success');
+        } else if (data.failed > 0) {
+          toast('⚠️ Invio fallito — dettagli in console (F12)', 'error');
+          if (data.errors) console.log('ERRORI send-push:', JSON.stringify(data.errors, null, 2));
         } else {
           toast('⚠️ 0 push inviate — dettagli in console (F12)', 'error');
           if (data.debug) console.log('DEBUG send-push:', JSON.stringify(data.debug, null, 2));
