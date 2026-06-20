@@ -123,6 +123,12 @@
     .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
     .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
 
+    .trust-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; }
+    .trust-badge.ok { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
+    .trust-badge.watch { background: var(--amber-lt); color: var(--amber); border-color: #e0cfa0; }
+    .trust-badge.suspicious { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
+    .trust-note { display: block; margin-top: 3px; font-size: 10px; color: var(--ink3); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     /* EXPORT */
     .export-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 8px; }
     .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -474,8 +480,8 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Azioni</th></tr></thead>
-          <tbody id="log-tbody"><tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr></tbody>
+          <thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Fiducia</th><th>Azioni</th></tr></thead>
+          <tbody id="log-tbody"><tr><td colspan="7" class="empty">⏳ Caricamento…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -851,6 +857,17 @@
     grid.innerHTML = list.length ? list.map(renderCard).join('') : '<div class="empty">👤 Nessun animatore trovato</div>';
   }
 
+
+  function renderTrust(l) {
+    if (l.fiducia_score === undefined || l.fiducia_score === null) return '<span class="trust-badge watch">— Non calcolato</span>';
+    const stato = l.fiducia_stato || 'Normale ma da monitorare';
+    const cls = stato === 'Affidabile' ? 'ok' : stato === 'Sospetto' ? 'suspicious' : 'watch';
+    const icon = stato === 'Affidabile' ? '✅' : stato === 'Sospetto' ? '🔴' : '🟡';
+    const meta = [l.metodo_timbratura ? 'metodo: '+l.metodo_timbratura : null, Number.isFinite(Number(l.gps_distanza_m)) ? 'GPS: '+Math.round(Number(l.gps_distanza_m))+'m' : null].filter(Boolean).join(' · ');
+    const title = esc(l.fiducia_motivi || meta || stato);
+    return `<span class="trust-badge ${cls}" title="${title}">${icon} ${esc(stato)} · ${l.fiducia_score}</span>${meta ? `<span class="trust-note">${esc(meta)}</span>` : ''}`;
+  }
+
   // ── RENDER LOG ─────────────────────────────────────────────────────────────
   function renderLog() {
     const search = document.getElementById('log-search').value.toLowerCase();
@@ -863,10 +880,11 @@
       return true;
     });
     const tbody = document.getElementById('log-tbody');
-    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
     tbody.innerHTML = filtered.map(l => `<tr>
       <td><strong>${esc(l.nome)}</strong></td><td>${l.anno||'—'}</td><td>${esc(l.data)}</td><td>${esc(l.ora)}</td>
       <td><span class="tipo-badge ${l.tipo.toLowerCase()}">${esc(l.tipo)}</span></td>
+      <td>${renderTrust(l)}</td>
       <td><button class="btn btn-ghost btn-sm" onclick="window._dl(${l.id})">🗑️</button></td>
     </tr>`).join('');
   }
