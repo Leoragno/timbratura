@@ -693,10 +693,51 @@
   }
 
   let reminderInterval = null;
+  const AUTO_NOTIFICATION_DAILY_LIMIT = 3;
+  const AUTO_NOTIFICATION_MIN_GAP_MS = 90 * 60 * 1000;
+  const AUTO_NOTIFICATION_CHECK_MS = 5 * 60 * 1000;
+  const END_OF_DAY_REMINDER_HOUR = 18;
+
+  function todayKey(date = new Date()) {
+    return date.toISOString().slice(0, 10);
+  }
+
+  function getDailyAutoNotificationCount(date = new Date()) {
+    return Number(localStorage.getItem('auto_notif_count_' + todayKey(date)) || '0');
+  }
+
+  function canSendAutoNotification(kind, date = new Date()) {
+    const day = todayKey(date);
+    if (getDailyAutoNotificationCount(date) >= AUTO_NOTIFICATION_DAILY_LIMIT) return false;
+    if (localStorage.getItem(`auto_notif_${kind}_${day}`)) return false;
+    const lastAny = localStorage.getItem('auto_notif_last_any');
+    if (lastAny && date - new Date(lastAny) < AUTO_NOTIFICATION_MIN_GAP_MS) return false;
+    return true;
+  }
+
+  function markAutoNotificationSent(kind, date = new Date()) {
+    const day = todayKey(date);
+    localStorage.setItem(`auto_notif_${kind}_${day}`, date.toISOString());
+    localStorage.setItem('auto_notif_last_any', date.toISOString());
+    localStorage.setItem('auto_notif_count_' + day, String(getDailyAutoNotificationCount(date) + 1));
+  }
+
+  async function showAutomaticNotification(kind, title, body) {
+    const now = new Date();
+    if (!canSendAutoNotification(kind, now)) return false;
+    await showNotification(title, body, 'auto-' + kind);
+    markAutoNotificationSent(kind, now);
+    return true;
+  }
+
+  function isTodayStamp(stamp, date = new Date()) {
+    const oggiStr = String(date.getDate()).padStart(2,'0')+'/'+String(date.getMonth()+1).padStart(2,'0')+'/'+date.getFullYear();
+    return stamp && stamp.data === oggiStr;
+  }
 
   function startReminderChecks(lastEntry) {
     stopReminderChecks();
-    reminderInterval = setInterval(() => checkReminders(lastEntry), 60000);
+    reminderInterval = setInterval(() => checkReminders(lastEntry), AUTO_NOTIFICATION_CHECK_MS);
     checkReminders(lastEntry);
   }
 
@@ -708,34 +749,69 @@
   }
 
   window.checkReminders = checkReminders;
-  function checkReminders(lastEntry) {
+  async function checkReminders(lastEntry) {
     const now = new Date();
-    checkBroadcastNotifications();
-    if (lastEntry && lastEntry.tipo === 'Ingresso') {
-      const entryTime = new Date(lastEntry.created_at);
-      const diffMs = now - entryTime;
-      const FOUR_HOURS = 4 * 60 * 60 * 1000;
-      if (diffMs > FOUR_HOURS) {
-        const lastNotif = localStorage.getItem('last_notif_uscita');
-        if (!lastNotif || (now - new Date(lastNotif) > 30 * 60 * 1000)) {
-          showNotification('Dimenticato di timbrare?', 'Sei ancora in oratorio? Ricordati di timbrare l\'uscita se hai finito!');
-          localStorage.setItem('last_notif_uscita', now.toISOString());
-        }
-      }
+    checkAdminNotifications();
+    checkEndOfDayReminder(lastEntry, now);
+    checkGpsAutomaticNotification(lastEntry, now);
+  }
+
+  function checkEndOfDayReminder(lastEntry, now) {
+    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+    if (!isWeekday || now.getHours() < END_OF_DAY_REMINDER_HOUR) return;
+    if (lastEntry && lastEntry.tipo === 'Ingresso' && isTodayStamp(lastEntry, now)) {
+      showAutomaticNotification('fine-giornata', 'Promemoria presenza', 'Ricordati di chiudere la presenza');
     }
-    const ore = now.getHours();
-    const giornoSettimana = now.getDay();
-    if (giornoSettimana >= 1 && giornoSettimana <= 5 && ore >= 8 && ore < 10) {
-      const oggiStr = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
-      const giaEntratoOggi = lastEntry && lastEntry.data === oggiStr;
-      if (!giaEntratoOggi) {
-        const lastNotif = localStorage.getItem('last_notif_ingresso');
-        if (!lastNotif || (now - new Date(lastNotif) > 60 * 60 * 1000)) {
-          showNotification('Buongiorno!', 'Ricordati di timbrare l\'ingresso in oratorio!');
-          localStorage.setItem('last_notif_ingresso', now.toISOString());
-        }
+  }
+
+  function checkGpsAutomaticNotification(lastEntry, now) {
+    if (!geoAbilitata || !('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(pos => {
+      const dist = distance(pos.coords.latitude, pos.coords.longitude, oratorioLat, oratorioLon);
+      const noEntryToday = !lastEntry || !isTodayStamp(lastEntry, now);
+      if (noEntryToday && dist <= Math.max(maxDistanza + 80, 200)) {
+        showAutomaticNotification('arrivo', 'Sei arrivato?', 'Vuoi timbrare l’ingresso?');
+        return;
       }
+      if (lastEntry && lastEntry.tipo === 'Ingresso' && isTodayStamp(lastEntry, now) && dist > maxDistanza + 300) {
+        showAutomaticNotification('uscita-sospetta', 'Sembra che tu abbia finito', 'Vuoi timbrare l’uscita?');
+      }
+    }, () => {}, { enableHighAccuracy: false, maximumAge: 10 * 60 * 1000, timeout: 5000 });
+  }
+
+  async function checkAdminNotifications() {
+    if (!currentUser) return;
+    try {
+      const { data, error } = await sb
+        .from('impostazioni')
+        .select('valore, updated_at')
+        .eq('chiave', 'admin_notification_latest')
+        .maybeSingle();
+
+      if (error || !data?.valore) {
+        await checkBroadcastNotifications();
+        return;
+      }
+
+      let msg;
+      try { msg = JSON.parse(data.valore); } catch { return; }
+      const msgId = msg.id || data.updated_at;
+      if (!shouldReceiveAdminNotification(msg)) return;
+      if (msg.scheduled_at && new Date(msg.scheduled_at) > new Date()) return;
+      if (localStorage.getItem('admin_notif_read_' + msgId)) return;
+
+      await showNotification(msg.title || 'Messaggio Oratorio', msg.message, 'admin-' + msgId);
+      localStorage.setItem('admin_notif_read_' + msgId, new Date().toISOString());
+    } catch (e) {
+      console.warn('Admin notification check failed:', e);
     }
+  }
+
+  function shouldReceiveAdminNotification(msg) {
+    if (!msg || msg.target_type === 'all') return true;
+    if (msg.target_type === 'single') return String(msg.target_value) === String(currentUser.id) || msg.target_value === currentUser.nome;
+    if (msg.target_type === 'group') return String(currentUser.anno || '') === String(msg.target_value || '');
+    return false;
   }
 
   async function checkBroadcastNotifications() {
@@ -759,7 +835,7 @@
         if (lastRead !== msgId) {
           const notifShown = localStorage.getItem('broadcast_shown_' + msgId);
           if (!notifShown) {
-            showNotification('📢 Messaggio Oratorio', data.valore);
+            showNotification('📢 Messaggio Oratorio', data.valore, 'admin-broadcast');
             localStorage.setItem('last_broadcast_read', msgId);
             localStorage.setItem('broadcast_shown_' + msgId, 'true');
           }
@@ -771,7 +847,7 @@
   }
 
   window.showNotification = showNotification;
-  async function showNotification(title, body) {
+  async function showNotification(title, body, tag = 'oratorio-notification') {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     if (Notification.permission === 'granted') {
       try {
@@ -780,7 +856,7 @@
           body: body,
           icon: '/icon-192.png',
           badge: '/icon-192.png',
-          tag: 'oratorio-notification',
+          tag,
           renotify: true
         });
       } catch (e) {

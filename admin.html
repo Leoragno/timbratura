@@ -179,6 +179,16 @@
     .toast.success { background: var(--green); }
     .toast.error { background: var(--red); }
 
+    .notif-layout { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); gap: 16px; }
+    @media (max-width: 800px) { .notif-layout { grid-template-columns: 1fr; } }
+    .notif-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; }
+    .notif-card h3 { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 14px; }
+    .notif-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .notif-grid { grid-template-columns: 1fr; } }
+    .system-alert { border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; background: var(--bg); font-size: 11px; line-height: 1.5; }
+    .system-alert.red { border-left-color: var(--red); }
+    .system-alert.green { border-left-color: var(--green); }
+
     .empty { text-align: center; padding: 48px; color: var(--ink3); }
 
     /* QR Code */
@@ -652,18 +662,60 @@
   <div class="tab-panel" id="tab-notifiche">
     <div class="main">
       <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Invia Notifica agli Animatori</div>
+        <div class="section-title">Notifiche</div>
       </div>
-      <div class="card">
-        <label>Messaggio Broadcast</label>
-        <textarea id="notif-broadcast-msg" style="width:100%; height:80px; background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:10px; font-family:var(--font-mono); font-size:13px; margin-bottom:12px;" placeholder="Scrivi qui il messaggio per tutti gli animatori..."></textarea>
-        <button class="btn btn-primary" id="notif-broadcast-btn">Invia a tutti gli animatori</button>
-        <div style="font-size:11px; color:var(--ink3); margin-top:10px;">
-          Il messaggio apparirà come una notifica push (se abilitate) o come avviso all'apertura dell'app per tutti gli animatori.
+      <div class="notif-layout">
+        <div class="notif-card">
+          <h3>👨‍💼 Notifica admin controllata</h3>
+          <div class="notif-grid">
+            <div>
+              <label>Tipo</label>
+              <select id="notif-type">
+                <option value="Ritrovo">Ritrovo</option>
+                <option value="Avviso generale">Avviso generale</option>
+                <option value="Emergenza">Emergenza</option>
+                <option value="Cambio orario">Cambio orario</option>
+                <option value="Richiamo timbratura">Richiamo timbratura</option>
+              </select>
+            </div>
+            <div>
+              <label>Destinatari</label>
+              <select id="notif-target-type">
+                <option value="all">Tutti</option>
+                <option value="group">Gruppo / anno</option>
+                <option value="single">Singolo</option>
+              </select>
+            </div>
+            <div id="notif-group-wrap" style="display:none;">
+              <label>Gruppo</label>
+              <select id="notif-target-group"></select>
+            </div>
+            <div id="notif-user-wrap" style="display:none;">
+              <label>Animatore</label>
+              <select id="notif-target-user"></select>
+            </div>
+            <div>
+              <label>Invio</label>
+              <select id="notif-send-mode">
+                <option value="now">Immediato</option>
+                <option value="scheduled">Programmato</option>
+              </select>
+            </div>
+            <div id="notif-scheduled-wrap" style="display:none;">
+              <label>Data e ora</label>
+              <input type="datetime-local" id="notif-scheduled-at" />
+            </div>
+          </div>
+          <label>Messaggio</label>
+          <input type="text" id="notif-message" maxlength="90" placeholder="Es. Ritrovo anticipato alle 14:30" />
+          <button class="btn btn-primary" id="notif-broadcast-btn">Invia / programma notifica</button>
+          <div style="font-size:11px; color:var(--ink3); margin-top:10px; line-height:1.6;">
+            Scegli un tipo, un destinatario e un messaggio breve. Le notifiche automatiche restano limitate a massimo 2–3 al giorno per utente.
+          </div>
         </div>
-        <div style="margin-top:16px; padding:12px; background:var(--amber-lt); border:1px solid #e0cfa0; border-radius:4px; font-size:11px; color:var(--amber);">
-          <strong>🚀 Notifiche in Background</strong><br>
-          Per far sì che le notifiche arrivino anche quando gli animatori hanno l'app chiusa, è necessario configurare la Supabase Edge Function seguendo le istruzioni nel file <code>PUSH_NOTIFICATIONS_SETUP.md</code> nel repository.
+        <div class="notif-card">
+          <h3>🚨 Notifiche di sistema per admin</h3>
+          <div id="system-alerts"><div class="empty">⏳ Caricamento controlli…</div></div>
         </div>
       </div>
     </div>
@@ -732,6 +784,7 @@
       document.getElementById(btn.dataset.tab).classList.add('active');
       if (btn.dataset.tab === 'tab-disponibilita') { loadSettimane(); loadDispRiepilogo(); }
       if (btn.dataset.tab === 'tab-statistiche') { initStatistiche(); }
+      if (btn.dataset.tab === 'tab-notifiche') { populateNotificationTargets(); renderSystemAlerts(); }
     };
   });
 
@@ -757,6 +810,8 @@
     renderAnimators2();
     renderLog();
     updateStats();
+    populateNotificationTargets();
+    renderSystemAlerts();
   }
 
   async function loadSettings() {
@@ -1680,47 +1735,114 @@
   });
 
   // ── NOTIFICHE ──────────────────────────────────────────────────────────────
-  document.getElementById('notif-broadcast-btn').onclick = async () => {
-    const msg = document.getElementById('notif-broadcast-msg').value.trim();
-    if (!msg) return toast('Inserisci un messaggio', 'error');
-
-    if (!confirm('Inviare questo messaggio a tutti gli animatori?')) return;
-
-    const { error } = await sb.from('impostazioni').upsert({
-      chiave: 'broadcast_msg',
-      valore: msg
-    }, { onConflict: 'chiave' });
-
-    if (error) {
-      toast('Errore invio: ' + error.message, 'error');
-    } else {
-      toast('✅ Messaggio salvato!', 'success');
-
-      try {
-        fetch(SB_URL + '/functions/v1/send-push', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + SB_KEY
-          },
-          body: JSON.stringify({
-            title: 'Messaggio Oratorio',
-            body: msg,
-            url: '/timbratura.html'
-          })
-        }).then(res => {
-          if (res.ok) toast('🔔 Notifiche inviate a tutti!', 'success');
-          else console.warn('Edge Function non configurata o errore.');
-        });
-      } catch (e) {
-        console.warn('Invio push fallito:', e);
-      }
-
-      document.getElementById('notif-broadcast-msg').value = '';
-    }
+  const NOTIFICATION_TYPES = {
+    'Ritrovo': '📍 Ritrovo',
+    'Avviso generale': '📢 Avviso generale',
+    'Emergenza': '🚨 Emergenza',
+    'Cambio orario': '⏰ Cambio orario',
+    'Richiamo timbratura': '⏱ Richiamo timbratura'
   };
 
-  // ── INIT ───────────────────────────────────────────────────────────────────
+  function populateNotificationTargets() {
+    const groupSel = document.getElementById('notif-target-group');
+    const userSel = document.getElementById('notif-target-user');
+    if (!groupSel || !userSel) return;
+    const years = [...new Set(allAnimators.map(a => a.anno).filter(Boolean))].sort();
+    groupSel.innerHTML = years.map(y => `<option value="${esc(y)}">Anno ${esc(y)}</option>`).join('') || '<option value="">Nessun gruppo</option>';
+    userSel.innerHTML = [...allAnimators].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a => `<option value="${a.id}">${esc(a.nome)}${a.anno ? ' ('+esc(a.anno)+')' : ''}</option>`).join('') || '<option value="">Nessun animatore</option>';
+  }
+
+  function updateNotificationFormVisibility() {
+    const targetType = document.getElementById('notif-target-type')?.value;
+    const sendMode = document.getElementById('notif-send-mode')?.value;
+    document.getElementById('notif-group-wrap').style.display = targetType === 'group' ? '' : 'none';
+    document.getElementById('notif-user-wrap').style.display = targetType === 'single' ? '' : 'none';
+    document.getElementById('notif-scheduled-wrap').style.display = sendMode === 'scheduled' ? '' : 'none';
+  }
+
+  function buildAdminNotificationPayload() {
+    const type = document.getElementById('notif-type').value;
+    const targetType = document.getElementById('notif-target-type').value;
+    const sendMode = document.getElementById('notif-send-mode').value;
+    const message = document.getElementById('notif-message').value.trim();
+    const scheduledAtRaw = document.getElementById('notif-scheduled-at').value;
+    const targetValue = targetType === 'single'
+      ? document.getElementById('notif-target-user').value
+      : targetType === 'group'
+        ? document.getElementById('notif-target-group').value
+        : 'all';
+    if (!message) throw new Error('Inserisci un messaggio breve');
+    if (!NOTIFICATION_TYPES[type]) throw new Error('Tipo notifica non valido');
+    if (targetType !== 'all' && !targetValue) throw new Error('Seleziona un destinatario');
+    if (sendMode === 'scheduled' && !scheduledAtRaw) throw new Error('Seleziona data e ora di invio');
+    return {
+      id: Date.now().toString(36), type, title: NOTIFICATION_TYPES[type], message,
+      target_type: targetType, target_value: targetValue,
+      scheduled_at: sendMode === 'scheduled' ? new Date(scheduledAtRaw).toISOString() : null,
+      created_at: new Date().toISOString()
+    };
+  }
+
+  async function saveAdminNotification(payload) {
+    const { error } = await sb.from('notifiche_admin').insert(payload);
+    if (!error) return 'history';
+    console.warn('Storico notifiche_admin non disponibile, uso impostazioni:', error.message);
+    const fallback = await sb.from('impostazioni').upsert({ chiave: 'admin_notification_latest', valore: JSON.stringify(payload) }, { onConflict: 'chiave' });
+    if (fallback.error) throw fallback.error;
+    return 'latest';
+  }
+
+  async function sendPushForAdminNotification(payload) {
+    if (payload.scheduled_at || payload.target_type !== 'all') return;
+    try {
+      fetch(SB_URL + '/functions/v1/send-push', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SB_KEY },
+        body: JSON.stringify({ title: payload.title, body: payload.message, url: '/timbratura.html', target_type: payload.target_type, target_value: payload.target_value })
+      }).then(res => { if (res.ok) toast('🔔 Push immediata inviata', 'success'); else console.warn('Edge Function non configurata o errore.'); });
+    } catch (e) { console.warn('Invio push fallito:', e); }
+  }
+
+  function renderSystemAlerts() {
+    const el = document.getElementById('system-alerts');
+    if (!el) return;
+    const alerts = [];
+    const suspicious = allLog.filter(l => l.fiducia_stato === 'Sospetto').slice(0, 5);
+    suspicious.forEach(l => alerts.push({ level: 'red', text: `Timbratura sospetta: ${esc(l.nome)} · ${esc(l.data)} ${esc(l.ora)} · ${esc(l.fiducia_motivi || '')}` }));
+    const byName = {};
+    allLog.forEach(l => { (byName[l.nome] ||= []).push(l); });
+    Object.entries(byName).forEach(([nome, logs]) => {
+      const recent = logs.slice(0, 10);
+      const noGpsCount = recent.filter(l => !Number.isFinite(Number(l.gps_distanza_m))).length;
+      const suspiciousCount = recent.filter(l => l.fiducia_stato === 'Sospetto').length;
+      if (recent.length >= 3 && noGpsCount === recent.length) alerts.push({ level: '', text: `${esc(nome)}: nessun dato GPS nelle ultime ${recent.length} timbrature` });
+      if (suspiciousCount >= 3) alerts.push({ level: 'red', text: `${esc(nome)}: ${suspiciousCount} timbrature sospette recenti` });
+    });
+    if (!alerts.length) {
+      el.innerHTML = '<div class="system-alert green">✅ Nessun alert di sistema rilevante. Il sistema resta silenzioso.</div>';
+      return;
+    }
+    el.innerHTML = alerts.slice(0, 12).map(a => `<div class="system-alert ${a.level}">${a.text}</div>`).join('');
+  }
+
+  document.getElementById('notif-target-type').addEventListener('change', updateNotificationFormVisibility);
+  document.getElementById('notif-send-mode').addEventListener('change', updateNotificationFormVisibility);
+  document.getElementById('notif-broadcast-btn').onclick = async () => {
+    let payload;
+    try { payload = buildAdminNotificationPayload(); } catch (e) { return toast(e.message, 'error'); }
+    const dest = payload.target_type === 'all' ? 'tutti' : payload.target_type === 'group' ? 'gruppo ' + payload.target_value : 'un animatore';
+    if (!confirm(`${payload.scheduled_at ? 'Programmare' : 'Inviare'} ${payload.type} a ${dest}?`)) return;
+    try {
+      const mode = await saveAdminNotification(payload);
+      await sb.from('impostazioni').upsert({ chiave: 'admin_notification_latest', valore: JSON.stringify(payload) }, { onConflict: 'chiave' });
+      await sendPushForAdminNotification(payload);
+      toast(payload.scheduled_at ? '✅ Notifica programmata' : '✅ Notifica salvata', 'success');
+      if (mode === 'latest') toast('Storico non configurato: salvata come ultima notifica', 'error');
+      document.getElementById('notif-message').value = '';
+    } catch (error) { toast('Errore invio: ' + error.message, 'error'); }
+  };
+  updateNotificationFormVisibility();
+
+
   if (sessionStorage.getItem('admin_auth') === '1') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
