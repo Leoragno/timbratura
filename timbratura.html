@@ -408,6 +408,7 @@
   let oratorioLat = 45.706869, oratorioLon = 8.800464, maxDistanza = 150;
   let stampBusy = false, dispChiuse = {};
   let qrModeActive = false, qrPendingTipo = null;
+  let _appListenersRegistered = false;
 
   // Configurazione GPS
   const GPS_CONFIG = {
@@ -1263,6 +1264,16 @@
     document.getElementById('user-display-name').textContent = currentUser.nome;
     document.getElementById('topbar-user').textContent = currentUser.nome;
 
+    // ← FIX: ricarica dati utente dal DB così parrocchia e altri campi
+    // modificati dall'admin si aggiornano subito (invece di usare il localStorage stale)
+    try {
+      const { data: freshUser } = await sb.from('utenti').select('*').eq('id', currentUser.id).maybeSingle();
+      if (freshUser) {
+        currentUser = freshUser;
+        localStorage.setItem('cu', JSON.stringify(currentUser));
+      }
+    } catch(e) { console.warn('Refresh utente fallito:', e); }
+
     const parrNomi = { jerago: 'Jerago', besnate: 'Besnate', orago: 'Orago' };
     document.getElementById('user-display-meta').textContent = 'Animatore — ' + (parrNomi[currentUser.parrocchia] || '?') + ' (' + (currentUser.anno || '?') + ')';
 
@@ -1281,6 +1292,19 @@
       hapticFeedback('light');
       animateButton(document.getElementById('refresh-app-btn'));
       toast('Aggiornamento dati...', 'info');
+      // ← FIX: svuota la cache così il DB viene interrogato davvero
+      window._cachedImpostazioni = null;
+      // Aggiorna anche i dati utente (parrocchia ecc.)
+      try {
+        const { data: fu } = await sb.from('utenti').select('*').eq('id', currentUser.id).maybeSingle();
+        if (fu) {
+          currentUser = fu;
+          localStorage.setItem('cu', JSON.stringify(currentUser));
+          document.getElementById('user-display-meta').textContent =
+            'Animatore — ' + ({ jerago:'Jerago', besnate:'Besnate', orago:'Orago' }[currentUser.parrocchia] || '?') +
+            ' (' + (currentUser.anno || '?') + ')';
+        }
+      } catch(e) {}
       await caricaImpostazioni();
       await aggiornaStatoUI();
       if (document.getElementById('tab-storico').classList.contains('active')) caricaStorico();
@@ -1302,11 +1326,38 @@
       mostraQRBanner(pendingQa);
     }
 
-    setInterval(async () => {
-      if (!currentUser) return;
-      await caricaImpostazioni();
-      await aggiornaStatoUI();
-    }, 30000);
+    // ← FIX: listener e interval registrati UNA SOLA VOLTA per evitare duplicati
+    if (!_appListenersRegistered) {
+      _appListenersRegistered = true;
+
+      // Aggiorna tutto quando l'utente torna sul tab / riapre l'app
+      document.addEventListener('visibilitychange', async () => {
+        if (!document.hidden && currentUser) {
+          window._cachedImpostazioni = null;
+          try {
+            const { data: fu } = await sb.from('utenti').select('*').eq('id', currentUser.id).maybeSingle();
+            if (fu) {
+              currentUser = fu;
+              localStorage.setItem('cu', JSON.stringify(currentUser));
+              const pn = { jerago: 'Jerago', besnate: 'Besnate', orago: 'Orago' };
+              const metaEl = document.getElementById('user-display-meta');
+              if (metaEl) metaEl.textContent =
+                'Animatore — ' + (pn[currentUser.parrocchia] || '?') + ' (' + (currentUser.anno || '?') + ')';
+            }
+          } catch(e) {}
+          await caricaImpostazioni();
+          await aggiornaStatoUI();
+        }
+      });
+
+      // Polling ogni 30s — svuota la cache così rileva davvero i cambiamenti admin
+      setInterval(async () => {
+        if (!currentUser) return;
+        window._cachedImpostazioni = null;
+        await caricaImpostazioni();
+        await aggiornaStatoUI();
+      }, 30000);
+    }
   }
 
   // ============================================================
