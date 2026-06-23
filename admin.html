@@ -59,7 +59,7 @@
 
     /* TAB NAV */
     .tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; position: sticky; top: 54px; z-index: 40; overflow-x: auto; }
-    .tab-btn { flex: 1; min-width: 80px; padding: 14px 8px 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 3px; white-space: nowrap; }
+    .tab-btn { flex: 1; min-width: 70px; padding: 14px 6px 12px; font-family: var(--font-mono); font-size: 10px; font-weight: 500; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--ink3); transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
     .tab-btn .tab-icon { font-size: 16px; }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-btn:hover:not(.active) { color: var(--ink2); background: var(--bg); }
@@ -76,6 +76,11 @@
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; margin-top: 28px; }
     .section-header:first-child { margin-top: 0; }
     .section-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; }
+
+    /* SEARCH BAR */
+    .search-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .search-bar input, .search-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 160px; }
+    .search-bar .btn { padding: 8px 16px; font-size: 11px; width: auto; }
 
     /* PARROCCHIA GRID */
     .parrocchia-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
@@ -95,14 +100,7 @@
     .password-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
     .password-card .parr-nome { font-family: var(--font-serif); font-size: 18px; margin-bottom: 8px; }
     .password-card .parr-pass { font-family: var(--font-mono); font-size: 14px; background: var(--bg); padding: 6px 10px; border-radius: 3px; margin: 6px 0; word-break: break-all; }
-    .password-card .parr-pass input { margin-bottom: 0; font-size: 14px; }
     .password-card .parr-actions { display: flex; gap: 6px; margin-top: 8px; }
-
-    /* ANIMATORI SENZA PARROCCHIA */
-    .no-parr-list { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
-    .no-parr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg2); flex-wrap: wrap; gap: 8px; }
-    .no-parr-item:last-child { border-bottom: none; }
-    .no-parr-item .nome { font-weight: 600; }
 
     /* ALL USERS */
     .user-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 12px; }
@@ -114,10 +112,88 @@
     .parr-group .group-empty { font-size: 11px; color: var(--ink3); margin-top: 4px; }
     .parr-group .group-users { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
+    /* ORPHAN */
+    .no-parr-list { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+    .no-parr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg2); flex-wrap: wrap; gap: 8px; }
+    .no-parr-item:last-child { border-bottom: none; }
+    .no-parr-item .nome { font-weight: 600; }
+
     /* BROADCAST */
     .broadcast-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; }
     .broadcast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 700px) { .broadcast-grid { grid-template-columns: 1fr; } }
+
+    /* STATISTICHE SUPER ADMIN */
+    .stat-topbar { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .stat-topbar > div { flex: 1; min-width: 130px; }
+    .stat-topbar label { margin-bottom: 5px; font-size: 9px; letter-spacing: 1.8px; }
+    .stat-topbar select, .stat-topbar input { margin-bottom: 0; padding: 8px 10px; font-size: 12px; }
+    .stat-topbar-btn { display: flex; align-items: flex-end; gap: 6px; }
+
+    .stat-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+    @media (max-width: 820px) { .stat-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 460px) { .stat-kpi-row { grid-template-columns: 1fr 1fr; } }
+    .stat-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 18px 20px 16px; position: relative; overflow: hidden; }
+    .stat-kpi::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+    .stat-kpi.kpi-amber::after { background: #b8892a; }
+    .stat-kpi.kpi-blue::after  { background: #3a6ea8; }
+    .stat-kpi.kpi-red::after   { background: var(--red); }
+    .stat-kpi-eyebrow { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+    .stat-kpi-value { font-family: var(--font-serif); font-size: 44px; line-height: 1; color: var(--ink); margin-bottom: 4px; }
+    .stat-kpi-sub { font-size: 10px; color: var(--ink3); }
+
+    .stat-section-hdr { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin: 28px 0 16px; }
+    .stat-section-hdr:first-of-type { margin-top: 0; }
+    .stat-section-hdr-title { font-family: var(--font-serif); font-size: 18px; font-style: italic; }
+    .stat-section-hdr-meta { font-size: 10px; color: var(--ink3); letter-spacing: .5px; }
+
+    .stat-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 860px) { .stat-charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; margin-bottom: 14px; }
+    .chart-card:last-child { margin-bottom: 0; }
+    .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; gap: 8px; flex-wrap: wrap; }
+    .chart-title-group { flex: 1; }
+    .chart-title { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--ink); line-height: 1.2; }
+    .chart-subtitle { font-size: 10px; color: var(--ink3); letter-spacing: .3px; margin-top: 2px; margin-bottom: 14px; }
+    .chart-toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; align-self: flex-start; }
+    .chart-toggle button { padding: 4px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .4px; border: none; background: transparent; cursor: pointer; color: var(--ink3); transition: background .12s, color .12s; }
+    .chart-toggle button.active { background: var(--accent); color: #fff; }
+    .chart-wrap { position: relative; }
+    .chart-wrap-sm { height: 170px; }
+    .chart-wrap-md { height: 210px; }
+
+    /* RANK LIST */
+    .rank-list { list-style: none; }
+    .rank-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bg2); }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-medal { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 12px; flex-shrink: 0; background: var(--bg2); color: var(--ink3); border: 1px solid var(--border); }
+    .rank-medal.gold   { background: #fdf3dc; color: #7a5c10; border-color: #e0cfa0; }
+    .rank-medal.silver { background: #f0eeea; color: #5a5148; border-color: #d0ccc4; }
+    .rank-medal.bronze { background: #f5ece4; color: #7a4a28; border-color: #dbb8a0; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-nome { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-anno { font-size: 10px; color: var(--ink3); }
+    .rank-bar-wrap { flex: 2; height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; min-width: 40px; }
+    .rank-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width .7s cubic-bezier(.23,1,.32,1); }
+    .rank-col-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+    .rank-ore { font-size: 12px; color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 500; }
+    .rank-parr { font-size: 10px; color: var(--ink3); white-space: nowrap; }
+
+    /* DETTAGLIO TABLE */
+    .det-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; }
+    .det-table { width: 100%; border-collapse: collapse; min-width: 650px; }
+    .det-table th { background: var(--bg2); padding: 10px 16px; text-align: left; font-size: 9px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1.2px; white-space: nowrap; }
+    .det-table th.num { text-align: right; }
+    .det-table td { padding: 11px 16px; border-bottom: 1px solid var(--bg2); font-size: 12px; vertical-align: middle; }
+    .det-table td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink2); }
+    .det-table tr:last-child td { border-bottom: none; }
+    .det-table tr:hover td { background: var(--bg); }
+    .det-anim-name { font-weight: 500; font-size: 13px; }
+    .det-anim-anno { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+    .det-ore-pill { display: inline-block; background: var(--accent-lt); color: var(--accent); font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; border: 1px solid #b2ccbc; }
+    .det-giorni-num { font-family: var(--font-serif); font-size: 20px; color: var(--ink); line-height: 1; }
+    .det-parr-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg2); color: var(--ink3); }
 
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 18px; font-size: 12px; transform: translateY(20px); opacity: 0; transition: all .3s; z-index: 300; }
     .toast.show { transform: translateY(0); opacity: 1; }
@@ -182,10 +258,11 @@
   <!-- TAB NAV -->
   <div class="tab-nav">
     <button class="tab-btn active" data-tab="tab-overview"><span class="tab-icon">📊</span>Overview</button>
-    <button class="tab-btn" data-tab="tab-all-users"><span class="tab-icon">👥</span>Tutti gli animatori</button>
-    <button class="tab-btn" data-tab="tab-password"><span class="tab-icon">🔐</span>Password Admin</button>
+    <button class="tab-btn" data-tab="tab-all-users"><span class="tab-icon">👥</span>Animatori</button>
+    <button class="tab-btn" data-tab="tab-statistiche"><span class="tab-icon">📈</span>Statistiche</button>
+    <button class="tab-btn" data-tab="tab-password"><span class="tab-icon">🔐</span>Password</button>
     <button class="tab-btn" data-tab="tab-broadcast"><span class="tab-icon">📢</span>Broadcast</button>
-    <button class="tab-btn" data-tab="tab-orphan"><span class="tab-icon">👤</span>Senza Parrocchia</button>
+    <button class="tab-btn" data-tab="tab-orphan"><span class="tab-icon">👤</span>Senza Parr.</button>
   </div>
 
   <!-- OVERVIEW -->
@@ -212,11 +289,172 @@
   <div class="tab-panel" id="tab-all-users">
     <div class="main">
       <div class="section-header" style="margin-top:0;">
-        <div class="section-title">👥 Tutti gli animatori (per parrocchia)</div>
+        <div class="section-title">👥 Tutti gli animatori</div>
         <button class="btn btn-sm btn-ghost" id="refresh-all-users">↻ Aggiorna</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-users" placeholder="🔍 Cerca nome, cognome o anno..." />
+        <select id="filter-parrocchia">
+          <option value="">Tutte le parrocchie</option>
+          <option value="jerago">🔴 Jerago</option>
+          <option value="besnate">🟢 Besnate</option>
+          <option value="orago">🔵 Orago</option>
+          <option value="senza">❌ Senza parrocchia</option>
+        </select>
+        <button class="btn btn-sm btn-ghost" onclick="window.filterUsers()">Filtra</button>
+        <button class="btn btn-sm btn-ghost" onclick="document.getElementById('search-users').value='';document.getElementById('filter-parrocchia').value='';window.filterUsers();">Reset</button>
       </div>
       <div id="all-users-container">
         <div class="empty">⏳ Caricamento...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATISTICHE -->
+  <div class="tab-panel" id="tab-statistiche">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">📈 Statistiche generali</div>
+        <button class="btn btn-sm btn-ghost" id="refresh-stats">↻ Aggiorna</button>
+      </div>
+
+      <div class="stat-topbar">
+        <div>
+          <label>Dal</label>
+          <input type="date" id="stat-dal" />
+        </div>
+        <div>
+          <label>Al</label>
+          <input type="date" id="stat-al" />
+        </div>
+        <div>
+          <label>Parrocchia</label>
+          <select id="stat-parrocchia">
+            <option value="">Tutte</option>
+            <option value="jerago">🔴 Jerago</option>
+            <option value="besnate">🟢 Besnate</option>
+            <option value="orago">🔵 Orago</option>
+          </select>
+        </div>
+        <div>
+          <label>Animatore</label>
+          <select id="stat-animatore"><option value="">Tutti</option></select>
+        </div>
+        <div class="stat-topbar-btn">
+          <button class="btn btn-primary" id="stat-applica-btn">Applica</button>
+          <button class="btn btn-ghost" id="stat-reset-btn">Reset</button>
+        </div>
+      </div>
+
+      <div class="stat-kpi-row">
+        <div class="stat-kpi">
+          <div class="stat-kpi-eyebrow">Animatori attivi</div>
+          <div class="stat-kpi-value" id="kpi-animatori">—</div>
+          <div class="stat-kpi-sub">nel periodo selezionato</div>
+        </div>
+        <div class="stat-kpi kpi-amber">
+          <div class="stat-kpi-eyebrow">Giorni con presenze</div>
+          <div class="stat-kpi-value" id="kpi-giorni">—</div>
+          <div class="stat-kpi-sub">giorni distinti</div>
+        </div>
+        <div class="stat-kpi kpi-blue">
+          <div class="stat-kpi-eyebrow">Timbrature totali</div>
+          <div class="stat-kpi-value" id="kpi-timbrature">—</div>
+          <div class="stat-kpi-sub">ingressi + uscite</div>
+        </div>
+        <div class="stat-kpi kpi-red">
+          <div class="stat-kpi-eyebrow">Ore lavorate</div>
+          <div class="stat-kpi-value" id="kpi-ore">—</div>
+          <div class="stat-kpi-sub">stima totale</div>
+        </div>
+      </div>
+
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Distribuzione oraria</div>
+        <div class="stat-section-hdr-meta">A che ora entrano ed escono gli animatori</div>
+      </div>
+
+      <div class="stat-charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-title">Ingressi per fascia</div>
+              <div class="chart-subtitle">Orari di entrata nel periodo</div>
+            </div>
+            <div class="chart-toggle">
+              <button class="active" data-chart="chart-in" data-mode="bar">Barre</button>
+              <button data-chart="chart-in" data-mode="line">Linea</button>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-sm"><canvas id="chart-in" role="img" aria-label="Grafico ingressi per fascia oraria"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-title">Uscite per fascia</div>
+              <div class="chart-subtitle">Orari di uscita nel periodo</div>
+            </div>
+            <div class="chart-toggle">
+              <button class="active" data-chart="chart-out" data-mode="bar">Barre</button>
+              <button data-chart="chart-out" data-mode="line">Linea</button>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-sm"><canvas id="chart-out" role="img" aria-label="Grafico uscite per fascia oraria"></canvas></div>
+        </div>
+      </div>
+
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Presenze giornaliere</div>
+        <div class="stat-section-hdr-meta">Quanti animatori distinti hanno timbrato ogni giorno</div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title-group">
+            <div class="chart-title">Animatori presenti per giorno</div>
+            <div class="chart-subtitle">Basato sugli ingressi registrati</div>
+          </div>
+          <div class="chart-toggle">
+            <button class="active" data-chart="chart-giorni" data-mode="bar">Barre</button>
+            <button data-chart="chart-giorni" data-mode="line">Linea</button>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap-md"><canvas id="chart-giorni" role="img" aria-label="Grafico presenze per giorno"></canvas></div>
+      </div>
+
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">🏆 Classifica animatori</div>
+        <div class="stat-section-hdr-meta">Per ore lavorate nel periodo</div>
+      </div>
+
+      <div class="chart-card">
+        <ul class="rank-list" id="stat-rank-list">
+          <li class="rank-item"><span style="color:var(--ink3);font-size:12px;">⏳ Caricamento…</span></li>
+        </ul>
+      </div>
+
+      <div class="stat-section-hdr">
+        <div class="stat-section-hdr-title">Dettaglio per animatore</div>
+        <div class="stat-section-hdr-meta" id="stat-det-meta"></div>
+      </div>
+
+      <div class="det-table-wrap">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>Animatore</th>
+              <th>Parrocchia</th>
+              <th class="num">Giorni</th>
+              <th class="num">Ore lavorate</th>
+              <th class="num">Ingressi</th>
+              <th class="num">Uscite</th>
+              <th>Ultimo accesso</th>
+            </tr>
+          </thead>
+          <tbody id="stat-det-tbody">
+            <tr><td colspan="7" class="empty">⏳ Caricamento…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -289,6 +527,10 @@
         <div class="section-title">👤 Animatori senza parrocchia</div>
         <button class="btn btn-sm btn-ghost" id="refresh-orphan">↻ Aggiorna</button>
       </div>
+      <div class="search-bar">
+        <input type="text" id="search-orphan" placeholder="🔍 Cerca nome..." />
+        <button class="btn btn-sm btn-ghost" onclick="window.filterOrphan()">Filtra</button>
+      </div>
       <div class="no-parr-list" id="orphan-list">
         <div class="empty">⏳ Caricamento...</div>
       </div>
@@ -319,8 +561,12 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function() {
+  // ════════════════════════════════════════════════
+  // CONFIGURAZIONE
+  // ════════════════════════════════════════════════
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   const sb = window.supabase.createClient(SB_URL, SB_KEY);
@@ -333,7 +579,15 @@
   };
   const PARROCCHIA_KEYS = Object.keys(PARROCCHIE);
 
-  // ── UTILS ──────────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // STATO
+  // ════════════════════════════════════════════════
+  let allUsers = [], allLogs = [], allSettings = [];
+  let statCharts = {};
+
+  // ════════════════════════════════════════════════
+  // UTILS
+  // ════════════════════════════════════════════════
   let toastQueue = [], toastBusy = false;
   function toast(msg, type) {
     toastQueue.push({ msg, type });
@@ -353,8 +607,13 @@
   }
   function esc(str) { if (!str) return ''; return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
+  function dataLogToISO(str) { if (!str) return ''; const p = str.split('/'); return p.length === 3 ? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : ''; }
+  function parseDataLog(str) { if (!str) return null; const p = str.split('/'); return p.length===3 ? new Date(+p[2], +p[1]-1, +p[0]) : null; }
+  function minutiToLabel(m) { if (!m) return '—'; const h = Math.floor(m/60), min = m%60; return h + 'h ' + String(min).padStart(2,'0') + 'min'; }
 
-  // ── LOGIN ──────────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // LOGIN
+  // ════════════════════════════════════════════════
   async function doLogin() {
     const pw = document.getElementById('admin-pass').value;
     if (pw !== SUPER_ADMIN_PASSWORD) {
@@ -379,9 +638,9 @@
     startClock();
   }
 
-  // ── DATA LOADING ──────────────────────────────────────────────────────────
-  let allUsers = [], allLogs = [], allSettings = [];
-
+  // ════════════════════════════════════════════════
+  // DATA LOADING
+  // ════════════════════════════════════════════════
   async function loadAllData() {
     await loadUsers();
     await loadTimbrature();
@@ -391,6 +650,8 @@
     renderPasswords();
     renderOrphan();
     loadBroadcastHistory();
+    populateStatAnimatore();
+    renderStatistiche();
   }
 
   async function loadUsers() {
@@ -413,7 +674,7 @@
   }
 
   function getLogsByParrocchia(parr) {
-    return allLogs.filter(l => l.parrocchia === parr);
+    return allLogs.filter(l => l.parrocchia === parr || l.parrocchia_timbratura === parr);
   }
 
   function getOrphanUsers() {
@@ -425,14 +686,14 @@
     return found ? found.valore : null;
   }
 
-  // ── OVERVIEW ──────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // OVERVIEW
+  // ════════════════════════════════════════════════
   function renderOverview() {
-    // Stats totali
     document.getElementById('stat-total').textContent = allUsers.length;
     document.getElementById('stat-timbrature').textContent = allLogs.length;
     document.getElementById('stat-orphan').textContent = getOrphanUsers().length;
 
-    // Grid parrocchie
     const grid = document.getElementById('parrocchia-grid');
     if (!PARROCCHIA_KEYS.length) {
       grid.innerHTML = '<div class="empty">Nessuna parrocchia configurata</div>';
@@ -448,7 +709,6 @@
       const oggiLogs = logs.filter(l => l.data === oggiStr);
       const lastStamp = logs.length ? logs[0] : null;
       
-      // Lista animatori della parrocchia
       const usersList = users.map(u => 
         `<span class="user-tag">${esc(u.nome)}</span>`
       ).join('');
@@ -472,19 +732,43 @@
     }).join('');
   }
 
-  // ── TUTTI GLI ANIMATORI ──────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // TUTTI GLI ANIMATORI (con ricerca)
+  // ════════════════════════════════════════════════
+  function filterUsers() {
+    renderAllUsers();
+  }
+  window.filterUsers = filterUsers;
+
   function renderAllUsers() {
     const container = document.getElementById('all-users-container');
     if (!container) return;
     
-    if (!allUsers.length) {
-      container.innerHTML = '<div class="empty">Nessun animatore registrato</div>';
+    const search = document.getElementById('search-users').value.toLowerCase().trim();
+    const filterParr = document.getElementById('filter-parrocchia').value;
+    
+    let filtered = allUsers;
+    
+    if (search) {
+      filtered = filtered.filter(u => 
+        u.nome.toLowerCase().includes(search) || 
+        String(u.anno).includes(search)
+      );
+    }
+    
+    if (filterParr === 'senza') {
+      filtered = filtered.filter(u => !u.parrocchia || u.parrocchia === '');
+    } else if (filterParr) {
+      filtered = filtered.filter(u => u.parrocchia === filterParr);
+    }
+    
+    if (!filtered.length) {
+      container.innerHTML = '<div class="empty">Nessun animatore trovato</div>';
       return;
     }
     
-    // Raggruppa per parrocchia
     const grouped = {};
-    allUsers.forEach(u => {
+    filtered.forEach(u => {
       const key = u.parrocchia || 'senza';
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(u);
@@ -492,7 +776,6 @@
     
     let html = '';
     
-    // Prima mostra "Senza parrocchia"
     if (grouped['senza']) {
       html += `<div class="parr-group senza">
         <div class="group-title">⚠️ Senza parrocchia (${grouped['senza'].length})</div>
@@ -502,7 +785,6 @@
       </div>`;
     }
     
-    // Poi le parrocchie
     PARROCCHIA_KEYS.forEach(key => {
       const users = grouped[key] || [];
       html += `<div class="parr-group ${key}">
@@ -531,7 +813,9 @@
     </span>`;
   }
 
-  // ── CAMBIO PARROCCHIA (Super-admin) ──────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // CAMBIO PARROCCHIA (Super-admin)
+  // ════════════════════════════════════════════════
   window.cambiaParrocchia = async (userId, newParrocchia) => {
     if (!userId || !newParrocchia) return;
     
@@ -563,6 +847,7 @@
       renderOverview();
       renderAllUsers();
       renderOrphan();
+      renderStatistiche();
       
     } catch (error) {
       toast('❌ Errore: ' + error.message, 'error');
@@ -585,9 +870,58 @@
     renderAllUsers();
     renderOrphan();
     renderPasswords();
+    renderStatistiche();
   };
 
-  // ── PASSWORD ADMIN ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // ORPHAN (con ricerca)
+  // ════════════════════════════════════════════════
+  function filterOrphan() {
+    renderOrphan();
+  }
+  window.filterOrphan = filterOrphan;
+
+  function renderOrphan() {
+    const list = document.getElementById('orphan-list');
+    const orphans = getOrphanUsers();
+    const search = document.getElementById('search-orphan').value.toLowerCase().trim();
+    
+    let filtered = orphans;
+    if (search) {
+      filtered = filtered.filter(u => u.nome.toLowerCase().includes(search));
+    }
+    
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty">✅ Nessun animatore senza parrocchia</div>';
+      return;
+    }
+
+    const parrOptions = Object.entries(PARROCCHIE).map(([key, p]) => 
+      `<option value="${key}">${p.emoji} ${p.nome}</option>`
+    ).join('');
+
+    list.innerHTML = filtered.map(u => `
+      <div class="no-parr-item">
+        <div>
+          <span class="nome">${esc(u.nome)}</span>
+          ${u.anno ? '<span style="font-size:11px;color:var(--ink3);">('+esc(u.anno)+')</span>' : ''}
+          <span style="font-size:10px;color:var(--red);margin-left:8px;">⚠️ Senza parrocchia</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+          <select style="padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;font-family:var(--font-mono);" 
+                  onchange="window.cambiaParrocchia(${u.id}, this.value)">
+            <option value="">📌 Assegna a...</option>
+            ${parrOptions}
+          </select>
+          <button class="btn btn-red btn-sm" onclick="window.deleteUser(${u.id},'${esc(u.nome)}')" style="padding:4px 8px;font-size:10px;">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ════════════════════════════════════════════════
+  // PASSWORD ADMIN
+  // ════════════════════════════════════════════════
   let passwordModalTarget = null;
 
   function renderPasswords() {
@@ -649,40 +983,9 @@
     renderPasswords();
   };
 
-  // ── ORPHAN ──────────────────────────────────────────────────────────────────
-  function renderOrphan() {
-    const list = document.getElementById('orphan-list');
-    const orphans = getOrphanUsers();
-    
-    if (!orphans.length) {
-      list.innerHTML = '<div class="empty">✅ Nessun animatore senza parrocchia</div>';
-      return;
-    }
-
-    const parrOptions = Object.entries(PARROCCHIE).map(([key, p]) => 
-      `<option value="${key}">${p.emoji} ${p.nome}</option>`
-    ).join('');
-
-    list.innerHTML = orphans.map(u => `
-      <div class="no-parr-item">
-        <div>
-          <span class="nome">${esc(u.nome)}</span>
-          ${u.anno ? '<span style="font-size:11px;color:var(--ink3);">('+esc(u.anno)+')</span>' : ''}
-          <span style="font-size:10px;color:var(--red);margin-left:8px;">⚠️ Senza parrocchia</span>
-        </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
-          <select style="padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;font-family:var(--font-mono);" 
-                  onchange="window.cambiaParrocchia(${u.id}, this.value)">
-            <option value="">📌 Assegna a...</option>
-            ${parrOptions}
-          </select>
-          <button class="btn btn-red btn-sm" onclick="window.deleteUser(${u.id},'${esc(u.nome)}')" style="padding:4px 8px;font-size:10px;">🗑️</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // ── BROADCAST ──────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // BROADCAST
+  // ════════════════════════════════════════════════
   async function loadBroadcastHistory() {
     const container = document.getElementById('broadcast-history');
     try {
@@ -784,7 +1087,298 @@
     }
   };
 
-  // ── TABS ──────────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // STATISTICHE
+  // ════════════════════════════════════════════════
+  function populateStatAnimatore() {
+    const sel = document.getElementById('stat-animatore');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Tutti gli animatori</option>';
+    [...allUsers].sort((a,b) => a.nome.localeCompare(b.nome)).forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.nome;
+      opt.textContent = a.nome + (a.anno ? ' ('+a.anno+')' : '') + (a.parrocchia ? ' · '+PARROCCHIE[a.parrocchia]?.nome : '');
+      if (a.nome === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function getStatFilters() {
+    return {
+      dal: document.getElementById('stat-dal').value,
+      al: document.getElementById('stat-al').value,
+      parrocchia: document.getElementById('stat-parrocchia').value,
+      animatore: document.getElementById('stat-animatore').value
+    };
+  }
+
+  function filtraLogStat(filters) {
+    return allLogs.filter(l => {
+      const iso = dataLogToISO(l.data);
+      if (filters.dal && iso < filters.dal) return false;
+      if (filters.al && iso > filters.al) return false;
+      if (filters.parrocchia) {
+        if (l.parrocchia !== filters.parrocchia && l.parrocchia_timbratura !== filters.parrocchia) return false;
+      }
+      if (filters.animatore && l.nome !== filters.animatore) return false;
+      return true;
+    });
+  }
+
+  function calcolaOreAnimatore(logAnimatore) {
+    const perData = {};
+    logAnimatore.forEach(l => {
+      if (!perData[l.data]) perData[l.data] = { ingressi: [], uscite: [] };
+      if (l.tipo === 'Ingresso') perData[l.data].ingressi.push(l.ora);
+      if (l.tipo === 'Uscita') perData[l.data].uscite.push(l.ora);
+    });
+    let totMin = 0;
+    Object.values(perData).forEach(g => {
+      g.ingressi.sort(); g.uscite.sort();
+      if (g.ingressi.length && g.uscite.length) {
+        const [ih,im] = g.ingressi[0].split(':').map(Number);
+        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
+        const diff = (oh*60+om)-(ih*60+im);
+        if (diff > 0) totMin += diff;
+      }
+    });
+    return totMin;
+  }
+
+  function buildChartData_orario(log, tipo) {
+    const counts = {};
+    for (let h = 7; h <= 21; h++) counts[String(h).padStart(2,'0')] = 0;
+    log.filter(l => l.tipo === tipo).forEach(l => {
+      const h = l.ora ? l.ora.split(':')[0] : null;
+      if (h && counts[h] !== undefined) counts[h]++;
+    });
+    return {
+      labels: Object.keys(counts).map(h => h + ':00'),
+      data: Object.values(counts)
+    };
+  }
+
+  function buildChartData_giorni(log) {
+    const perData = {};
+    log.filter(l => l.tipo === 'Ingresso').forEach(l => {
+      if (!perData[l.data]) perData[l.data] = new Set();
+      perData[l.data].add(l.nome);
+    });
+    const sorted = Object.keys(perData).sort((a,b) => {
+      const pa = a.split('/'), pb = b.split('/');
+      return new Date(+pa[2],+pa[1]-1,+pa[0]) - new Date(+pb[2],+pb[1]-1,+pb[0]);
+    });
+    return {
+      labels: sorted.map(d => { const p=d.split('/'); return p[0]+'/'+p[1]; }),
+      data: sorted.map(d => perData[d].size)
+    };
+  }
+
+  function destroyChart(id) {
+    if (statCharts[id]) { statCharts[id].destroy(); delete statCharts[id]; }
+  }
+
+  function renderChart(id, chartData, type, color, bgColor) {
+    destroyChart(id);
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    const isEmpty = chartData.data.every(v => v === 0);
+    statCharts[id] = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          data: chartData.data,
+          backgroundColor: type === 'bar' ? (bgColor || color + '33') : 'transparent',
+          borderColor: color,
+          borderWidth: type === 'line' ? 2 : 1,
+          fill: type === 'line' ? { target: 'origin', above: bgColor || color + '18' } : false,
+          tension: 0.4,
+          pointRadius: type === 'line' ? 4 : 0,
+          pointHoverRadius: type === 'line' ? 6 : 4,
+          pointBackgroundColor: color,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          borderRadius: type === 'bar' ? 3 : 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1714',
+            titleColor: '#f5f2eb',
+            bodyColor: '#ede9df',
+            padding: 10,
+            cornerRadius: 4,
+            titleFont: { family: "'Geist Mono', monospace", size: 11 },
+            bodyFont: { family: "'Geist Mono', monospace", size: 12, weight: '500' },
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: '#ede9df', drawBorder: false },
+            ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72', maxRotation: 45 }
+          },
+          y: {
+            grid: { color: '#ede9df', drawBorder: false },
+            ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72', precision: 0 },
+            beginAtZero: true,
+            suggestedMax: isEmpty ? 5 : undefined
+          }
+        }
+      }
+    });
+  }
+
+  const chartModes = { 'chart-in': 'bar', 'chart-out': 'bar', 'chart-giorni': 'bar' };
+
+  function renderAllStatCharts(log) {
+    renderChart('chart-in', buildChartData_orario(log, 'Ingresso'), chartModes['chart-in'], '#2d5a3d', '#e5f2ea');
+    renderChart('chart-out', buildChartData_orario(log, 'Uscita'), chartModes['chart-out'], '#8b2e2e', '#f5e8e8');
+    renderChart('chart-giorni', buildChartData_giorni(log), chartModes['chart-giorni'], '#3a6ea8', '#e8f0f8');
+  }
+
+  function renderKPI(log) {
+    const animatoriAttivi = new Set(log.map(l => l.nome)).size;
+    const giorniAttivi = new Set(log.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
+    const totTimbrature = log.length;
+    const nomi = [...new Set(log.map(l => l.nome))];
+    let totMin = 0;
+    nomi.forEach(nome => { totMin += calcolaOreAnimatore(log.filter(l => l.nome === nome)); });
+    document.getElementById('kpi-animatori').textContent = animatoriAttivi || '—';
+    document.getElementById('kpi-giorni').textContent = giorniAttivi || '—';
+    document.getElementById('kpi-timbrature').textContent = totTimbrature || '—';
+    document.getElementById('kpi-ore').textContent = totMin ? Math.floor(totMin/60)+'h' : '—';
+  }
+
+  function renderRank(log) {
+    const nomi = [...new Set(log.map(l => l.nome))];
+    const rank = nomi.map(nome => {
+      const nl = log.filter(l => l.nome === nome);
+      const min = calcolaOreAnimatore(nl);
+      const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
+      const user = allUsers.find(a => a.nome === nome);
+      const parr = user ? user.parrocchia : null;
+      return { nome, anno: user ? user.anno : '', parr, min, giorni };
+    }).sort((a,b) => b.min - a.min);
+
+    const maxMin = rank[0] ? rank[0].min || 1 : 1;
+    const list = document.getElementById('stat-rank-list');
+
+    if (!rank.length) {
+      list.innerHTML = '<li class="rank-item"><span style="color:var(--ink3);font-size:12px;">Nessun dato nel periodo selezionato</span></li>';
+      return;
+    }
+
+    const medalClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+
+    list.innerHTML = rank.map((r, i) => {
+      const parrLabel = r.parr ? PARROCCHIE[r.parr]?.emoji + ' ' + PARROCCHIE[r.parr]?.nome : '❌ Senza';
+      return `<li class="rank-item">
+        <div class="rank-medal ${medalClass(i)}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-nome">${esc(r.nome)}</div>
+          <div class="rank-anno">${r.anno ? r.anno+' ·' : ''} ${r.giorni} giorn${r.giorni===1?'o':'i'} · ${parrLabel}</div>
+        </div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(r.min/maxMin*100)}%"></div></div>
+        <div class="rank-col-right">
+          <div class="rank-ore">${minutiToLabel(r.min)}</div>
+        </div>
+      </li>`;
+    }).join('');
+  }
+
+  function renderDettaglio(log) {
+    const nomi = [...new Set(log.map(l => l.nome))];
+    const tbody = document.getElementById('stat-det-tbody');
+    const meta = document.getElementById('stat-det-meta');
+
+    if (!nomi.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Nessun dato nel periodo selezionato</td></tr>';
+      if (meta) meta.textContent = '';
+      return;
+    }
+
+    const rows = nomi.map(nome => {
+      const nl = log.filter(l => l.nome === nome);
+      const user = allUsers.find(a => a.nome === nome);
+      const anno = user ? user.anno : (nl[0] ? nl[0].anno : '');
+      const parr = user ? user.parrocchia : (nl[0] ? nl[0].parrocchia : null);
+      const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
+      const minuti = calcolaOreAnimatore(nl);
+      const nIn = nl.filter(l=>l.tipo==='Ingresso').length;
+      const nOut = nl.filter(l=>l.tipo==='Uscita').length;
+      const ultimo = nl[0];
+      return { nome, anno, parr, giorni, minuti, nIn, nOut, ultimo };
+    }).sort((a,b) => b.minuti - a.minuti);
+
+    if (meta) meta.textContent = rows.length + ' animator' + (rows.length===1?'e':'i');
+
+    tbody.innerHTML = rows.map(r => {
+      const parrLabel = r.parr ? PARROCCHIE[r.parr]?.emoji + ' ' + PARROCCHIE[r.parr]?.nome : '❌';
+      return `<tr>
+        <td>
+          <div class="det-anim-name">${esc(r.nome)}</div>
+          ${r.anno ? '<div class="det-anim-anno">'+esc(r.anno)+'</div>' : ''}
+        </td>
+        <td><span class="det-parr-badge">${parrLabel}</span></td>
+        <td class="num"><div class="det-giorni-num">${r.giorni}</div></td>
+        <td class="num"><span class="det-ore-pill">${minutiToLabel(r.minuti)}</span></td>
+        <td class="num"><span class="det-badge in">${r.nIn}</span></td>
+        <td class="num"><span class="det-badge out">${r.nOut}</span></td>
+        <td>
+          ${r.ultimo ? `<div class="det-last">${esc(r.ultimo.data)}</div><div class="det-last-ora">${esc(r.ultimo.ora)}</div>` : '<span style="color:var(--ink3)">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderStatistiche() {
+    const filters = getStatFilters();
+    const log = filtraLogStat(filters);
+    renderKPI(log);
+    renderAllStatCharts(log);
+    renderRank(log);
+    renderDettaglio(log);
+  }
+
+  // ════════════════════════════════════════════════
+  // CHART TOGGLE
+  // ════════════════════════════════════════════════
+  document.querySelectorAll('.chart-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const chartId = btn.dataset.chart;
+      const mode = btn.dataset.mode;
+      chartModes[chartId] = mode;
+      btn.closest('.chart-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filters = getStatFilters();
+      const log = filtraLogStat(filters);
+      if (chartId === 'chart-in') renderChart('chart-in', buildChartData_orario(log, 'Ingresso'), mode, '#2d5a3d', '#e5f2ea');
+      if (chartId === 'chart-out') renderChart('chart-out', buildChartData_orario(log, 'Uscita'), mode, '#8b2e2e', '#f5e8e8');
+      if (chartId === 'chart-giorni') renderChart('chart-giorni', buildChartData_giorni(log), mode, '#3a6ea8', '#e8f0f8');
+    });
+  });
+
+  // ════════════════════════════════════════════════
+  // STATISTICHE BUTTONS
+  // ════════════════════════════════════════════════
+  document.getElementById('stat-applica-btn').addEventListener('click', renderStatistiche);
+  
+  document.getElementById('stat-reset-btn').addEventListener('click', () => {
+    document.getElementById('stat-dal').value = '';
+    document.getElementById('stat-al').value = '';
+    document.getElementById('stat-parrocchia').value = '';
+    document.getElementById('stat-animatore').value = '';
+    renderStatistiche();
+  });
+
+  // ════════════════════════════════════════════════
+  // TABS
+  // ════════════════════════════════════════════════
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -794,13 +1388,16 @@
       
       if (btn.dataset.tab === 'tab-overview') renderOverview();
       if (btn.dataset.tab === 'tab-all-users') renderAllUsers();
+      if (btn.dataset.tab === 'tab-statistiche') renderStatistiche();
       if (btn.dataset.tab === 'tab-password') renderPasswords();
       if (btn.dataset.tab === 'tab-orphan') renderOrphan();
       if (btn.dataset.tab === 'tab-broadcast') loadBroadcastHistory();
     };
   });
 
-  // ── REFRESH BUTTONS ──────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // REFRESH BUTTONS
+  // ════════════════════════════════════════════════
   document.getElementById('refresh-overview').onclick = async () => {
     toast('Aggiornamento...');
     await loadAllData();
@@ -811,6 +1408,13 @@
     toast('Aggiornamento...');
     await loadUsers();
     renderAllUsers();
+    toast('✅ Aggiornato', 'success');
+  };
+  document.getElementById('refresh-stats').onclick = async () => {
+    toast('Aggiornamento...');
+    await loadAllData();
+    populateStatAnimatore();
+    renderStatistiche();
     toast('✅ Aggiornato', 'success');
   };
   document.getElementById('refresh-passwords').onclick = async () => {
@@ -826,7 +1430,9 @@
     toast('✅ Aggiornato', 'success');
   };
 
-  // ── CLOCK ──────────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════
+  // CLOCK
+  // ════════════════════════════════════════════════
   function startClock() {
     setInterval(() => {
       const now = new Date();
@@ -834,6 +1440,27 @@
       if (el) el.textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     }, 1000);
   }
+
+  // ════════════════════════════════════════════════
+  // INIT STAT DATE RANGE
+  // ════════════════════════════════════════════════
+  function initStatDateRange() {
+    if (allLogs.length === 0) return;
+    const dates = allLogs.map(l => dataLogToISO(l.data)).filter(Boolean).sort();
+    const dal = document.getElementById('stat-dal');
+    const al = document.getElementById('stat-al');
+    if (!dal.value) dal.value = dates[0];
+    if (!al.value) al.value = dates[dates.length - 1];
+  }
+
+  // Override loadAllData per inizializzare le date
+  const originalLoadAllData = loadAllData;
+  loadAllData = async function() {
+    await originalLoadAllData();
+    initStatDateRange();
+    populateStatAnimatore();
+    renderStatistiche();
+  };
 
   console.log('👑 Super Admin caricato!');
   console.log('📋 Parrocchie: ' + PARROCCHIA_KEYS.join(', '));
