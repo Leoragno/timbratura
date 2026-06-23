@@ -54,11 +54,13 @@
     .topbar-title { font-family: var(--font-serif); font-size: 20px; }
     .topbar-title em { font-style: italic; color: var(--accent); }
     .topbar-badge { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; background: var(--accent-lt); color: var(--accent); padding: 3px 8px; border-radius: 20px; border: 1px solid #b2ccbc; }
-    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
     .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); }
     .live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.7);} }
     .topbar-clock { font-size: 12px; color: var(--ink3); }
+    .btn-refresh { padding: 4px 10px; font-size: 14px; background: transparent; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; color: var(--ink3); transition: all .15s; }
+    .btn-refresh:hover { background: var(--bg); color: var(--ink); }
 
     /* TAB NAV */
     .tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; position: sticky; top: 54px; z-index: 40; overflow-x: auto; }
@@ -114,7 +116,7 @@
 
     /* TABLE */
     .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
     th { background: var(--bg2); padding: 11px 14px; text-align: left; font-size: 10px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
     td { padding: 11px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
     tr:last-child td { border-bottom: none; }
@@ -122,7 +124,7 @@
     .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
     .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
     .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
-    .luogo-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--amber-lt); color: var(--amber); }
+    .luogo-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg2); color: var(--ink3); }
     .luogo-badge.trasferta { background: var(--amber-lt); color: var(--amber); border: 1px solid #e0cfa0; }
 
     .trust-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; }
@@ -308,6 +310,7 @@
     <div class="topbar-right">
       <span class="live-dot">Live</span>
       <span class="topbar-clock" id="top-clock">—</span>
+      <button class="btn-refresh" onclick="window.forceRefresh()" title="Aggiorna tutti i dati">↻</button>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Esci</button>
     </div>
   </div>
@@ -761,7 +764,6 @@
   const match = path.match(/admin-(\w+)\.html/);
   let parrocchiaSlug = match ? match[1] : 'jerago';
   
-  // Fallback: se non è una delle tre, usa jerago
   if (!PARROCCHIE[parrocchiaSlug]) {
     parrocchiaSlug = 'jerago';
   }
@@ -769,14 +771,11 @@
   const CONFIG = PARROCCHIE[parrocchiaSlug];
   const PARROCCHIA = parrocchiaSlug;
 
-  // Esponi la configurazione globalmente per le funzioni che ne hanno bisogno
   window.PARROCCHIA_CONFIG = CONFIG;
 
-  // Applica colore parrocchia al tema
   document.documentElement.style.setProperty('--accent', CONFIG.colore);
   document.documentElement.style.setProperty('--accent-lt', CONFIG.coloreChiaro);
 
-  // Aggiorna titolo e badge
   document.getElementById('page-title').textContent = `Admin — ${CONFIG.nome}`;
   document.getElementById('login-eyebrow').textContent = `Pannello di controllo - ${CONFIG.nome}`;
   document.getElementById('login-title').innerHTML = `Accesso <em>${CONFIG.nome}</em>`;
@@ -829,12 +828,20 @@
   const GIORNI_TUTTI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
   // ════════════════════════════════════════════════
+  // FORCE REFRESH
+  // ════════════════════════════════════════════════
+  window.forceRefresh = async function() {
+    toast('🔄 Aggiornamento completo...', 'info');
+    await loadAllData();
+    toast('✅ Dati aggiornati!', 'success');
+  };
+
+  // ════════════════════════════════════════════════
   // LOGIN
   // ════════════════════════════════════════════════
   async function doLogin() {
     const pw = document.getElementById('admin-pass').value;
     
-    // Recupera password da impostazioni
     const { data, error } = await sb.from('impostazioni')
       .select('valore')
       .eq('chiave', ADMIN_PASSWORD_KEY)
@@ -868,7 +875,6 @@
     location.reload();
   });
 
-  // Auto-login se già autenticato
   if (sessionStorage.getItem('admin_auth_' + PARROCCHIA) === '1') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
@@ -892,7 +898,6 @@
   }
 
   async function loadSettings() {
-    // Carica impostazioni con prefisso parrocchia
     const { data } = await sb.from('impostazioni').select('*');
     let geoAbilitata = true, geoLat = '', geoLon = '', geoRadius = '';
     dispChiuse = {};
@@ -900,7 +905,6 @@
     
     if (data) data.forEach(row => {
       const key = row.chiave;
-      // Rimuovi prefisso parrocchia per le chiavi generiche
       const bareKey = key.startsWith(PARROCCHIA + '_') ? key.slice(PARROCCHIA.length + 1) : key;
       
       if (bareKey === 'ingresso_aperto') ingressoAperto = toBool(row.valore);
@@ -935,7 +939,6 @@
   }
 
   async function upsertImpostazione(chiave, valore) {
-    // Salva con prefisso parrocchia
     const fullKey = PARROCCHIA + '_' + chiave;
     const { error } = await sb.from('impostazioni').upsert({ chiave: fullKey, valore: String(valore) }, { onConflict: 'chiave' });
     if (error) console.error('Errore upsert', fullKey, error);
@@ -1010,13 +1013,11 @@
       ? parrNomi[a.parrocchia] 
       : '❌ Nessuna';
     
-    // Controlla se l'ultima timbratura è in trasferta
     let trasfertaInfo = '';
     if (a.lastStamp && a.lastStamp.parrocchia_timbratura && a.lastStamp.parrocchia !== a.lastStamp.parrocchia_timbratura) {
       trasfertaInfo = `<span class="anim-trasferta"> · 📌 ${parrNomi[a.lastStamp.parrocchia_timbratura]}</span>`;
     }
     
-    // Dropdown per cambiare parrocchia
     const parrSelect = `
       <select class="btn btn-sm" style="padding:4px 8px;font-size:10px;margin:0;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;" 
               onchange="window.cambiaParrocchia(${a.id}, this.value)">
@@ -1253,8 +1254,9 @@
         if (!isNaN(id)) dispChiuse[id] = (r.valore === true || r.valore === 'true');
       }
     });
-    const { data }       = await sb.from('settimane').select('*').eq('parrocchia', PARROCCHIA).order('id');
-    const { data: dispo }  = await sb.from('disponibilita').select('user_id, settimana_id');
+    // ★ IMPORTANTE: filtra per parrocchia
+    const { data } = await sb.from('settimane').select('*').eq('parrocchia', PARROCCHIA).order('id');
+    const { data: dispo } = await sb.from('disponibilita').select('user_id, settimana_id');
     const { data: utenti } = await sb.from('utenti').select('id').eq('parrocchia', PARROCCHIA);
     const totale = utenti ? utenti.length : 0;
 
