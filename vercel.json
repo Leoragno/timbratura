@@ -2,7 +2,10 @@
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/timbratura.html", "destination": "/timbratura.html" },
-    { "source": "/admin.html", "destination": "/admin.html" }
+    { "source": "/admin.html", "destination": "/admin.html" },
+    { "source": "/admin-jerago.html", "destination": "/admin-parrocchia.html" },
+    { "source": "/admin-orago.html", "destination": "/admin-parrocchia.html" },
+    { "source": "/admin-besnate.html", "destination": "/admin-parrocchia.html" }
   ],
   "headers": [
     {
