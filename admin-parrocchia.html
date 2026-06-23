@@ -98,7 +98,7 @@
     /* ANIMATORS */
     .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
-    .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
     .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
     .animator-card.inside { border-left: 3px solid var(--green); }
     .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
@@ -108,7 +108,8 @@
     .anim-status.out { background: var(--bg2); color: var(--ink3); }
     .anim-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
     .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+    .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+    .anim-actions select { width: auto; padding: 4px 8px; font-size: 10px; margin: 0; border: 1px solid var(--border); border-radius: 3px; background: var(--bg); cursor: pointer; }
 
     /* TABLE */
     .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; margin-bottom: 20px; }
@@ -202,7 +203,7 @@
     .qr-hint { font-size: 11px; color: var(--ink3); line-height: 1.6; background: var(--bg2); border-radius: 3px; padding: 10px 14px; margin-top: 8px; text-align: left; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
 
-    /* ═══════════════ STATISTICHE ═══════════════ */
+    /* STATISTICHE */
     .stat-topbar { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
     .stat-topbar > div { flex: 1; min-width: 130px; }
     .stat-topbar label { margin-bottom: 5px; font-size: 9px; letter-spacing: 1.8px; }
@@ -765,6 +766,9 @@
   const CONFIG = PARROCCHIE[parrocchiaSlug];
   const PARROCCHIA = parrocchiaSlug;
 
+  // Esponi la configurazione globalmente per le funzioni che ne hanno bisogno
+  window.PARROCCHIA_CONFIG = CONFIG;
+
   // Applica colore parrocchia al tema
   document.documentElement.style.setProperty('--accent', CONFIG.colore);
   document.documentElement.style.setProperty('--accent-lt', CONFIG.coloreChiaro);
@@ -966,7 +970,7 @@
   }
 
   // ════════════════════════════════════════════════
-  // RENDER ANIMATORI
+  // RENDER ANIMATORI (con cambio parrocchia)
   // ════════════════════════════════════════════════
   function buildAnimatorList(searchId, statusId, sortId) {
     const search = document.getElementById(searchId).value.toLowerCase();
@@ -975,7 +979,10 @@
     const lastStampMap = {};
     allLog.forEach(l => { if (!lastStampMap[l.nome]) lastStampMap[l.nome] = l; });
     let list = allAnimators.map(a => ({
-      nome: a.nome, anno: a.anno,
+      id: a.id,
+      nome: a.nome, 
+      anno: a.anno,
+      parrocchia: a.parrocchia,
       lastStamp: lastStampMap[a.nome] || null,
       isInside: !!(lastStampMap[a.nome] && lastStampMap[a.nome].tipo === 'Ingresso')
     }));
@@ -989,14 +996,39 @@
   }
 
   function renderCard(a) {
+    const parrNomi = { 
+      jerago: '🔴 Jerago', 
+      besnate: '🟢 Besnate', 
+      orago: '🔵 Orago' 
+    };
+    
+    const currentParrLabel = a.parrocchia && parrNomi[a.parrocchia] 
+      ? parrNomi[a.parrocchia] 
+      : '❌ Nessuna';
+    
+    // Dropdown per cambiare parrocchia
+    const parrSelect = `
+      <select class="btn btn-sm" style="padding:4px 8px;font-size:10px;margin:0;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;" 
+              onchange="window.cambiaParrocchia(${a.id}, this.value)">
+        <option value="">📌 ${currentParrLabel}</option>
+        <option value="jerago">🔴 Jerago</option>
+        <option value="besnate">🟢 Besnate</option>
+        <option value="orago">🔵 Orago</option>
+      </select>
+    `;
+
     return `<div class="animator-card ${a.isInside?'inside':''}">
       <div class="anim-name">${esc(a.nome)} <span>(${a.anno||'—'})</span></div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">
+        📍 ${currentParrLabel}
+      </div>
       <div class="anim-status ${a.isInside?'in':'out'}">${a.isInside?'Dentro':'Fuori'}</div>
       <div class="anim-last">${a.lastStamp ? a.lastStamp.tipo+' — '+a.lastStamp.data+' '+a.lastStamp.ora : 'Nessuna timbratura'}</div>
       <div class="anim-actions">
         <button class="btn btn-green btn-sm" onclick="window._mt('${esc(a.nome).replace(/'/g,"\\'")}','${a.anno||''}','Ingresso')">⬆ In</button>
         <button class="btn btn-red btn-sm"   onclick="window._mt('${esc(a.nome).replace(/'/g,"\\'")}','${a.anno||''}','Uscita')">⬇ Out</button>
         <button class="btn btn-amber btn-sm" onclick="window._ea('${esc(a.nome).replace(/'/g,"\\'")}','${a.anno||''}')">✎ Modifica</button>
+        ${parrSelect}
       </div>
     </div>`;
   }
@@ -1006,6 +1038,49 @@
     const grid = document.getElementById('animators-grid2');
     grid.innerHTML = list.length ? list.map(renderCard).join('') : '<div class="empty">👤 Nessun animatore trovato</div>';
   }
+
+  // ════════════════════════════════════════════════
+  // CAMBIO PARROCCHIA PER ANIMATORE
+  // ════════════════════════════════════════════════
+  window.cambiaParrocchia = async (userId, newParrocchia) => {
+    if (!userId || !newParrocchia) return;
+    
+    const parrNomi = {
+      jerago: '🔴 Jerago',
+      besnate: '🟢 Besnate', 
+      orago: '🔵 Orago'
+    };
+    
+    // Trova il nome dell'animatore per il messaggio
+    const animator = allAnimators.find(a => a.id === userId);
+    if (!animator) {
+      toast('❌ Animatore non trovato', 'error');
+      return;
+    }
+    
+    if (!confirm(`Spostare ${animator.nome} in ${parrNomi[newParrocchia]}?`)) return;
+    
+    try {
+      const { error } = await sb.from('utenti')
+        .update({ parrocchia: newParrocchia })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      toast(`✅ ${animator.nome} spostato in ${parrNomi[newParrocchia]}`, 'success');
+      
+      // Ricarica i dati
+      await loadUsers();
+      await loadTimbrature();
+      renderAnimators2();
+      renderLog();
+      updateStats();
+      
+    } catch (error) {
+      toast('❌ Errore: ' + error.message, 'error');
+      console.error('Errore cambio parrocchia:', error);
+    }
+  };
 
   // ════════════════════════════════════════════════
   // TRUST BADGE
@@ -1557,7 +1632,7 @@
   qrInput.style.borderRadius = '3px';
 
   // ════════════════════════════════════════════════
-  // STATISTICHE (versione semplificata per admin parrocchia)
+  // STATISTICHE
   // ════════════════════════════════════════════════
   let statCharts = {};
   let statInited = false;
@@ -1855,7 +1930,7 @@
   });
 
   // ════════════════════════════════════════════════
-  // NOTIFICHE (semplificate per parrocchia)
+  // NOTIFICHE
   // ════════════════════════════════════════════════
   const NOTIFICATION_TYPES = {
     'Ritrovo': '📍 Ritrovo',
@@ -2007,7 +2082,6 @@
       const panel = document.getElementById(btn.dataset.tab);
       if (panel) panel.classList.add('active');
       
-      // Carica dati on-demand
       if (btn.dataset.tab === 'tab-disponibilita') { 
         loadSettimane(); 
         loadDispRiepilogo(); 
@@ -2022,13 +2096,11 @@
     };
   });
 
-  // Carica disponibilità all'avvio se tab attivo
   if (document.getElementById('tab-disponibilita').classList.contains('active')) {
     loadSettimane();
     loadDispRiepilogo();
   }
 
-  // Carica statistiche all'avvio se tab attivo
   if (document.getElementById('tab-statistiche').classList.contains('active')) {
     initStatistiche();
   }
