@@ -48,7 +48,7 @@
       color: #5a5148;
       margin-bottom: 4px;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 12px 14px;
       border: 1px solid #d8d2c4;
@@ -57,8 +57,9 @@
       margin-bottom: 16px;
       background: #f5f2eb;
       transition: border-color 0.2s;
+      font-family: inherit;
     }
-    input:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: #2d4a3e;
     }
@@ -107,6 +108,79 @@
       cursor: pointer;
       text-decoration: underline;
     }
+    .parr-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid #d8d2c4;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f5f2eb;
+    }
+    .parr-option:hover {
+      border-color: #2d4a3e;
+      background: #e8f0ec;
+    }
+    .parr-option.selected {
+      border-color: #2d4a3e;
+      background: #e8f0ec;
+      box-shadow: 0 0 0 2px rgba(45,74,62,0.15);
+    }
+    .parr-option input[type="radio"] {
+      width: auto;
+      margin: 0;
+      accent-color: #2d4a3e;
+    }
+    .parr-option .emoji { font-size: 20px; }
+    .parr-option .nome { font-weight: 600; font-size: 14px; }
+    .parr-option .colore { 
+      width: 12px; 
+      height: 12px; 
+      border-radius: 50%; 
+      display: inline-block;
+      margin-left: auto;
+      border: 1px solid #d8d2c4;
+    }
+    .parrocchia-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #5a5148;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 8px 0 14px;
+      padding: 10px 12px;
+      background: #f5f2eb;
+      border-radius: 6px;
+      border: 1px solid #d8d2c4;
+    }
+    .consent-row input[type="checkbox"] {
+      width: auto;
+      margin: 2px 0 0;
+      flex-shrink: 0;
+      accent-color: #2d4a3e;
+    }
+    .consent-row label {
+      font-size: 11px;
+      color: #5a5148;
+      line-height: 1.6;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+    .consent-row a {
+      color: #2d4a3e;
+      text-decoration: underline;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -129,12 +203,37 @@
       <input type="text" id="reg-nome" placeholder="es. Mario Rossi" />
       <label>Anno di nascita</label>
       <input type="number" id="reg-anno" placeholder="2008" />
+      
+      <label class="parrocchia-label">📍 Parrocchia di appartenenza</label>
+      <div id="reg-parrocchia-container">
+        <label class="parr-option selected">
+          <input type="radio" name="reg-parrocchia" value="jerago" checked />
+          <span class="emoji">🔴</span>
+          <span class="nome">Jerago</span>
+          <span class="colore" style="background:#8b2e2e;"></span>
+        </label>
+        <label class="parr-option">
+          <input type="radio" name="reg-parrocchia" value="besnate" />
+          <span class="emoji">🟢</span>
+          <span class="nome">Besnate</span>
+          <span class="colore" style="background:#2d5a3d;"></span>
+        </label>
+        <label class="parr-option">
+          <input type="radio" name="reg-parrocchia" value="orago" />
+          <span class="emoji">🔵</span>
+          <span class="nome">Orago</span>
+          <span class="colore" style="background:#2a6f8f;"></span>
+        </label>
+      </div>
+
       <label>Password (min. 4 caratteri)</label>
       <input type="password" id="reg-pass" placeholder="••••••••" />
-      <div style="margin-bottom:12px;">
+      
+      <div class="consent-row">
         <input type="checkbox" id="reg-consent" />
-        <label for="reg-consent" style="display:inline;font-size:12px;">Accetto l'informativa privacy</label>
+        <label for="reg-consent">Accetto l'<a onclick="alert('Informativa privacy disponibile sul sito della parrocchia.')">informativa privacy</a></label>
       </div>
+      
       <button class="btn btn-primary" id="register-btn">Registrati</button>
       <div class="error" id="register-error"></div>
       <div class="toggle">Hai già un account? <a id="show-login">Accedi</a></div>
@@ -148,13 +247,20 @@
       const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
       const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
-      function showError(id, msg) {
-        const el = document.getElementById(id);
-        el.textContent = msg;
-        el.style.display = 'block';
-        setTimeout(() => { el.style.display = 'none'; }, 4000);
-      }
+      // ── PARROCCHIA SELECTOR ──────────────────────────────────────────────
+      document.querySelectorAll('.parr-option').forEach(el => {
+        el.addEventListener('click', function() {
+          // Rimuovi selected da tutti
+          document.querySelectorAll('.parr-option').forEach(opt => opt.classList.remove('selected'));
+          // Aggiungi selected a questo
+          this.classList.add('selected');
+          // Seleziona il radio button
+          const radio = this.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+        });
+      });
 
+      // ── TOGGLE LOGIN/REGISTER ────────────────────────────────────────────
       document.getElementById('show-register').onclick = () => {
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('register-form').style.display = 'block';
@@ -165,49 +271,83 @@
         document.getElementById('login-form').style.display = 'block';
       };
 
+      function showError(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+      }
+
+      // ── LOGIN ─────────────────────────────────────────────────────────────
       document.getElementById('login-btn').onclick = async () => {
         const nome = document.getElementById('login-nome').value.trim();
         const pass = document.getElementById('login-pass').value.trim();
         if (!nome || !pass) { showError('login-error', 'Compila tutti i campi.'); return; }
 
-        const { data, error } = await sb.from('utenti').select('*').eq('nome', nome).eq('password', pass).maybeSingle();
+        const { data, error } = await sb.from('utenti')
+          .select('*')
+          .eq('nome', nome)
+          .eq('password', pass)
+          .maybeSingle();
+          
         if (error || !data) { showError('login-error', 'Credenziali non valide.'); return; }
 
         localStorage.setItem('cu', JSON.stringify(data));
         window.location.href = '/timbratura.html';
       };
 
+      // ── REGISTER (con parrocchia) ────────────────────────────────────────
       document.getElementById('register-btn').onclick = async () => {
         const nome = document.getElementById('reg-nome').value.trim();
         const anno = parseInt(document.getElementById('reg-anno').value);
         const pass = document.getElementById('reg-pass').value.trim();
         const consenso = document.getElementById('reg-consent').checked;
+        
+        // Leggi la parrocchia selezionata
+        const parrocchiaRadio = document.querySelector('input[name="reg-parrocchia"]:checked');
+        const parrocchia = parrocchiaRadio ? parrocchiaRadio.value : 'jerago';
 
         if (!consenso) { showError('register-error', 'Devi accettare l\'informativa privacy.'); return; }
         if (!nome || !pass) { showError('register-error', 'Compila tutti i campi.'); return; }
         if (pass.length < 4) { showError('register-error', 'La password deve avere almeno 4 caratteri.'); return; }
+        if (isNaN(anno) || anno < 1900 || anno > new Date().getFullYear()) {
+          showError('register-error', 'Inserisci un anno di nascita valido.');
+          return;
+        }
 
-        const { data: exist } = await sb.from('utenti').select('nome').eq('nome', nome).maybeSingle();
+        const { data: exist } = await sb.from('utenti')
+          .select('nome')
+          .eq('nome', nome)
+          .maybeSingle();
+          
         if (exist) { showError('register-error', 'Questo nome è già registrato.'); return; }
 
         const { error } = await sb.from('utenti').insert([{
           nome,
           password: pass,
           anno: anno || null,
+          parrocchia: parrocchia,  // ← NUOVO: salva la parrocchia!
           privacy_accepted: true,
           privacy_accepted_at: new Date().toISOString(),
           privacy_version: '1.0'
         }]);
 
-        if (error) { showError('register-error', 'Errore durante la registrazione.'); return; }
+        if (error) { 
+          console.error('Errore registrazione:', error);
+          showError('register-error', 'Errore durante la registrazione. Riprova.'); 
+          return;
+        }
 
-        alert('✅ Registrazione completata! Ora puoi accedere.');
+        const parrNomi = { jerago: 'Jerago', besnate: 'Besnate', orago: 'Orago' };
+        alert('✅ Registrazione completata! Sei stato aggiunto a ' + parrNomi[parrocchia] + '.\nOra puoi accedere.');
+        
         document.getElementById('register-form').style.display = 'none';
         document.getElementById('login-form').style.display = 'block';
         document.getElementById('login-nome').value = nome;
         document.getElementById('login-pass').value = pass;
       };
 
+      // ── ENTER KEY ─────────────────────────────────────────────────────────
       document.getElementById('login-pass').addEventListener('keypress', e => {
         if (e.key === 'Enter') document.getElementById('login-btn').click();
       });
@@ -215,7 +355,7 @@
         if (e.key === 'Enter') document.getElementById('register-btn').click();
       });
 
-      // Se l'utente è già loggato, reindirizza
+      // ── AUTO-LOGIN ────────────────────────────────────────────────────────
       const saved = localStorage.getItem('cu');
       if (saved) {
         try {
@@ -226,10 +366,9 @@
         } catch(e) {}
       }
 
-      // Controlla se c'è un QR in sospeso
+      // ── QR PENDING ────────────────────────────────────────────────────────
       const pendingQa = localStorage.getItem('pqa');
       if (pendingQa) {
-        // Mostra un messaggio all'utente
         const sub = document.querySelector('.sub');
         const tipo = pendingQa === 'Ingresso' ? 'ingresso' : 'uscita';
         sub.textContent = `📱 QR ${tipo} rilevato! Accedi per timbrare.`;
