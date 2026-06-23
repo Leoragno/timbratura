@@ -110,10 +110,11 @@
     .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
     .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
     .anim-actions select { width: auto; padding: 4px 8px; font-size: 10px; margin: 0; border: 1px solid var(--border); border-radius: 3px; background: var(--bg); cursor: pointer; }
+    .anim-trasferta { font-size: 10px; color: var(--amber); font-weight: 500; }
 
     /* TABLE */
     .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; min-width: 650px; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
     th { background: var(--bg2); padding: 11px 14px; text-align: left; font-size: 10px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
     td { padding: 11px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
     tr:last-child td { border-bottom: none; }
@@ -121,6 +122,8 @@
     .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
     .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
     .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
+    .luogo-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--amber-lt); color: var(--amber); }
+    .luogo-badge.trasferta { background: var(--amber-lt); color: var(--amber); border: 1px solid #e0cfa0; }
 
     .trust-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; }
     .trust-badge.ok { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
@@ -481,8 +484,8 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Fiducia</th><th>Azioni</th></tr></thead>
-          <tbody id="log-tbody"><tr><td colspan="7" class="empty">⏳ Caricamento…</td></tr></tbody>
+          <thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Luogo</th><th>Fiducia</th><th>Azioni</th></tr></thead>
+          <tbody id="log-tbody"><tr><td colspan="8" class="empty">⏳ Caricamento…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -874,7 +877,7 @@
   }
 
   // ════════════════════════════════════════════════
-  // DATA LOADING (filtrato per parrocchia)
+  // DATA LOADING (con filtro OR per cross-parrocchia)
   // ════════════════════════════════════════════════
   async function loadAllData() {
     await loadSettings();
@@ -945,10 +948,11 @@
     allAnimators = data || [];
   }
 
+  // ★ IMPORTANTE: Carica timbrature dove parrocchia = PARROCCHIA OPPURE parrocchia_timbratura = PARROCCHIA
   async function loadTimbrature() {
     const { data } = await sb.from('timbrature')
       .select('*')
-      .eq('parrocchia', PARROCCHIA)
+      .or(`parrocchia.eq.${PARROCCHIA},parrocchia_timbratura.eq.${PARROCCHIA}`)
       .order('id', { ascending: false });
     allLog = data || [];
   }
@@ -970,7 +974,7 @@
   }
 
   // ════════════════════════════════════════════════
-  // RENDER ANIMATORI (con cambio parrocchia)
+  // RENDER ANIMATORI (con indicazione trasferta)
   // ════════════════════════════════════════════════
   function buildAnimatorList(searchId, statusId, sortId) {
     const search = document.getElementById(searchId).value.toLowerCase();
@@ -1006,6 +1010,12 @@
       ? parrNomi[a.parrocchia] 
       : '❌ Nessuna';
     
+    // Controlla se l'ultima timbratura è in trasferta
+    let trasfertaInfo = '';
+    if (a.lastStamp && a.lastStamp.parrocchia_timbratura && a.lastStamp.parrocchia !== a.lastStamp.parrocchia_timbratura) {
+      trasfertaInfo = `<span class="anim-trasferta"> · 📌 ${parrNomi[a.lastStamp.parrocchia_timbratura]}</span>`;
+    }
+    
     // Dropdown per cambiare parrocchia
     const parrSelect = `
       <select class="btn btn-sm" style="padding:4px 8px;font-size:10px;margin:0;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;" 
@@ -1020,7 +1030,7 @@
     return `<div class="animator-card ${a.isInside?'inside':''}">
       <div class="anim-name">${esc(a.nome)} <span>(${a.anno||'—'})</span></div>
       <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">
-        📍 ${currentParrLabel}
+        📍 ${currentParrLabel}${trasfertaInfo}
       </div>
       <div class="anim-status ${a.isInside?'in':'out'}">${a.isInside?'Dentro':'Fuori'}</div>
       <div class="anim-last">${a.lastStamp ? a.lastStamp.tipo+' — '+a.lastStamp.data+' '+a.lastStamp.ora : 'Nessuna timbratura'}</div>
@@ -1051,7 +1061,6 @@
       orago: '🔵 Orago'
     };
     
-    // Trova il nome dell'animatore per il messaggio
     const animator = allAnimators.find(a => a.id === userId);
     if (!animator) {
       toast('❌ Animatore non trovato', 'error');
@@ -1069,7 +1078,6 @@
       
       toast(`✅ ${animator.nome} spostato in ${parrNomi[newParrocchia]}`, 'success');
       
-      // Ricarica i dati
       await loadUsers();
       await loadTimbrature();
       renderAnimators2();
@@ -1098,7 +1106,7 @@
   }
 
   // ════════════════════════════════════════════════
-  // RENDER LOG
+  // RENDER LOG (con colonna Luogo)
   // ════════════════════════════════════════════════
   function renderLog() {
     const search = document.getElementById('log-search').value.toLowerCase();
@@ -1111,17 +1119,32 @@
       return true;
     });
     const tbody = document.getElementById('log-tbody');
-    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
-    tbody.innerHTML = filtered.map(l => `<tr>
-      <td><strong>${esc(l.nome)}</strong></td><td>${l.anno||'—'}</td><td>${esc(l.data)}</td><td>${esc(l.ora)}</td>
-      <td><span class="tipo-badge ${l.tipo.toLowerCase()}">${esc(l.tipo)}</span></td>
-      <td>${renderTrust(l)}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="window._dl(${l.id})">🗑️</button></td>
-    </tr>`).join('');
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
+    
+    const parrNomi = { jerago: '🔴 Jerago', besnate: '🟢 Besnate', orago: '🔵 Orago' };
+    
+    tbody.innerHTML = filtered.map(l => {
+      const luogo = l.parrocchia_timbratura ? parrNomi[l.parrocchia_timbratura] : '—';
+      const isTrasferta = l.parrocchia && l.parrocchia_timbratura && l.parrocchia !== l.parrocchia_timbratura;
+      const luogoLabel = isTrasferta 
+        ? `<span class="luogo-badge trasferta">${luogo} 📌</span>` 
+        : `<span class="luogo-badge">${luogo}</span>`;
+      
+      return `<tr>
+        <td><strong>${esc(l.nome)}</strong></td>
+        <td>${l.anno||'—'}</td>
+        <td>${esc(l.data)}</td>
+        <td>${esc(l.ora)}</td>
+        <td><span class="tipo-badge ${l.tipo.toLowerCase()}">${esc(l.tipo)}</span></td>
+        <td>${luogoLabel}</td>
+        <td>${renderTrust(l)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="window._dl(${l.id})">🗑️</button></td>
+      </tr>`;
+    }).join('');
   }
 
   // ════════════════════════════════════════════════
-  // TIMBRATURA MANUALE
+  // TIMBRATURA MANUALE (con parrocchia_timbratura)
   // ════════════════════════════════════════════════
   window._mt = function(nome, anno, tipo) {
     const utente = allAnimators.find(a => a.nome === nome);
@@ -1148,7 +1171,8 @@
       tipo, 
       data: p[2]+'/'+p[1]+'/'+p[0], 
       ora: oRaw,
-      parrocchia: PARROCCHIA
+      parrocchia: PARROCCHIA,
+      parrocchia_timbratura: PARROCCHIA
     }]);
     if (error) toast('Errore salvataggio','error');
     else { toast('Timbratura manuale salvata','success'); closeAllModals(); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats(); }
@@ -1554,7 +1578,6 @@
   document.getElementById('qr-genera-btn').onclick = () => {
     let base = document.getElementById('qr-base-url').value.trim();
     if (!base) return toast('Inserisci URL del sito animatori', 'error');
-    // Se l'URL non ha già il parametro parrocchia, aggiungilo
     const separator = base.includes('?') ? '&' : '?';
     const urlWithParrocchia = base + separator + 'parrocchia=' + PARROCCHIA;
     
