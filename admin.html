@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Timbratura</title>
+  <title>Super Admin — Timbratura Multi-Parrocchia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -19,9 +19,6 @@
       --font-mono: 'Geist Mono', 'Courier New', monospace;
     }
     html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
-    body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(180,160,100,.08) 0%, transparent 60%),
-                        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(100,130,110,.06) 0%, transparent 60%); }
 
     /* LOGIN */
     #login-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 24px; }
@@ -36,8 +33,6 @@
     label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
     input, select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 11px 13px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); outline: none; margin-bottom: 16px; }
     input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,74,62,.12); }
-    #qr-base-url { background: #ffffff !important; color: #000000 !important; border: 2px solid #2d4a3e !important; font-size: 14px !important; }
-    #qr-base-url::placeholder { color: #aaaaaa !important; }
     .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border: 1px solid transparent; border-radius: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
     .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); width: 100%; justify-content: center; padding: 12px; }
     .btn-primary:hover { background: #1f3329; }
@@ -72,97 +67,54 @@
     .tab-panel.active { display: block; }
     .main { padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
 
-    /* STATS */
+    /* CARDS */
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; }
     .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
     .stat-value { font-family: var(--font-serif); font-size: 40px; line-height: 1; }
 
-    /* SECTION HEADER */
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; margin-top: 28px; }
     .section-header:first-child { margin-top: 0; }
     .section-title { font-family: var(--font-serif); font-size: 20px; font-style: italic; }
 
-    /* LOCKS */
-    .control-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 8px; }
-    .btn-toggle { width: 100%; padding: 14px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; text-align: center; transition: all .15s; }
-    .btn-toggle.open { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
-    .btn-toggle.locked { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
+    /* PARROCCHIA GRID */
+    .parrocchia-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .parrocchia-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; border-top: 4px solid var(--accent); }
+    .parrocchia-card .nome { font-family: var(--font-serif); font-size: 22px; margin-bottom: 4px; }
+    .parrocchia-card .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .parrocchia-card .stats .num { font-size: 24px; font-family: var(--font-serif); }
+    .parrocchia-card .stats .label { font-size: 10px; color: var(--ink3); text-transform: uppercase; letter-spacing: 1px; }
+    .parrocchia-card .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .parrocchia-card .badge { font-size: 10px; padding: 2px 10px; border-radius: 20px; display: inline-block; }
 
-    /* GEO */
-    .geo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 8px; }
-    .geo-row { display: grid; grid-template-columns: 1fr 2fr; gap: 28px; }
-    @media (max-width: 700px) { .geo-row { grid-template-columns: 1fr; } }
-    .geo-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    @media (max-width: 600px) { .geo-fields { grid-template-columns: 1fr; } }
-    .geo-fields input { margin-bottom: 0; }
+    /* PASSWORD ADMIN */
+    .password-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 800px) { .password-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 500px) { .password-grid { grid-template-columns: 1fr; } }
+    .password-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+    .password-card .parr-nome { font-family: var(--font-serif); font-size: 18px; margin-bottom: 8px; }
+    .password-card .parr-pass { font-family: var(--font-mono); font-size: 14px; background: var(--bg); padding: 6px 10px; border-radius: 3px; margin: 6px 0; word-break: break-all; }
+    .password-card .parr-pass input { margin-bottom: 0; font-size: 14px; }
+    .password-card .parr-actions { display: flex; gap: 6px; margin-top: 8px; }
 
-    /* ANIMATORS */
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-    .filter-bar input, .filter-bar select { margin-bottom: 0; width: auto; flex: 1; min-width: 140px; }
-    .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .animator-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
-    .animator-card.inside { border-left: 3px solid var(--green); }
-    .anim-name { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
-    .anim-name span { font-size: 13px; color: var(--ink3); margin-left: 6px; }
-    .anim-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; margin-bottom: 10px; }
-    .anim-status.in { background: var(--green-lt); color: var(--green); }
-    .anim-status.out { background: var(--bg2); color: var(--ink3); }
-    .anim-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; border-radius: 50%; }
-    .anim-last { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
-    .anim-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+    /* ANIMATORI SENZA PARROCCHIA */
+    .no-parr-list { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+    .no-parr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg2); }
+    .no-parr-item:last-child { border-bottom: none; }
+    .no-parr-item .nome { font-weight: 600; }
 
-    /* TABLE */
-    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; min-width: 650px; }
-    th { background: var(--bg2); padding: 11px 14px; text-align: left; font-size: 10px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
-    td { padding: 11px 14px; border-bottom: 1px solid var(--bg2); font-size: 12px; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--bg); }
-    .tipo-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
-    .tipo-badge.ingresso { background: var(--green-lt); color: var(--green); }
-    .tipo-badge.uscita { background: var(--red-lt); color: var(--red); }
+    /* BROADCAST */
+    .broadcast-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; }
+    .broadcast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .broadcast-grid { grid-template-columns: 1fr; } }
 
-    .trust-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; }
-    .trust-badge.ok { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
-    .trust-badge.watch { background: var(--amber-lt); color: var(--amber); border-color: #e0cfa0; }
-    .trust-badge.suspicious { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
-    .trust-note { display: block; margin-top: 3px; font-size: 10px; color: var(--ink3); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 18px; font-size: 12px; transform: translateY(20px); opacity: 0; transition: all .3s; z-index: 300; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error { background: var(--red); }
 
-    /* EXPORT */
-    .export-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 8px; }
-    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 600px) { .export-grid { grid-template-columns: 1fr; } }
-    .export-group label { margin-bottom: 8px; }
-    .export-group select, .export-group input { margin-bottom: 10px; }
-    .periodo-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-    .periodo-option { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 10px; border: 1px solid var(--border); border-radius: 3px; transition: all .12s; font-size: 12px; }
-    .periodo-option:hover { border-color: var(--accent); background: var(--accent-lt); }
-    .periodo-option input[type=radio] { accent-color: var(--accent); width: auto; margin-bottom: 0; }
-    .periodo-option.selected { border-color: var(--accent); background: var(--accent-lt); }
-    .export-preview { background: var(--bg2); border: 1px solid var(--border); border-radius: 3px; padding: 10px 13px; font-size: 11px; color: var(--ink3); margin-bottom: 14px; }
-    .export-preview strong { color: var(--ink); }
-
-    /* SETTIMANE */
-    .sett-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .sett-info { flex: 1; min-width: 160px; }
-    .sett-nome-admin { font-family: var(--font-serif); font-size: 17px; margin-bottom: 2px; }
-    .sett-date-admin { font-size: 11px; color: var(--ink3); }
-    .sett-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .disp-lock-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; margin-top: 5px; }
-    .disp-lock-badge.open  { background: var(--green-lt); color: var(--green); border: 1px solid #b2d4bc; }
-    .disp-lock-badge.locked { background: var(--red-lt); color: var(--red); border: 1px solid #dbb2b2; }
-
-    /* DISP TABLE */
-    .disp-block { margin-bottom: 36px; }
-    .disp-block-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; margin-bottom: 4px; }
-    .disp-block-date { font-size: 12px; color: var(--ink3); margin-bottom: 14px; }
-    .disp-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); font-size: 12px; overflow-x: auto; display: block; }
-    .disp-table th, .disp-table td { border: 1px solid var(--border); padding: 8px 6px; text-align: center; vertical-align: middle; }
-    .disp-table th { background: var(--bg2); font-weight: 600; text-transform: uppercase; font-size: 10px; }
-    .disp-table td:first-child { text-align: left; font-weight: 600; background: var(--bg2); position: sticky; left: 0; }
-    .disp-si { color: var(--green); font-weight: 600; }
-    .disp-no { color: var(--red); font-weight: 600; }
+    .empty { text-align: center; padding: 48px; color: var(--ink3); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
 
     /* MODAL */
     .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(26,23,20,.45); display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s; }
@@ -170,124 +122,17 @@
     .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 32px 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
     .modal-title { font-family: var(--font-serif); font-size: 22px; font-style: italic; margin-bottom: 18px; }
     .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
-    .giorni-checkboxes { display: flex; gap: 10px; margin: 8px 0 18px; flex-wrap: wrap; }
-    .giorni-checkboxes label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; text-transform: none; color: var(--ink2); cursor: pointer; }
 
-    /* TOAST */
-    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 12px 18px; font-size: 12px; transform: translateY(20px); opacity: 0; transition: all .3s; z-index: 300; }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success { background: var(--green); }
-    .toast.error { background: var(--red); }
-
-    .notif-layout { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); gap: 16px; }
-    @media (max-width: 800px) { .notif-layout { grid-template-columns: 1fr; } }
-    .notif-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; }
-    .notif-card h3 { font-family: var(--font-serif); font-size: 20px; font-style: italic; margin-bottom: 14px; }
-    .notif-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    @media (max-width: 600px) { .notif-grid { grid-template-columns: 1fr; } }
-    .system-alert { border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; background: var(--bg); font-size: 11px; line-height: 1.5; }
-    .system-alert.red { border-left-color: var(--red); }
-    .system-alert.green { border-left-color: var(--green); }
-
-    .empty { text-align: center; padding: 48px; color: var(--ink3); }
-
-    /* QR Code */
-    .qr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-    @media (max-width: 600px) { .qr-grid { grid-template-columns: 1fr; } }
-    .qr-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 32px 24px; text-align: center; }
-    .qr-card.ingresso { border-top: 4px solid var(--green); }
-    .qr-card.uscita   { border-top: 4px solid var(--red); }
-    .qr-label { font-family: var(--font-serif); font-size: 22px; margin-bottom: 6px; }
-    .qr-sublabel { font-size: 11px; color: var(--ink3); margin-bottom: 20px; }
-    .qr-box { display: inline-block; padding: 16px; background: #fff; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 18px; }
-    .qr-url { font-size: 10px; color: var(--ink3); word-break: break-all; margin-bottom: 16px; font-family: var(--font-mono); background: var(--bg2); padding: 6px 10px; border-radius: 3px; }
-    .qr-hint { font-size: 11px; color: var(--ink3); line-height: 1.6; background: var(--bg2); border-radius: 3px; padding: 10px 14px; margin-top: 8px; text-align: left; }
-    .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
-
-    /* ═══════════════ STATISTICHE ═══════════════ */
-
-    /* Filtri in cima */
-    .stat-topbar { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
-    .stat-topbar > div { flex: 1; min-width: 130px; }
-    .stat-topbar label { margin-bottom: 5px; font-size: 9px; letter-spacing: 1.8px; }
-    .stat-topbar select, .stat-topbar input { margin-bottom: 0; padding: 8px 10px; font-size: 12px; }
-    .stat-topbar-btn { display: flex; align-items: flex-end; gap: 6px; }
-    .stat-topbar-btn .btn { padding: 8px 16px; font-size: 11px; width: auto; }
-
-    /* KPI row */
-    .stat-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
-    @media (max-width: 820px) { .stat-kpi-row { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 460px) { .stat-kpi-row { grid-template-columns: 1fr 1fr; } }
-    .stat-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 18px 20px 16px; position: relative; overflow: hidden; }
-    .stat-kpi::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
-    .stat-kpi.kpi-amber::after { background: #b8892a; }
-    .stat-kpi.kpi-blue::after  { background: #3a6ea8; }
-    .stat-kpi.kpi-red::after   { background: var(--red); }
-    .stat-kpi-eyebrow { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
-    .stat-kpi-value { font-family: var(--font-serif); font-size: 44px; line-height: 1; color: var(--ink); margin-bottom: 4px; }
-    .stat-kpi-sub { font-size: 10px; color: var(--ink3); }
-
-    /* Sezione intestazione interna */
-    .stat-section-hdr { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin: 28px 0 16px; }
-    .stat-section-hdr:first-of-type { margin-top: 0; }
-    .stat-section-hdr-title { font-family: var(--font-serif); font-size: 18px; font-style: italic; }
-    .stat-section-hdr-meta { font-size: 10px; color: var(--ink3); letter-spacing: .5px; }
-
-    /* Griglia 2 col grafici orari */
-    .stat-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    @media (max-width: 860px) { .stat-charts-grid { grid-template-columns: 1fr; } }
-
-    /* Card grafico */
-    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; margin-bottom: 14px; }
-    .chart-card:last-child { margin-bottom: 0; }
-    .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; gap: 8px; flex-wrap: wrap; }
-    .chart-title-group { flex: 1; }
-    .chart-title { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--ink); line-height: 1.2; }
-    .chart-subtitle { font-size: 10px; color: var(--ink3); letter-spacing: .3px; margin-top: 2px; margin-bottom: 14px; }
-    .chart-toggle { display: flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; align-self: flex-start; }
-    .chart-toggle button { padding: 4px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .4px; border: none; background: transparent; cursor: pointer; color: var(--ink3); transition: background .12s, color .12s; }
-    .chart-toggle button.active { background: var(--accent); color: #fff; }
-    .chart-wrap { position: relative; }
-    .chart-wrap-sm { height: 170px; }
-    .chart-wrap-md { height: 210px; }
-
-    /* Classifica animatori */
-    .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-    @media (max-width: 700px) { .rank-grid { grid-template-columns: 1fr; } }
-    .rank-list { list-style: none; }
-    .rank-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bg2); }
-    .rank-item:last-child { border-bottom: none; }
-    .rank-medal { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 12px; flex-shrink: 0; background: var(--bg2); color: var(--ink3); border: 1px solid var(--border); }
-    .rank-medal.gold   { background: #fdf3dc; color: #7a5c10; border-color: #e0cfa0; }
-    .rank-medal.silver { background: #f0eeea; color: #5a5148; border-color: #d0ccc4; }
-    .rank-medal.bronze { background: #f5ece4; color: #7a4a28; border-color: #dbb8a0; }
-    .rank-info { flex: 1; min-width: 0; }
-    .rank-nome { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rank-anno { font-size: 10px; color: var(--ink3); }
-    .rank-bar-wrap { flex: 2; height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; min-width: 40px; }
-    .rank-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width .7s cubic-bezier(.23,1,.32,1); }
-    .rank-col-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
-    .rank-ore { font-size: 12px; color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 500; }
-    .rank-giorni-tag { font-size: 10px; color: var(--ink3); white-space: nowrap; }
-
-    /* Tabella dettaglio */
-    .det-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; }
-    .det-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-    .det-table th { background: var(--bg2); padding: 10px 16px; text-align: left; font-size: 9px; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--border); letter-spacing: 1.2px; white-space: nowrap; }
-    .det-table th.num { text-align: right; }
-    .det-table td { padding: 11px 16px; border-bottom: 1px solid var(--bg2); font-size: 12px; vertical-align: middle; }
-    .det-table td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink2); }
-    .det-table tr:last-child td { border-bottom: none; }
-    .det-table tr:hover td { background: var(--bg); }
-    .det-anim-name { font-weight: 500; font-size: 13px; }
-    .det-anim-anno { font-size: 10px; color: var(--ink3); margin-top: 2px; }
-    .det-ore-pill { display: inline-block; background: var(--accent-lt); color: var(--accent); font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; border: 1px solid #b2ccbc; }
-    .det-giorni-num { font-family: var(--font-serif); font-size: 20px; color: var(--ink); line-height: 1; }
-    .det-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; }
-    .det-badge.in  { background: var(--green-lt); color: var(--green); }
-    .det-badge.out { background: var(--red-lt); color: var(--red); }
-    .det-last { font-size: 11px; color: var(--ink2); }
-    .det-last-ora { font-size: 10px; color: var(--ink3); margin-top: 1px; }
+    /* PARROCCHIA COLORS */
+    .parr-jerago { --parr-color: #8b2e2e; --parr-light: #f5e8e8; }
+    .parr-besnate { --parr-color: #2d5a3d; --parr-light: #e5f2ea; }
+    .parr-orago { --parr-color: #2a6f8f; --parr-light: #e8f0f8; }
+    .parr-jerago .badge { background: var(--parr-light); color: var(--parr-color); }
+    .parr-besnate .badge { background: var(--parr-light); color: var(--parr-color); }
+    .parr-orago .badge { background: var(--parr-light); color: var(--parr-color); }
+    .parr-jerago { border-top-color: var(--parr-color); }
+    .parr-besnate { border-top-color: var(--parr-color); }
+    .parr-orago { border-top-color: var(--parr-color); }
   </style>
 </head>
 <body>
@@ -295,9 +140,9 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-eyebrow">Pannello di controllo</div>
-    <div class="login-title">Accesso <em>Admin</em></div>
-    <label for="admin-pass">Password</label>
+    <div class="login-eyebrow">Super Admin</div>
+    <div class="login-title">Pannello di <em>controllo</em></div>
+    <label for="admin-pass">Password Super Admin</label>
     <input type="password" id="admin-pass" placeholder="••••••••" />
     <button class="btn btn-primary" id="loginBtn">Entra →</button>
     <div class="login-err" id="login-err">Password errata. Riprova.</div>
@@ -308,8 +153,8 @@
 <div id="app">
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-title">tim<em>bratura</em></div>
-      <div class="topbar-badge">Admin</div>
+      <div class="topbar-title">tim<em>bratura</em> 👑</div>
+      <div class="topbar-badge">Super Admin</div>
     </div>
     <div class="topbar-right">
       <span class="live-dot">Live</span>
@@ -320,458 +165,146 @@
 
   <!-- TAB NAV -->
   <div class="tab-nav">
-    <button class="tab-btn active" data-tab="tab-dashboard"><span class="tab-icon">📊</span>Dashboard</button>
-    <button class="tab-btn" data-tab="tab-animatori"><span class="tab-icon">👤</span>Animatori</button>
-    <button class="tab-btn" data-tab="tab-timbrature"><span class="tab-icon">⏱</span>Timbrature</button>
-    <button class="tab-btn" data-tab="tab-disponibilita"><span class="tab-icon">📅</span>Disponibilità</button>
-    <button class="tab-btn" data-tab="tab-qr"><span class="tab-icon">🔲</span>QR Code</button>
-    <button class="tab-btn" data-tab="tab-statistiche"><span class="tab-icon">📈</span>Statistiche</button>
-    <button class="tab-btn" data-tab="tab-notifiche"><span class="tab-icon">🔔</span>Notifiche</button>
+    <button class="tab-btn active" data-tab="tab-overview"><span class="tab-icon">📊</span>Overview</button>
+    <button class="tab-btn" data-tab="tab-password"><span class="tab-icon">🔐</span>Password Admin</button>
+    <button class="tab-btn" data-tab="tab-broadcast"><span class="tab-icon">📢</span>Broadcast</button>
+    <button class="tab-btn" data-tab="tab-orphan"><span class="tab-icon">👤</span>Senza Parrocchia</button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════ TAB: DASHBOARD -->
-  <div class="tab-panel active" id="tab-dashboard">
+  <!-- OVERVIEW -->
+  <div class="tab-panel active" id="tab-overview">
     <div class="main">
       <div class="stats-row">
         <div class="stat-card"><div class="stat-label">Totale animatori</div><div class="stat-value" id="stat-total">—</div></div>
-        <div class="stat-card"><div class="stat-label">Dentro ora</div><div class="stat-value" id="stat-in">—</div></div>
-        <div class="stat-card"><div class="stat-label">Fuori ora</div><div class="stat-value" id="stat-out">—</div></div>
-        <div class="stat-card"><div class="stat-label">Timbrature oggi</div><div class="stat-value" id="stat-oggi">—</div></div>
-      </div>
-
-      <div class="section-header"><div class="section-title">Controllo accessi</div></div>
-      <div class="control-row">
-        <button id="toggle-in-btn" class="btn-toggle">Ingressi: Caricamento...</button>
-        <button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button>
-      </div>
-
-      <div class="section-header"><div class="section-title">Geolocalizzazione</div></div>
-      <div class="geo-card">
-        <div class="geo-row">
-          <div>
-            <div class="stat-label" style="margin-bottom:10px;">Controllo GPS</div>
-            <button id="toggle-geo-btn" class="btn-toggle">Caricamento...</button>
-            <div style="font-size:11px; color:var(--ink3); margin-top:8px; line-height:1.6;">Se disabilitato, gli animatori possono timbrare senza verifica posizione.</div>
-          </div>
-          <div>
-            <div class="stat-label" style="margin-bottom:10px;">Coordinate Oratorio</div>
-            <div class="geo-fields">
-              <div><label>Latitudine</label><input type="text" id="geo-lat" placeholder="45.706869" /></div>
-              <div><label>Longitudine</label><input type="text" id="geo-lon" placeholder="8.800464" /></div>
-              <div><label>Raggio (m)</label><input type="number" id="geo-radius" placeholder="150" /></div>
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-ghost btn-sm" id="geo-use-current">📍 Posizione attuale</button>
-              <button class="btn btn-primary btn-sm" id="geo-save-btn">💾 Salva</button>
-            </div>
-            <div id="geo-current-preview" style="font-size:11px; color:var(--ink3); margin-top:10px; display:none;"></div>
-          </div>
-        </div>
+        <div class="stat-card"><div class="stat-label">Totale timbrature</div><div class="stat-value" id="stat-timbrature">—</div></div>
+        <div class="stat-card"><div class="stat-label">Parrocchie</div><div class="stat-value" id="stat-parrocchie">3</div></div>
+        <div class="stat-card"><div class="stat-label">Senza parrocchia</div><div class="stat-value" id="stat-orphan">—</div></div>
       </div>
 
       <div class="section-header">
-        <div class="section-title">Esportazione presenze</div>
+        <div class="section-title">📋 Riepilogo per parrocchia</div>
+        <button class="btn btn-sm btn-ghost" id="refresh-overview">↻ Aggiorna</button>
       </div>
-      <div class="export-card">
-        <div class="export-grid">
-          <div class="export-group">
-            <label>📅 Periodo</label>
-            <div class="periodo-options">
-              <label class="periodo-option selected"><input type="radio" name="export-periodo" value="giorno" checked> Singolo giorno</label>
-              <label class="periodo-option"><input type="radio" name="export-periodo" value="settimana"> Singola settimana</label>
-              <label class="periodo-option"><input type="radio" name="export-periodo" value="intervallo"> Intervallo date</label>
-              <label class="periodo-option"><input type="radio" name="export-periodo" value="tutto"> Tutti i dati</label>
-            </div>
-            <div id="export-giorno-wrap">
-              <label>Data</label>
-              <input type="date" id="export-giorno" />
-            </div>
-            <div id="export-settimana-wrap" style="display:none;">
-              <label>Settimana</label>
-              <input type="week" id="export-week" />
-            </div>
-            <div id="export-intervallo-wrap" style="display:none;">
-              <label>Dal</label><input type="date" id="export-dal" />
-              <label>Al</label><input type="date" id="export-al" />
-            </div>
-          </div>
-          <div class="export-group">
-            <label>📊 Tipologia</label>
-            <select id="export-tipo">
-              <option value="entrambi">Entrate e uscite</option>
-              <option value="Ingresso">Solo entrate</option>
-              <option value="Uscita">Solo uscite</option>
+      <div class="parrocchia-grid" id="parrocchia-grid">
+        <div class="empty">⏳ Caricamento...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSWORD ADMIN -->
+  <div class="tab-panel" id="tab-password">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">🔐 Password Admin per parrocchia</div>
+        <button class="btn btn-sm btn-ghost" id="refresh-passwords">↻ Aggiorna</button>
+      </div>
+      <div class="password-grid" id="password-grid">
+        <div class="empty">⏳ Caricamento...</div>
+      </div>
+      <div style="margin-top:16px; font-size:11px; color:var(--ink3); background:var(--bg2); padding:12px 16px; border-radius:4px; border:1px solid var(--border);">
+        ⚠️ Cambiando la password di una parrocchia, tutti gli admin di quella parrocchia dovranno usare la nuova password.
+      </div>
+    </div>
+  </div>
+
+  <!-- BROADCAST -->
+  <div class="tab-panel" id="tab-broadcast">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">📢 Broadcast a tutte le parrocchie</div>
+      </div>
+      <div class="broadcast-card">
+        <div class="broadcast-grid">
+          <div>
+            <label>Tipo</label>
+            <select id="broadcast-type">
+              <option value="Avviso generale">📢 Avviso generale</option>
+              <option value="Emergenza">🚨 Emergenza</option>
+              <option value="Cambio orario">⏰ Cambio orario</option>
+              <option value="Ritrovo">📍 Ritrovo</option>
             </select>
-            <label>📝 Note (opzionale)</label>
-            <input type="text" id="export-note" placeholder="Es. Settimana 1 campo estivo" />
-            <div class="export-preview"><strong>File:</strong> <span id="export-filename-preview">—</span></div>
-            <button class="btn btn-excel" id="export-btn" style="width:100%; justify-content:center; margin-bottom:8px;">📥 Scarica Presenze Excel</button>
-            <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
-            <label>📋 Disponibilità animatori</label>
-            <select id="export-disp-sett" style="margin-bottom:8px;">
-              <option value="tutte">Tutte le settimane</option>
+          </div>
+          <div>
+            <label>Destinatari</label>
+            <select id="broadcast-target">
+              <option value="all">Tutte le parrocchie</option>
+              <option value="jerago">🔴 Solo Jerago</option>
+              <option value="besnate">🟢 Solo Besnate</option>
+              <option value="orago">🔵 Solo Orago</option>
             </select>
-            <button class="btn btn-ghost" id="export-disp-btn" style="width:100%; justify-content:center; border-color:var(--accent); color:var(--accent);">📋 Scarica Disponibilità Excel</button>
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>Messaggio</label>
+            <input type="text" id="broadcast-message" maxlength="200" placeholder="Messaggio per tutti gli animatori..." />
+          </div>
+          <div style="grid-column: 1 / -1; display: flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="broadcast-btn" style="width:auto;">📨 Invia Broadcast</button>
+            <button class="btn btn-ghost" id="broadcast-test-btn" style="width:auto;">🔔 Invia test (solo a me)</button>
+          </div>
+        </div>
+        <div style="margin-top:14px; font-size:11px; color:var(--ink3); border-top:1px solid var(--border); padding-top:14px;">
+          <strong>Ultime notifiche broadcast:</strong>
+          <div id="broadcast-history" style="margin-top:6px; max-height:200px; overflow-y:auto;">
+            <div class="empty">Nessuna notifica recente</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════ TAB: QR CODE -->
-  <div class="tab-panel" id="tab-qr">
+  <!-- ORPHAN -->
+  <div class="tab-panel" id="tab-orphan">
     <div class="main">
       <div class="section-header" style="margin-top:0;">
-        <div class="section-title">QR Code timbratura</div>
+        <div class="section-title">👤 Animatori senza parrocchia</div>
+        <button class="btn btn-sm btn-ghost" id="refresh-orphan">↻ Aggiorna</button>
       </div>
-      <div style="margin-bottom:16px;">
-        <label>🌐 URL base del sito animatori</label>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input type="text" id="qr-base-url" placeholder="https://tuosito.vercel.app/timbratura.html" style="margin-bottom:0; flex:1; background:#fff; color:#1a1714; border:2px solid #2d4a3e; font-size:13px;" />
-          <button class="btn btn-primary btn-sm" id="qr-genera-btn">Genera QR</button>
-        </div>
-        <div style="font-size:11px; color:var(--ink3); margin-top:6px;">Inserisci l'URL completo della pagina animatori, poi premi Genera QR.</div>
+      <div class="no-parr-list" id="orphan-list">
+        <div class="empty">⏳ Caricamento...</div>
       </div>
-
-      <div class="qr-grid" id="qr-grid" style="display:none;">
-        <div class="qr-card ingresso">
-          <div class="qr-label">⬆ Ingresso</div>
-          <div class="qr-sublabel">Scansiona per timbrare l&#39;entrata</div>
-          <div class="qr-box"><div id="qr-ingresso"></div></div>
-          <div class="qr-url" id="qr-url-ingresso">—</div>
-          <button class="btn btn-green btn-sm" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="window.stampaQR('ingresso')">🖨️ Stampa QR Ingresso</button>
-        </div>
-        <div class="qr-card uscita">
-          <div class="qr-label">⬇ Uscita</div>
-          <div class="qr-sublabel">Scansiona per timbrare l&#39;uscita</div>
-          <div class="qr-box"><div id="qr-uscita"></div></div>
-          <div class="qr-url" id="qr-url-uscita">—</div>
-          <button class="btn btn-red btn-sm" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="window.stampaQR('uscita')">🖨️ Stampa QR Uscita</button>
-        </div>
-      </div>
-
-      <div class="qr-hint">
-        <strong>Come usarlo:</strong><br>
-        1. Stampa i due QR Code e appendili all'ingresso dell'oratorio<br>
-        2. Gli animatori scansionano il QR con la fotocamera del telefono<br>
-        3. La timbratura parte automaticamente se sono già loggati<br>
-        4. Se non sono loggati, la pagina li porta al login e poi timbra
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════ TAB: ANIMATORI -->
-  <div class="tab-panel" id="tab-animatori">
-    <div class="main">
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Tutti gli animatori</div>
-        <button class="btn btn-sm btn-ghost" id="refreshAnimBtn">↻ Aggiorna</button>
-      </div>
-      <div class="filter-bar">
-        <input type="text" id="filter-name2" placeholder="Cerca nome o anno…">
-        <select id="filter-status2"><option value="">Tutti</option><option value="inside">Dentro</option><option value="outside">Fuori</option></select>
-        <select id="filter-sort2"><option value="alpha">Ordina: Alfabetico</option><option value="status">Ordina: Stato</option><option value="anno">Ordina: Anno</option></select>
-      </div>
-      <div class="status-grid" id="animators-grid2"><div class="empty">⏳ Caricamento…</div></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════ TAB: TIMBRATURE -->
-  <div class="tab-panel" id="tab-timbrature">
-    <div class="main">
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Log timbrature</div>
-        <button class="btn btn-sm btn-ghost" id="refreshLogBtn">↻ Aggiorna</button>
-      </div>
-      <div class="filter-bar">
-        <input type="text" id="log-search" placeholder="Cerca nome…">
-        <input type="date" id="log-date">
-        <select id="log-tipo"><option value="">Tutti</option><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nome</th><th>Anno</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Fiducia</th><th>Azioni</th></tr></thead>
-          <tbody id="log-tbody"><tr><td colspan="7" class="empty">⏳ Caricamento…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════ TAB: DISPONIBILITÀ -->
-  <div class="tab-panel" id="tab-disponibilita">
-    <div class="main">
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Settimane oratorio</div>
-        <button class="btn btn-sm btn-primary" id="add-sett-btn">+ Aggiungi settimana</button>
-      </div>
-      <div id="settimane-list" style="margin-bottom:8px;"><div class="empty">⏳ Caricamento…</div></div>
-
-      <hr class="divider">
-
-      <div class="section-header">
-        <div class="section-title">Riepilogo disponibilità</div>
-        <button class="btn btn-sm btn-ghost" id="refresh-disp-btn">↻ Aggiorna</button>
-      </div>
-      <div id="admin-disp-container"><div class="empty">⏳ Caricamento…</div></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════ TAB: STATISTICHE -->
-  <div class="tab-panel" id="tab-statistiche">
-    <div class="main">
-
-      <!-- ── Topbar filtri ── -->
-      <div class="stat-topbar">
-        <div>
-          <label>Dal</label>
-          <input type="date" id="stat-dal" />
-        </div>
-        <div>
-          <label>Al</label>
-          <input type="date" id="stat-al" />
-        </div>
-        <div>
-          <label>Animatore</label>
-          <select id="stat-animatore"><option value="">Tutti gli animatori</option></select>
-        </div>
-        <div class="stat-topbar-btn">
-          <button class="btn btn-primary" id="stat-applica-btn">Applica</button>
-          <button class="btn btn-ghost" id="stat-refresh-btn">↻</button>
-        </div>
-      </div>
-
-      <!-- ── KPI ── -->
-      <div class="stat-kpi-row">
-        <div class="stat-kpi">
-          <div class="stat-kpi-eyebrow">Animatori attivi</div>
-          <div class="stat-kpi-value" id="kpi-animatori">—</div>
-          <div class="stat-kpi-sub">nel periodo selezionato</div>
-        </div>
-        <div class="stat-kpi kpi-amber">
-          <div class="stat-kpi-eyebrow">Giorni con presenze</div>
-          <div class="stat-kpi-value" id="kpi-giorni">—</div>
-          <div class="stat-kpi-sub">giorni distinti</div>
-        </div>
-        <div class="stat-kpi kpi-blue">
-          <div class="stat-kpi-eyebrow">Timbrature totali</div>
-          <div class="stat-kpi-value" id="kpi-timbrature">—</div>
-          <div class="stat-kpi-sub">ingressi + uscite</div>
-        </div>
-        <div class="stat-kpi kpi-red">
-          <div class="stat-kpi-eyebrow">Ore lavorate</div>
-          <div class="stat-kpi-value" id="kpi-ore">—</div>
-          <div class="stat-kpi-sub">stima totale</div>
-        </div>
-      </div>
-
-      <!-- ── Sezione: Distribuzione oraria ── -->
-      <div class="stat-section-hdr">
-        <div class="stat-section-hdr-title">Distribuzione oraria</div>
-        <div class="stat-section-hdr-meta">A che ora entrano ed escono gli animatori</div>
-      </div>
-
-      <div class="stat-charts-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title-group">
-              <div class="chart-title">Ingressi per fascia</div>
-              <div class="chart-subtitle">Orari di entrata nel periodo</div>
-            </div>
-            <div class="chart-toggle">
-              <button class="active" data-chart="chart-in" data-mode="bar">Barre</button>
-              <button data-chart="chart-in" data-mode="line">Linea</button>
-            </div>
-          </div>
-          <div class="chart-wrap chart-wrap-sm"><canvas id="chart-in" role="img" aria-label="Grafico ingressi per fascia oraria"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title-group">
-              <div class="chart-title">Uscite per fascia</div>
-              <div class="chart-subtitle">Orari di uscita nel periodo</div>
-            </div>
-            <div class="chart-toggle">
-              <button class="active" data-chart="chart-out" data-mode="bar">Barre</button>
-              <button data-chart="chart-out" data-mode="line">Linea</button>
-            </div>
-          </div>
-          <div class="chart-wrap chart-wrap-sm"><canvas id="chart-out" role="img" aria-label="Grafico uscite per fascia oraria"></canvas></div>
-        </div>
-      </div>
-
-      <!-- ── Sezione: Presenze per giorno ── -->
-      <div class="stat-section-hdr">
-        <div class="stat-section-hdr-title">Presenze giornaliere</div>
-        <div class="stat-section-hdr-meta">Quanti animatori distinti hanno timbrato ogni giorno</div>
-      </div>
-
-      <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title-group">
-            <div class="chart-title">Animatori presenti per giorno</div>
-            <div class="chart-subtitle">Basato sugli ingressi registrati</div>
-          </div>
-          <div class="chart-toggle">
-            <button class="active" data-chart="chart-giorni" data-mode="bar">Barre</button>
-            <button data-chart="chart-giorni" data-mode="line">Linea</button>
-          </div>
-        </div>
-        <div class="chart-wrap chart-wrap-md"><canvas id="chart-giorni" role="img" aria-label="Grafico presenze per giorno"></canvas></div>
-      </div>
-
-      <!-- ── Sezione: Classifica ── -->
-      <div class="stat-section-hdr">
-        <div class="stat-section-hdr-title">Classifica animatori</div>
-        <div class="stat-section-hdr-meta">Per ore lavorate nel periodo</div>
-      </div>
-
-      <div class="chart-card">
-        <ul class="rank-list" id="stat-rank-list">
-          <li class="rank-item"><span style="color:var(--ink3);font-size:12px;">⏳ Caricamento…</span></li>
-        </ul>
-      </div>
-
-      <!-- ── Sezione: Tabella dettaglio ── -->
-      <div class="stat-section-hdr">
-        <div class="stat-section-hdr-title">Dettaglio per animatore</div>
-        <div class="stat-section-hdr-meta" id="stat-det-meta"></div>
-      </div>
-
-      <div class="det-table-wrap">
-        <table class="det-table">
-          <thead>
-            <tr>
-              <th>Animatore</th>
-              <th class="num">Giorni</th>
-              <th class="num">Ore lavorate</th>
-              <th class="num">Ingressi</th>
-              <th class="num">Uscite</th>
-              <th>Ultimo accesso</th>
-            </tr>
-          </thead>
-          <tbody id="stat-det-tbody">
-            <tr><td colspan="6" class="empty">⏳ Caricamento…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════ TAB: NOTIFICHE -->
-  <div class="tab-panel" id="tab-notifiche">
-    <div class="main">
-      <div class="section-header" style="margin-top:0;">
-        <div class="section-title">Notifiche</div>
-      </div>
-      <div class="notif-layout">
-        <div class="notif-card">
-          <h3>👨‍💼 Notifica admin controllata</h3>
-          <div class="notif-grid">
-            <div>
-              <label>Tipo</label>
-              <select id="notif-type">
-                <option value="Ritrovo">Ritrovo</option>
-                <option value="Avviso generale">Avviso generale</option>
-                <option value="Emergenza">Emergenza</option>
-                <option value="Cambio orario">Cambio orario</option>
-                <option value="Richiamo timbratura">Richiamo timbratura</option>
-              </select>
-            </div>
-            <div>
-              <label>Destinatari</label>
-              <select id="notif-target-type">
-                <option value="all">Tutti</option>
-                <option value="group">Gruppo / anno</option>
-                <option value="single">Singolo</option>
-              </select>
-            </div>
-            <div id="notif-group-wrap" style="display:none;">
-              <label>Gruppo</label>
-              <select id="notif-target-group"></select>
-            </div>
-            <div id="notif-user-wrap" style="display:none;">
-              <label>Animatore</label>
-              <select id="notif-target-user"></select>
-            </div>
-            <div>
-              <label>Invio</label>
-              <select id="notif-send-mode">
-                <option value="now">Immediato</option>
-                <option value="scheduled">Programmato</option>
-              </select>
-            </div>
-            <div id="notif-scheduled-wrap" style="display:none;">
-              <label>Data e ora</label>
-              <input type="datetime-local" id="notif-scheduled-at" />
-            </div>
-          </div>
-          <label>Messaggio</label>
-          <input type="text" id="notif-message" maxlength="90" placeholder="Es. Ritrovo anticipato alle 14:30" />
-          <button class="btn btn-primary" id="notif-broadcast-btn">Invia / programma notifica</button>
-          <div style="font-size:11px; color:var(--ink3); margin-top:10px; line-height:1.6;">
-            Scegli un tipo, un destinatario e un messaggio breve. Le notifiche automatiche restano limitate a massimo 2–3 al giorno per utente.
-          </div>
-        </div>
-        <div class="notif-card">
-          <h3>🚨 Notifiche di sistema per admin</h3>
-          <div id="system-alerts"><div class="empty">⏳ Caricamento controlli…</div></div>
-        </div>
+      <div style="margin-top:16px; font-size:11px; color:var(--ink3); background:var(--bg2); padding:12px 16px; border-radius:4px; border:1px solid var(--border);">
+        💡 Gli animatori senza parrocchia possono essere riassegnati modificando il loro profilo. Se sono vecchi dati, puoi eliminarli.
       </div>
     </div>
   </div>
 
 </div>
 
-<!-- MODALS -->
-<div class="modal-overlay" id="modal-manual">
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-password">
   <div class="modal">
-    <div class="modal-title">Timbratura manuale</div>
-    <p style="font-size:12px;margin-bottom:18px;">Registra per <strong id="manual-name-label">—</strong></p>
-    <select id="manual-tipo"><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
-    <input type="date" id="manual-data" /><input type="time" id="manual-ora" />
-    <div class="modal-actions"><button class="btn btn-ghost" id="closeManualBtn">Annulla</button><button class="btn btn-primary" id="saveManualBtn">Salva</button></div>
-  </div>
-</div>
-<div class="modal-overlay" id="modal-edit-profile">
-  <div class="modal">
-    <div class="modal-title">Modifica Anagrafica</div>
-    <input type="hidden" id="profile-old-nome" /><input type="hidden" id="profile-old-anno" />
-    <label>Nome</label><input type="text" id="profile-new-nome" />
-    <label>Anno</label><input type="number" id="profile-new-anno" />
-    <div class="modal-actions"><button class="btn btn-ghost" id="closeProfileBtn">Annulla</button><button class="btn btn-amber" id="saveProfileBtn">Salva</button></div>
-  </div>
-</div>
-<div class="modal-overlay" id="modal-settimana">
-  <div class="modal">
-    <div class="modal-title">Settimana</div>
-    <input type="hidden" id="sett-id" />
-    <label>Nome settimana</label><input type="text" id="sett-nome" />
-    <label>Info date (opzionale)</label><input type="text" id="sett-date-info" />
-    <label>Giorni attivi</label>
-    <div class="giorni-checkboxes" id="giorni-checkboxes"></div>
-    <div class="modal-actions"><button class="btn btn-ghost" id="closeSettBtn">Annulla</button><button class="btn btn-primary" id="saveSettBtn">Salva</button></div>
+    <div class="modal-title">Cambia password admin</div>
+    <p style="font-size:12px;color:var(--ink2);margin-bottom:16px;">Parrocchia: <strong id="modal-parr-nome">—</strong></p>
+    <label>Nuova password</label>
+    <input type="password" id="modal-new-pass" placeholder="Inserisci nuova password..." />
+    <label>Conferma password</label>
+    <input type="password" id="modal-confirm-pass" placeholder="Conferma nuova password..." />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="closeModalBtn">Annulla</button>
+      <button class="btn btn-primary" id="saveModalBtn">Salva password</button>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function() {
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
-  const ADMIN_PASSWORD = 'Jerago4!';
   const sb = window.supabase.createClient(SB_URL, SB_KEY);
-  const GIORNI_TUTTI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
+  const SUPER_ADMIN_PASSWORD = 'Jerago4!';
 
-  let allAnimators = [], allLog = [], ingressoAperto = true, uscitaAperta = true, manualTarget = null, dispChiuse = {};
+  const PARROCCHIE = {
+    jerago: { nome: 'Jerago', emoji: '🔴', colore: '#8b2e2e', coloreChiaro: '#f5e8e8' },
+    besnate: { nome: 'Besnate', emoji: '🟢', colore: '#2d5a3d', coloreChiaro: '#e5f2ea' },
+    orago: { nome: 'Orago', emoji: '🔵', colore: '#2a6f8f', coloreChiaro: '#e8f0f8' }
+  };
+  const PARROCCHIA_KEYS = Object.keys(PARROCCHIE);
 
   // ── UTILS ──────────────────────────────────────────────────────────────────
-  let toastQueue = [];
-  let toastBusy = false;
+  let toastQueue = [], toastBusy = false;
   function toast(msg, type) {
     toastQueue.push({ msg, type });
     processToastQueue();
@@ -790,581 +323,373 @@
   }
   function esc(str) { if (!str) return ''; return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
-  function parseDataLog(str) { if (!str) return null; const p = str.split('/'); return p.length===3 ? new Date(+p[2], +p[1]-1, +p[0]) : null; }
 
-  // ── TAB SWITCHING ──────────────────────────────────────────────────────────
+  // ── LOGIN ──────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const pw = document.getElementById('admin-pass').value;
+    if (pw !== SUPER_ADMIN_PASSWORD) {
+      document.getElementById('login-err').style.display = 'block';
+      return;
+    }
+    document.getElementById('login-err').style.display = 'none';
+    sessionStorage.setItem('super_admin_auth', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    await loadAllData();
+    startClock();
+  }
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('admin-pass').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('super_admin_auth'); location.reload(); });
+
+  if (sessionStorage.getItem('super_admin_auth') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAllData();
+    startClock();
+  }
+
+  // ── DATA LOADING ──────────────────────────────────────────────────────────
+  let allUsers = [], allLogs = [], allSettings = [];
+
+  async function loadAllData() {
+    await loadUsers();
+    await loadTimbrature();
+    await loadSettings();
+    renderOverview();
+    renderPasswords();
+    renderOrphan();
+    loadBroadcastHistory();
+  }
+
+  async function loadUsers() {
+    const { data } = await sb.from('utenti').select('*');
+    allUsers = data || [];
+  }
+
+  async function loadTimbrature() {
+    const { data } = await sb.from('timbrature').select('*');
+    allLogs = data || [];
+  }
+
+  async function loadSettings() {
+    const { data } = await sb.from('impostazioni').select('*');
+    allSettings = data || [];
+  }
+
+  function getUsersByParrocchia(parr) {
+    return allUsers.filter(u => u.parrocchia === parr);
+  }
+
+  function getLogsByParrocchia(parr) {
+    return allLogs.filter(l => l.parrocchia === parr);
+  }
+
+  function getOrphanUsers() {
+    return allUsers.filter(u => !u.parrocchia || u.parrocchia === '');
+  }
+
+  function getSetting(key) {
+    const found = allSettings.find(s => s.chiave === key);
+    return found ? found.valore : null;
+  }
+
+  // ── OVERVIEW ──────────────────────────────────────────────────────────────
+  function renderOverview() {
+    // Stats totali
+    document.getElementById('stat-total').textContent = allUsers.length;
+    document.getElementById('stat-timbrature').textContent = allLogs.length;
+    document.getElementById('stat-orphan').textContent = getOrphanUsers().length;
+
+    // Grid parrocchie
+    const grid = document.getElementById('parrocchia-grid');
+    if (!PARROCCHIA_KEYS.length) {
+      grid.innerHTML = '<div class="empty">Nessuna parrocchia configurata</div>';
+      return;
+    }
+
+    grid.innerHTML = PARROCCHIA_KEYS.map(key => {
+      const p = PARROCCHIE[key];
+      const users = getUsersByParrocchia(key);
+      const logs = getLogsByParrocchia(key);
+      const oggi = new Date();
+      const oggiStr = String(oggi.getDate()).padStart(2,'0')+'/'+String(oggi.getMonth()+1).padStart(2,'0')+'/'+oggi.getFullYear();
+      const oggiLogs = logs.filter(l => l.data === oggiStr);
+
+      // Ultimo accesso
+      const lastStamp = logs.length ? logs[0] : null;
+      
+      return `<div class="parrocchia-card parr-${key}">
+        <div class="nome">${p.emoji} ${p.nome}</div>
+        <div class="badge">${key}</div>
+        <div class="stats">
+          <div><div class="num">${users.length}</div><div class="label">Animatori</div></div>
+          <div><div class="num">${logs.length}</div><div class="label">Timbrature</div></div>
+          <div><div class="num">${oggiLogs.length}</div><div class="label">Oggi</div></div>
+          <div><div class="num">${lastStamp ? lastStamp.data : '—'}</div><div class="label">Ultima</div></div>
+        </div>
+        <div class="actions">
+          <a href="/admin-${key}.html" target="_blank" class="btn btn-sm btn-ghost">🔗 Vai admin</a>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── PASSWORD ADMIN ────────────────────────────────────────────────────────
+  let passwordModalTarget = null;
+
+  function renderPasswords() {
+    const grid = document.getElementById('password-grid');
+    if (!PARROCCHIA_KEYS.length) {
+      grid.innerHTML = '<div class="empty">Nessuna parrocchia configurata</div>';
+      return;
+    }
+
+    grid.innerHTML = PARROCCHIA_KEYS.map(key => {
+      const p = PARROCCHIE[key];
+      const passKey = key + '_admin_password';
+      const currentPass = getSetting(passKey) || '⚠️ Non configurata';
+      return `<div class="password-card parr-${key}">
+        <div class="parr-nome">${p.emoji} ${p.nome}</div>
+        <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;">Password attuale</div>
+        <div class="parr-pass">${esc(currentPass)}</div>
+        <div class="parr-actions">
+          <button class="btn btn-amber btn-sm" onclick="window.openPasswordModal('${key}','${esc(p.nome)}')">✎ Cambia</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.openPasswordModal = function(key, nome) {
+    passwordModalTarget = key;
+    document.getElementById('modal-parr-nome').textContent = nome;
+    document.getElementById('modal-new-pass').value = '';
+    document.getElementById('modal-confirm-pass').value = '';
+    document.getElementById('modal-password').classList.add('open');
+  };
+
+  document.getElementById('closeModalBtn').onclick = closeAllModals;
+  document.getElementById('saveModalBtn').onclick = async () => {
+    const newPass = document.getElementById('modal-new-pass').value.trim();
+    const confirmPass = document.getElementById('modal-confirm-pass').value.trim();
+    if (!newPass || newPass.length < 4) {
+      toast('La password deve avere almeno 4 caratteri', 'error');
+      return;
+    }
+    if (newPass !== confirmPass) {
+      toast('Le password non coincidono', 'error');
+      return;
+    }
+    if (!passwordModalTarget) return;
+
+    const passKey = passwordModalTarget + '_admin_password';
+    const { error } = await sb.from('impostazioni')
+      .upsert({ chiave: passKey, valore: newPass }, { onConflict: 'chiave' });
+
+    if (error) {
+      toast('Errore: ' + error.message, 'error');
+      return;
+    }
+
+    toast('✅ Password aggiornata per ' + PARROCCHIE[passwordModalTarget].nome, 'success');
+    closeAllModals();
+    await loadSettings();
+    renderPasswords();
+  };
+
+  // ── ORPHAN ──────────────────────────────────────────────────────────────────
+  function renderOrphan() {
+    const list = document.getElementById('orphan-list');
+    const orphans = getOrphanUsers();
+    if (!orphans.length) {
+      list.innerHTML = '<div class="empty">✅ Nessun animatore senza parrocchia</div>';
+      return;
+    }
+
+    list.innerHTML = orphans.map(u => `
+      <div class="no-parr-item">
+        <div>
+          <span class="nome">${esc(u.nome)}</span>
+          ${u.anno ? '<span style="font-size:11px;color:var(--ink3);">('+esc(u.anno)+')</span>' : ''}
+        </div>
+        <div class="actions" style="display:flex;gap:4px;">
+          <select class="btn btn-sm btn-ghost" style="width:auto;padding:4px 8px;font-size:11px;margin:0;" onchange="window.assignParrocchia(${u.id}, this.value)">
+            <option value="">Assegna a...</option>
+            ${PARROCCHIA_KEYS.map(k => `<option value="${k}">${PARROCCHIE[k].emoji} ${PARROCCHIE[k].nome}</option>`).join('')}
+          </select>
+          <button class="btn btn-red btn-sm" onclick="window.deleteUser(${u.id},'${esc(u.nome)}')">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.assignParrocchia = async (userId, parrocchia) => {
+    if (!parrocchia) return;
+    const { error } = await sb.from('utenti').update({ parrocchia }).eq('id', userId);
+    if (error) {
+      toast('Errore: ' + error.message, 'error');
+      return;
+    }
+    toast('✅ Animatore assegnato a ' + PARROCCHIE[parrocchia].nome, 'success');
+    await loadUsers();
+    renderOrphan();
+    renderOverview();
+  };
+
+  window.deleteUser = async (userId, nome) => {
+    if (!confirm(`Eliminare definitivamente ${nome}?`)) return;
+    const { error } = await sb.from('utenti').delete().eq('id', userId);
+    if (error) {
+      toast('Errore: ' + error.message, 'error');
+      return;
+    }
+    // Elimina anche le timbrature associate
+    await sb.from('timbrature').delete().eq('user_id', userId);
+    toast('✅ ' + nome + ' eliminato', 'success');
+    await loadUsers();
+    await loadTimbrature();
+    renderOrphan();
+    renderOverview();
+    renderPasswords();
+  };
+
+  // ── BROADCAST ──────────────────────────────────────────────────────────────
+  async function loadBroadcastHistory() {
+    const container = document.getElementById('broadcast-history');
+    try {
+      const { data, error } = await sb
+        .from('notifiche_admin')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      if (!data || !data.length) {
+        container.innerHTML = '<div class="empty">Nessuna notifica recente</div>';
+        return;
+      }
+      
+      container.innerHTML = data.map(n => `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2);font-size:11px;">
+          <span>${esc(n.title || n.type)}: ${esc(n.message)}</span>
+          <span style="color:var(--ink3);font-size:10px;white-space:nowrap;margin-left:8px;">
+            ${n.parrocchia ? PARROCCHIE[n.parrocchia]?.emoji || '' : '🌍'} 
+            ${n.created_at ? new Date(n.created_at).toLocaleDateString() : ''}
+          </span>
+        </div>
+      `).join('');
+    } catch (e) {
+      console.warn('Broadcast history error:', e);
+      container.innerHTML = '<div class="empty">⏳ Caricamento storico...</div>';
+    }
+  }
+
+  document.getElementById('broadcast-btn').onclick = async () => {
+    const type = document.getElementById('broadcast-type').value;
+    const target = document.getElementById('broadcast-target').value;
+    const message = document.getElementById('broadcast-message').value.trim();
+    if (!message) { toast('Inserisci un messaggio', 'error'); return; }
+
+    if (!confirm(`Inviare "${message}" a ${target === 'all' ? 'tutte le parrocchie' : PARROCCHIE[target].nome}?`)) return;
+
+    // Costruisci il payload
+    const parrocchie = target === 'all' ? PARROCCHIA_KEYS : [target];
+    let successCount = 0;
+
+    for (const parr of parrocchie) {
+      const payload = {
+        id: Date.now().toString(36) + '_' + parr + '_' + Math.random().toString(36).substring(2, 6),
+        parrocchia: parr,
+        type: type,
+        title: type,
+        message: message,
+        target_type: 'all',
+        target_value: 'all',
+        scheduled_at: null,
+        created_at: new Date().toISOString()
+      };
+
+      try {
+        await sb.from('notifiche_admin').insert(payload);
+        await sb.from('impostazioni').upsert({
+          chiave: 'admin_notification_latest_' + parr,
+          valore: JSON.stringify(payload)
+        }, { onConflict: 'chiave' });
+        successCount++;
+      } catch (e) {
+        console.warn('Broadcast fallito per ' + parr, e);
+      }
+    }
+
+    if (successCount > 0) {
+      toast(`✅ Broadcast inviato a ${successCount} parrocchia${successCount > 1 ? 'e' : ''}`, 'success');
+      document.getElementById('broadcast-message').value = '';
+      await loadBroadcastHistory();
+    } else {
+      toast('❌ Errore nell\'invio del broadcast', 'error');
+    }
+  };
+
+  document.getElementById('broadcast-test-btn').onclick = async () => {
+    const message = document.getElementById('broadcast-message').value.trim();
+    if (!message) { toast('Inserisci un messaggio di test', 'error'); return; }
+    try {
+      const res = await fetch(SB_URL + '/functions/v1/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SB_KEY },
+        body: JSON.stringify({
+          title: '🔔 Test Broadcast',
+          body: '[TEST] ' + message,
+          url: '/admin.html',
+          target_type: 'single',
+          target_value: 'super-admin'
+        })
+      });
+      if (res.ok) {
+        toast('✅ Test inviato (se hai le notifiche attive)', 'success');
+      } else {
+        const err = await res.text();
+        toast('⚠️ Test fallito: ' + err.slice(0, 80), 'error');
+      }
+    } catch (e) {
+      toast('⚠️ Errore test: ' + e.message, 'error');
+    }
+  };
+
+  // ── TABS ──────────────────────────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
-      if (btn.dataset.tab === 'tab-disponibilita') { loadSettimane(); loadDispRiepilogo(); }
-      if (btn.dataset.tab === 'tab-statistiche') { initStatistiche(); }
-      if (btn.dataset.tab === 'tab-notifiche') { populateNotificationTargets(); renderSystemAlerts(); }
+      
+      if (btn.dataset.tab === 'tab-overview') renderOverview();
+      if (btn.dataset.tab === 'tab-password') renderPasswords();
+      if (btn.dataset.tab === 'tab-orphan') renderOrphan();
+      if (btn.dataset.tab === 'tab-broadcast') loadBroadcastHistory();
     };
   });
 
-  // ── LOGIN ──────────────────────────────────────────────────────────────────
-  async function doLogin() {
-    const pw = document.getElementById('admin-pass').value;
-    if (pw !== ADMIN_PASSWORD) { document.getElementById('login-err').style.display = 'block'; return; }
-    document.getElementById('login-err').style.display = 'none';
-    sessionStorage.setItem('admin_auth', '1');
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    await loadAllData(); startClock();
-  }
-  document.getElementById('loginBtn').addEventListener('click', doLogin);
-  document.getElementById('admin-pass').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
-  document.getElementById('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('admin_auth'); location.reload(); });
-
-  // ── DATA LOADING ───────────────────────────────────────────────────────────
-  async function loadAllData() {
+  // ── REFRESH BUTTONS ──────────────────────────────────────────────────────
+  document.getElementById('refresh-overview').onclick = async () => {
+    toast('Aggiornamento...');
+    await loadAllData();
+    renderOverview();
+    toast('✅ Aggiornato', 'success');
+  };
+  document.getElementById('refresh-passwords').onclick = async () => {
+    toast('Aggiornamento...');
     await loadSettings();
+    renderPasswords();
+    toast('✅ Aggiornato', 'success');
+  };
+  document.getElementById('refresh-orphan').onclick = async () => {
+    toast('Aggiornamento...');
     await loadUsers();
-    await loadTimbrature();
-    renderAnimators2();
-    renderLog();
-    updateStats();
-    populateNotificationTargets();
-    renderSystemAlerts();
-  }
-
-  async function loadSettings() {
-    const { data } = await sb.from('impostazioni').select('*');
-    let geoAbilitata = true, geoLat = '', geoLon = '', geoRadius = '';
-    dispChiuse = {};
-    const toBool = v => v === true || v === 'true';
-    if (data) data.forEach(row => {
-      if (row.chiave === 'ingresso_aperto') ingressoAperto = toBool(row.valore);
-      if (row.chiave === 'uscita_aperta')   uscitaAperta   = toBool(row.valore);
-      if (row.chiave === 'geo_abilitata')   geoAbilitata   = toBool(row.valore);
-      if (row.chiave === 'oratorio_lat')    geoLat   = row.valore;
-      if (row.chiave === 'oratorio_lon')    geoLon   = row.valore;
-      if (row.chiave === 'max_distanza')    geoRadius = row.valore;
-      if (row.chiave && row.chiave.startsWith('disp_chiusa_')) {
-        const id = parseInt(row.chiave.replace('disp_chiusa_', ''));
-        if (!isNaN(id)) dispChiuse[id] = toBool(row.valore);
-      }
-    });
-    const btnIn  = document.getElementById('toggle-in-btn');
-    const btnOut = document.getElementById('toggle-out-btn');
-    const btnGeo = document.getElementById('toggle-geo-btn');
-    btnIn.textContent  = ingressoAperto ? '🔓 INGRESSI: ATTIVI'    : '🔒 INGRESSI: BLOCCATI';
-    btnIn.className    = 'btn-toggle ' + (ingressoAperto ? 'open' : 'locked');
-    btnOut.textContent = uscitaAperta   ? '🔓 USCITE: ATTIVE'      : '🔒 USCITE: BLOCCATE';
-    btnOut.className   = 'btn-toggle ' + (uscitaAperta ? 'open' : 'locked');
-    btnGeo.textContent = geoAbilitata   ? '🛰️ GPS: ATTIVO'         : '🚫 GPS: DISABILITATO';
-    btnGeo.className   = 'btn-toggle ' + (geoAbilitata ? 'open' : 'locked');
-    if (geoLat) document.getElementById('geo-lat').value = geoLat;
-    if (geoLon) document.getElementById('geo-lon').value = geoLon;
-    if (geoRadius) document.getElementById('geo-radius').value = geoRadius;
-    if (geoLat && geoLon) {
-      const p = document.getElementById('geo-current-preview');
-      p.style.display = 'block';
-      p.innerHTML = '📌 <strong>' + geoLat + '</strong>, <strong>' + geoLon + '</strong> · raggio <strong>' + (geoRadius||'150') + 'm</strong>';
-    }
-  }
-
-  async function upsertImpostazione(chiave, valore) {
-    const { error } = await sb.from('impostazioni').upsert({ chiave, valore: String(valore) }, { onConflict: 'chiave' });
-    if (error) console.error('Errore upsert', chiave, error);
-  }
-
-  async function loadUsers()      { const { data } = await sb.from('utenti').select('*'); allAnimators = data || []; }
-  async function loadTimbrature() { const { data } = await sb.from('timbrature').select('*').order('id', { ascending: false }); allLog = data || []; }
-
-  // ── STATS ──────────────────────────────────────────────────────────────────
-  function updateStats() {
-    document.getElementById('stat-total').textContent = allAnimators.length;
-    const lastMap = {};
-    allLog.forEach(l => { if (!lastMap[l.nome]) lastMap[l.nome] = l; });
-    let inside = 0;
-    allAnimators.forEach(a => { if (lastMap[a.nome] && lastMap[a.nome].tipo === 'Ingresso') inside++; });
-    document.getElementById('stat-in').textContent  = inside;
-    document.getElementById('stat-out').textContent = allAnimators.length - inside;
-    const oggi = new Date();
-    const oggiStr = String(oggi.getDate()).padStart(2,'0') + '/' + String(oggi.getMonth()+1).padStart(2,'0') + '/' + oggi.getFullYear();
-    document.getElementById('stat-oggi').textContent = allLog.filter(l => l.data === oggiStr).length;
-  }
-
-  // ── RENDER ANIMATORS ───────────────────────────────────────────────────────
-  function buildAnimatorList(searchId, statusId, sortId) {
-    const search = document.getElementById(searchId).value.toLowerCase();
-    const statusFilter = document.getElementById(statusId).value;
-    const sortBy = document.getElementById(sortId).value;
-    const lastStampMap = {};
-    allLog.forEach(l => { if (!lastStampMap[l.nome]) lastStampMap[l.nome] = l; });
-    let list = allAnimators.map(a => ({
-      nome: a.nome, anno: a.anno,
-      lastStamp: lastStampMap[a.nome] || null,
-      isInside: !!(lastStampMap[a.nome] && lastStampMap[a.nome].tipo === 'Ingresso')
-    }));
-    if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || String(a.anno).includes(search));
-    if (statusFilter === 'inside')  list = list.filter(a => a.isInside);
-    if (statusFilter === 'outside') list = list.filter(a => !a.isInside);
-    if (sortBy === 'status') list.sort((a,b) => (b.isInside?1:0)-(a.isInside?1:0));
-    else if (sortBy === 'alpha') list.sort((a,b) => a.nome.localeCompare(b.nome));
-    else if (sortBy === 'anno')  list.sort((a,b) => (parseInt(a.anno)||0)-(parseInt(b.anno)||0));
-    return list;
-  }
-
-  function renderCard(a) {
-    return `<div class="animator-card ${a.isInside?'inside':''}">
-      <div class="anim-name">${esc(a.nome)} <span>(${a.anno||'—'})</span></div>
-      <div class="anim-status ${a.isInside?'in':'out'}">${a.isInside?'Dentro':'Fuori'}</div>
-      <div class="anim-last">${a.lastStamp ? a.lastStamp.tipo+' — '+a.lastStamp.data+' '+a.lastStamp.ora : 'Nessuna timbratura'}</div>
-      <div class="anim-actions">
-        <button class="btn btn-green btn-sm" onclick="window._mt('${esc(a.nome).replace(/'/g,"\\'")}','${a.anno||''}','Ingresso')">⬆ In</button>
-        <button class="btn btn-red btn-sm"   onclick="window._mt('${esc(a.nome).replace(/'/g,"\\'")}','${a.anno||''}','Uscita')">⬇ Out</button>
-        <button class="btn btn-amber btn-sm" onclick="window._ea('${esc(a.nome).replace(/'/g,"\\'")}','${a.anno||''}')">✎ Modifica</button>
-      </div>
-    </div>`;
-  }
-
-  function renderAnimators2() {
-    const list = buildAnimatorList('filter-name2','filter-status2','filter-sort2');
-    const grid = document.getElementById('animators-grid2');
-    grid.innerHTML = list.length ? list.map(renderCard).join('') : '<div class="empty">👤 Nessun animatore trovato</div>';
-  }
-
-
-  function renderTrust(l) {
-    if (l.fiducia_score === undefined || l.fiducia_score === null) return '<span class="trust-badge watch">— Non calcolato</span>';
-    const stato = l.fiducia_stato || 'Normale ma da monitorare';
-    const cls = stato === 'Affidabile' ? 'ok' : stato === 'Sospetto' ? 'suspicious' : 'watch';
-    const icon = stato === 'Affidabile' ? '✅' : stato === 'Sospetto' ? '🔴' : '🟡';
-    const meta = [l.metodo_timbratura ? 'metodo: '+l.metodo_timbratura : null, Number.isFinite(Number(l.gps_distanza_m)) ? 'GPS: '+Math.round(Number(l.gps_distanza_m))+'m' : null].filter(Boolean).join(' · ');
-    const title = esc(l.fiducia_motivi || meta || stato);
-    return `<span class="trust-badge ${cls}" title="${title}">${icon} ${esc(stato)} · ${l.fiducia_score}</span>${meta ? `<span class="trust-note">${esc(meta)}</span>` : ''}`;
-  }
-
-  // ── RENDER LOG ─────────────────────────────────────────────────────────────
-  function renderLog() {
-    const search = document.getElementById('log-search').value.toLowerCase();
-    const date   = document.getElementById('log-date').value;
-    const tipo   = document.getElementById('log-tipo').value;
-    let filtered = allLog.filter(l => {
-      if (search && !l.nome.toLowerCase().includes(search)) return false;
-      if (tipo && l.tipo !== tipo) return false;
-      if (date) { const p = l.data.split('/'); if ((p[2]+'-'+p[1]+'-'+p[0]) !== date) return false; }
-      return true;
-    });
-    const tbody = document.getElementById('log-tbody');
-    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
-    tbody.innerHTML = filtered.map(l => `<tr>
-      <td><strong>${esc(l.nome)}</strong></td><td>${l.anno||'—'}</td><td>${esc(l.data)}</td><td>${esc(l.ora)}</td>
-      <td><span class="tipo-badge ${l.tipo.toLowerCase()}">${esc(l.tipo)}</span></td>
-      <td>${renderTrust(l)}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="window._dl(${l.id})">🗑️</button></td>
-    </tr>`).join('');
-  }
-
-  // ── TIMBRATURA MANUALE ─────────────────────────────────────────────────────
-  window._mt = function(nome, anno, tipo) {
-    const utente = allAnimators.find(a => a.nome === nome);
-    manualTarget = { nome, anno, userId: utente ? utente.id : null };
-    document.getElementById('manual-name-label').textContent = nome;
-    document.getElementById('manual-tipo').value = tipo;
-    const now = new Date(); const off = now.getTimezoneOffset()*60000;
-    document.getElementById('manual-data').value = (new Date(now-off)).toISOString().split('T')[0];
-    document.getElementById('manual-ora').value  = now.toTimeString().substring(0,5);
-    document.getElementById('modal-manual').classList.add('open');
+    renderOrphan();
+    toast('✅ Aggiornato', 'success');
   };
-  document.getElementById('closeManualBtn').onclick = closeAllModals;
-  document.getElementById('saveManualBtn').onclick = async () => {
-    const tipo = document.getElementById('manual-tipo').value;
-    const dRaw = document.getElementById('manual-data').value;
-    const oRaw = document.getElementById('manual-ora').value;
-    if (!dRaw || !oRaw) return toast('Completa data e ora','error');
-    const p = dRaw.split('-');
-    const { error } = await sb.from('timbrature').insert([{ nome: manualTarget.nome, anno: manualTarget.anno, user_id: manualTarget.userId || null, tipo, data: p[2]+'/'+p[1]+'/'+p[0], ora: oRaw }]);
-    if (error) toast('Errore salvataggio','error');
-    else { toast('Timbratura manuale salvata','success'); closeAllModals(); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats(); }
-  };
-
-  window._dl = async (id) => {
-    if (!confirm('Eliminare questa timbratura?')) return;
-    const { error } = await sb.from('timbrature').delete().eq('id', id);
-    if (error) toast('Errore','error');
-    else { toast('Eliminata','success'); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats(); }
-  };
-
-  window._ea = function(nome, anno) {
-    document.getElementById('profile-old-nome').value = nome;
-    document.getElementById('profile-old-anno').value = anno;
-    document.getElementById('profile-new-nome').value = nome;
-    document.getElementById('profile-new-anno').value = anno;
-    document.getElementById('modal-edit-profile').classList.add('open');
-  };
-  document.getElementById('closeProfileBtn').onclick = closeAllModals;
-  document.getElementById('saveProfileBtn').onclick = async () => {
-    const oldNome = document.getElementById('profile-old-nome').value;
-    const newNome = document.getElementById('profile-new-nome').value;
-    const newAnno = document.getElementById('profile-new-anno').value;
-    if (!newNome) return toast('Nome obbligatorio','error');
-    const { error } = await sb.from('utenti').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
-    if (error) return toast('Errore modifica','error');
-    if (newNome !== oldNome) await sb.from('timbrature').update({ nome: newNome, anno: newAnno }).eq('nome', oldNome);
-    toast('Profilo aggiornato','success'); closeAllModals();
-    await loadUsers(); await loadTimbrature(); renderAnimators2(); renderLog(); updateStats();
-  };
-
-  // ── TOGGLE LOCKS & GEO ────────────────────────────────────────────────────
-  document.getElementById('toggle-in-btn').onclick  = async () => { ingressoAperto = !ingressoAperto; await upsertImpostazione('ingresso_aperto', ingressoAperto); toast(ingressoAperto?'Ingressi sbloccati':'Ingressi bloccati', ingressoAperto?'success':'error'); loadSettings(); };
-  document.getElementById('toggle-out-btn').onclick = async () => { uscitaAperta   = !uscitaAperta;   await upsertImpostazione('uscita_aperta',   uscitaAperta);   toast(uscitaAperta?'Uscite sbloccate':'Uscite bloccate',   uscitaAperta?'success':'error');   loadSettings(); };
-  document.getElementById('toggle-geo-btn').onclick = async function() { const on = this.classList.contains('open'); await upsertImpostazione('geo_abilitata', !on); toast(!on?'GPS attivato':'GPS disabilitato', !on?'success':'error'); loadSettings(); };
-  document.getElementById('geo-save-btn').onclick   = async () => {
-    const lat = document.getElementById('geo-lat').value, lon = document.getElementById('geo-lon').value, rad = document.getElementById('geo-radius').value;
-    if (!lat||!lon||!rad) return toast('Compila tutti i campi GPS','error');
-    await upsertImpostazione('oratorio_lat', lat); await upsertImpostazione('oratorio_lon', lon); await upsertImpostazione('max_distanza', rad);
-    toast('Coordinate salvate','success'); loadSettings();
-  };
-  document.getElementById('geo-use-current').onclick = () => {
-    if (!navigator.geolocation) return toast('GPS non supportato','error');
-    toast('Acquisizione posizione...');
-    navigator.geolocation.getCurrentPosition(pos => {
-      document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(6);
-      document.getElementById('geo-lon').value = pos.coords.longitude.toFixed(6);
-      if (!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value = '150';
-      toast('Posizione acquisita. Salva!','success');
-    }, err => toast('Errore GPS: '+err.message,'error'), { enableHighAccuracy: true });
-  };
-
-  // ── SETTIMANE ──────────────────────────────────────────────────────────────
-  window.toggleDispSettimana = async (settId) => {
-    const nuovoStato = !dispChiuse[settId];
-    await upsertImpostazione('disp_chiusa_' + settId, nuovoStato);
-    dispChiuse[settId] = nuovoStato;
-    toast(nuovoStato ? '🔒 Disponibilità chiuse' : '🔓 Disponibilità aperte', nuovoStato ? 'error' : 'success');
-    await loadSettimane();
-  };
-
-  async function loadSettimane() {
-    const { data: impo } = await sb.from('impostazioni').select('*');
-    dispChiuse = {};
-    if (impo) impo.forEach(r => {
-      if (r.chiave && r.chiave.startsWith('disp_chiusa_')) {
-        const id = parseInt(r.chiave.replace('disp_chiusa_',''));
-        if (!isNaN(id)) dispChiuse[id] = (r.valore === true || r.valore === 'true');
-      }
-    });
-    const { data }       = await sb.from('settimane').select('*').order('id');
-    const { data: dispo }  = await sb.from('disponibilita').select('user_id, settimana_id');
-    const { data: utenti } = await sb.from('utenti').select('id');
-    const totale = utenti ? utenti.length : 0;
-
-    const container = document.getElementById('settimane-list');
-    if (!data || !data.length) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
-    container.innerHTML = data.map(s => {
-      let giorni = GIORNI_TUTTI;
-      if (s.giorni_attivi && s.giorni_attivi.trim()) giorni = s.giorni_attivi.split(',').map(g=>g.trim()).filter(g=>GIORNI_TUTTI.includes(g));
-      const chiusa = !!dispChiuse[s.id];
-      const hannoVotato = dispo ? new Set(dispo.filter(d => d.settimana_id === s.id).map(d => d.user_id)).size : 0;
-      const mancanti = totale - hannoVotato;
-      return `<div class="sett-card">
-        <div class="sett-info">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-            <div class="sett-nome-admin" style="margin-bottom:0;">${esc(s.nome)}</div>
-            <span style="font-size:11px;font-weight:600;background:var(--green-lt);color:var(--green);border:1px solid #b2d4bc;padding:2px 9px;border-radius:20px;">✅ ${hannoVotato} compilato</span>
-            <span style="font-size:11px;font-weight:600;background:var(--red-lt);color:var(--red);border:1px solid #dbb2b2;padding:2px 9px;border-radius:20px;">⏳ ${mancanti} mancanti</span>
-          </div>
-          <div class="sett-date-admin">${esc(s.date_info||'')}</div>
-          <div class="sett-date-admin" style="font-size:10px;">Giorni: ${giorni.join(', ')}</div>
-          <div class="disp-lock-badge ${chiusa?'locked':'open'}">${chiusa?'🔒 Disponibilità chiuse':'🔓 Disponibilità aperte'}</div>
-        </div>
-        <div class="sett-actions">
-          <button class="btn ${chiusa?'btn-green':'btn-red'} btn-sm" onclick="window.toggleDispSettimana(${s.id})">${chiusa?'🔓 Apri':'🔒 Chiudi'}</button>
-          <button class="btn btn-amber btn-sm" onclick="window.editSettimana(${s.id},'${esc(s.nome)}','${esc(s.date_info||'')}','${esc(s.giorni_attivi||'')}')">✏️ Modifica</button>
-          <button class="btn btn-red btn-sm"   onclick="window.deleteSettimana(${s.id})">🗑️</button>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  function parseGiorniAttivi(g) {
-    if (!g || !String(g).trim()) return GIORNI_TUTTI;
-    return String(g).split(',').map(x=>x.trim()).filter(x=>GIORNI_TUTTI.includes(x));
-  }
-
-  async function loadDispRiepilogo() {
-    const { data: settimane } = await sb.from('settimane').select('*').order('id');
-    const { data: dispo }    = await sb.from('disponibilita').select('*');
-    const { data: utenti }   = await sb.from('utenti').select('id, nome, anno').order('nome');
-    const container = document.getElementById('admin-disp-container');
-    if (!settimane || !settimane.length) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
-    let html = '';
-    for (const s of settimane) {
-      const giorni = parseGiorniAttivi(s.giorni_attivi);
-      const chiusa = !!dispChiuse[s.id];
-      const lockTag = chiusa
-        ? '<span style="display:inline-flex;align-items:center;font-size:11px;background:var(--red-lt);color:var(--red);border:1px solid #dbb2b2;padding:2px 9px;border-radius:20px;margin-left:10px;">🔒 Chiuse</span>'
-        : '<span style="display:inline-flex;align-items:center;font-size:11px;background:var(--green-lt);color:var(--green);border:1px solid #b2d4bc;padding:2px 9px;border-radius:20px;margin-left:10px;">🔓 Aperte</span>';
-      const map = new Map();
-      if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
-        const gn = GIORNI_TUTTI[d.giorno_index]; const idx = giorni.indexOf(gn); if (idx === -1) return;
-        if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(''));
-        let cell = '';
-        if (d.stato === 'disponibile')     cell = '<span class="disp-si">✅ Sì</span>';
-        else if (d.stato === 'non_disponibile') cell = '<span class="disp-no">❌ No</span>';
-        if (d.note) cell += '<br><span style="font-size:10px;color:var(--ink3);font-style:italic;">' + esc(d.note) + '</span>';
-        map.get(d.user_id)[idx] = cell;
-      });
-      html += `<div class="disp-block">
-        <div class="disp-block-title">📅 ${esc(s.nome)}${lockTag}</div>
-        <div class="disp-block-date">${esc(s.date_info||'')}</div>
-        <div style="overflow-x:auto;">
-          <table class="disp-table">
-            <thead><tr><th>Animatore</th>${giorni.map(g=>`<th>${g}</th>`).join('')}</tr></thead>
-            <tbody>${(utenti||[]).map(u => {
-              const scelte = map.get(u.id) || Array(giorni.length).fill('');
-              return `<tr><td><strong>${esc(u.nome)}</strong>${u.anno?' ('+u.anno+')':''}</td>${scelte.map(c=>`<td>${c||'—'}</td>`).join('')}</tr>`;
-            }).join('')}</tbody>
-          </table>
-        </div>
-      </div>`;
-    }
-    container.innerHTML = html;
-  }
-
-  window.editSettimana = (id, nome, dateInfo, giorniStr) => {
-    document.getElementById('sett-id').value = id || '';
-    document.getElementById('sett-nome').value = nome || '';
-    document.getElementById('sett-date-info').value = dateInfo || '';
-    const sel = giorniStr ? giorniStr.split(',').map(g=>g.trim()) : [];
-    document.getElementById('giorni-checkboxes').innerHTML = GIORNI_TUTTI.map(g =>
-      `<label><input type="checkbox" value="${g}" ${sel.includes(g)?'checked':''}> ${g}</label>`).join('');
-    document.getElementById('modal-settimana').classList.add('open');
-  };
-
-  document.getElementById('add-sett-btn').onclick = () => {
-    document.getElementById('sett-id').value = '';
-    document.getElementById('sett-nome').value = '';
-    document.getElementById('sett-date-info').value = '';
-    document.getElementById('giorni-checkboxes').innerHTML = GIORNI_TUTTI.map(g =>
-      `<label><input type="checkbox" value="${g}" checked> ${g}</label>`).join('');
-    document.getElementById('modal-settimana').classList.add('open');
-  };
-
-  document.getElementById('closeSettBtn').onclick = closeAllModals;
-  document.getElementById('saveSettBtn').onclick = async () => {
-    const idRaw = document.getElementById('sett-id').value.trim();
-    const nome = document.getElementById('sett-nome').value.trim();
-    const dateInfo = document.getElementById('sett-date-info').value.trim();
-    const giorni = Array.from(document.querySelectorAll('#giorni-checkboxes input:checked')).map(cb=>cb.value).join(',');
-    if (!nome) return toast('Nome obbligatorio','error');
-    const payload = { nome, date_info: dateInfo, giorni_attivi: giorni };
-    const numId = parseInt(idRaw);
-    const res = (!isNaN(numId) && numId > 0)
-      ? await sb.from('settimane').update(payload).eq('id', numId).select()
-      : await sb.from('settimane').insert(payload).select();
-    if (res.error) return toast('Errore: ' + res.error.message, 'error');
-    toast('Settimana salvata','success'); closeAllModals();
-    await loadSettimane(); await loadDispRiepilogo();
-  };
-
-  window.deleteSettimana = async (id) => {
-    if (!confirm('Eliminare definitivamente questa settimana?')) return;
-    const { error } = await sb.from('settimane').delete().eq('id', id);
-    if (error) return toast('Errore: '+error.message,'error');
-    await sb.from('disponibilita').delete().eq('settimana_id', id);
-    await sb.from('impostazioni').delete().eq('chiave', 'disp_chiusa_'+id);
-    toast('Settimana eliminata','success');
-    await loadSettimane(); await loadDispRiepilogo();
-  };
-
-  // ── EXPORT EXCEL ───────────────────────────────────────────────────────────
-  function getISOWeek(date) {
-    const d = new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-(d.getDay()+6)%7);
-    const w1 = new Date(d.getFullYear(),0,4);
-    return d.getFullYear()+'-W'+String(1+Math.round(((d-w1)/86400000-3+(w1.getDay()+6)%7)/7)).padStart(2,'0');
-  }
-
-  function aggiornaPreview() {
-    const tipo = document.getElementById('export-tipo').value;
-    const periodo = document.querySelector('input[name="export-periodo"]:checked').value;
-    const _n = new Date();
-    const oggi = _n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
-    const tl = tipo==='entrambi'?'Entrate_Uscite':tipo==='Ingresso'?'Entrate':'Uscite';
-    let pl = '';
-    if (periodo==='giorno')     pl = '_'+(document.getElementById('export-giorno').value||oggi);
-    else if (periodo==='settimana') pl = '_'+(document.getElementById('export-week').value||'').replace('-W','_Sett');
-    else if (periodo==='intervallo') pl = '_'+(document.getElementById('export-dal').value||oggi)+'_'+(document.getElementById('export-al').value||oggi);
-    else pl = '_Completo';
-    const fn = tl+pl+'.xlsx';
-    document.getElementById('export-filename-preview').textContent = fn;
-    return fn;
-  }
-
-  function dataLogToISO(str) {
-    if (!str) return '';
-    const p = str.split('/');
-    return p.length === 3 ? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : '';
-  }
-
-  function filtraLog() {
-    const tipo = document.getElementById('export-tipo').value;
-    const periodo = document.querySelector('input[name="export-periodo"]:checked').value;
-    let f = tipo==='entrambi' ? [...allLog] : allLog.filter(l=>l.tipo===tipo);
-    if (periodo==='giorno') {
-      const g = document.getElementById('export-giorno').value;
-      if (g) f = f.filter(l => dataLogToISO(l.data) === g);
-    } else if (periodo==='settimana') {
-      const w = document.getElementById('export-week').value;
-      if (w) f = f.filter(l => { const d=parseDataLog(l.data); return d&&getISOWeek(d)===w; });
-    } else if (periodo==='intervallo') {
-      const dal=document.getElementById('export-dal').value, al=document.getElementById('export-al').value;
-      if (dal) f = f.filter(l => dataLogToISO(l.data) >= dal);
-      if (al)  f = f.filter(l => dataLogToISO(l.data) <= al);
-    }
-    return f;
-  }
-
-  document.getElementById('export-btn').onclick = () => {
-    if (!window.XLSX) return toast('Libreria Excel non caricata','error');
-    const tipo = document.getElementById('export-tipo').value;
-    const note = document.getElementById('export-note').value.trim();
-    const filename = aggiornaPreview();
-    const filtered = filtraLog();
-    if (!filtered.length) return toast('⚠️ Nessun dato nel periodo selezionato','error');
-    const gruppi = {};
-    filtered.forEach(r => {
-      const k = r.nome+'||'+r.data;
-      if (!gruppi[k]) gruppi[k] = { nome:r.nome, anno:r.anno||'', data:r.data, ingressi:[], uscite:[] };
-      if (r.tipo==='Ingresso') gruppi[k].ingressi.push(r.ora);
-      if (r.tipo==='Uscita')   gruppi[k].uscite.push(r.ora);
-    });
-    const rows = Object.values(gruppi).map(g => {
-      g.ingressi.sort(); g.uscite.sort();
-      let ore = '';
-      if (g.ingressi.length && g.uscite.length) {
-        const [ih,im] = g.ingressi[0].split(':').map(Number);
-        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
-        const diff = (oh*60+om)-(ih*60+im);
-        if (diff > 0) ore = Math.floor(diff/60)+'h '+(diff%60)+'min';
-      }
-      const row = { Nome:g.nome, Anno:g.anno, Data:g.data };
-      if (tipo==='entrambi'||tipo==='Ingresso') row['Ora Entrata'] = g.ingressi.join(', ')||'—';
-      if (tipo==='entrambi'||tipo==='Uscita')   row['Ora Uscita']  = g.uscite.join(', ')  ||'—';
-      if (tipo==='entrambi') row['Ore Lavorate'] = ore||'—';
-      if (note) row['Note'] = note;
-      return row;
-    }).sort((a,b) => { const da=parseDataLog(a.Data),db=parseDataLog(b.Data); return (da&&db&&da-db)||a.Nome.localeCompare(b.Nome); });
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,14)}));
-    XLSX.utils.book_append_sheet(wb, ws, 'Presenze');
-
-    const nomi = [...new Set(filtered.map(r=>r.nome))].sort();
-    const riepilogo = nomi.map(nome => {
-      const rl = filtered.filter(r=>r.nome===nome);
-      return { Nome:nome, Anno:rl[0].anno||'', 'Giorni Presenti':[...new Set(rl.map(r=>r.data))].length, 'N° Entrate':rl.filter(r=>r.tipo==='Ingresso').length, 'N° Uscite':rl.filter(r=>r.tipo==='Uscita').length };
-    });
-    const wsR = XLSX.utils.json_to_sheet(riepilogo);
-    wsR['!cols'] = [{wch:22},{wch:8},{wch:16},{wch:12},{wch:12}];
-    XLSX.utils.book_append_sheet(wb, wsR, 'Riepilogo');
-    XLSX.writeFile(wb, filename);
-    toast('✅ Excel scaricato!','success');
-  };
-
-  // ── EXPORT DISPONIBILITÀ ────────────────────────────────────────────────────
-  async function caricaSettimanePerExport() {
-    const { data } = await sb.from('settimane').select('*').order('id');
-    const sel = document.getElementById('export-disp-sett');
-    if (!sel || !data) return;
-    sel.innerHTML = '<option value="tutte">Tutte le settimane</option>';
-    data.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.nome + (s.date_info ? ' — ' + s.date_info : '');
-      sel.appendChild(opt);
-    });
-  }
-
-  document.getElementById('export-disp-btn').onclick = async () => {
-    if (!window.XLSX) return toast('Libreria Excel non caricata','error');
-    toast('Caricamento dati disponibilità...','');
-    const settScelta = document.getElementById('export-disp-sett').value;
-    let settQuery = sb.from('settimane').select('*').order('id');
-    const { data: settimane } = await settQuery;
-    const { data: dispo }    = await sb.from('disponibilita').select('*');
-    const { data: utenti }   = await sb.from('utenti').select('id, nome, anno').order('nome');
-    if (!settimane || !settimane.length) return toast('Nessuna settimana trovata','error');
-    if (!utenti || !utenti.length)       return toast('Nessun animatore trovato','error');
-    const settDaEsportare = settScelta === 'tutte' ? settimane : settimane.filter(s => String(s.id) === String(settScelta));
-    if (!settDaEsportare.length) return toast('Settimana non trovata','error');
-    const wb = XLSX.utils.book_new();
-    for (const s of settDaEsportare) {
-      const giorni = parseGiorniAttivi(s.giorni_attivi);
-      const map = new Map();
-      if (dispo) dispo.filter(d => d.settimana_id === s.id).forEach(d => {
-        const gn = GIORNI_TUTTI[d.giorno_index];
-        const idx = giorni.indexOf(gn);
-        if (idx === -1) return;
-        if (!map.has(d.user_id)) map.set(d.user_id, Array(giorni.length).fill(null));
-        map.get(d.user_id)[idx] = { stato: d.stato, note: d.note || '' };
-      });
-      const rows = utenti.map(u => {
-        const scelte = map.get(u.id) || Array(giorni.length).fill(null);
-        const row = { 'Nome': u.nome, 'Anno': u.anno || '' };
-        giorni.forEach((g, i) => {
-          const cell = scelte[i];
-          if (cell) {
-            row[g] = cell.stato === 'disponibile' ? 'Sì' : cell.stato === 'non_disponibile' ? 'No' : '—';
-            row[g + ' (note)'] = cell.note || '';
-          } else {
-            row[g] = '—';
-            row[g + ' (note)'] = '';
-          }
-        });
-        return row;
-      });
-      if (!rows.length) continue;
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws['!cols'] = [{ wch: 22 }, { wch: 6 }, ...giorni.map(() => ({ wch: 12 }))];
-      const nomeSheet = s.nome.substring(0, 31);
-      XLSX.utils.book_append_sheet(wb, ws, nomeSheet);
-    }
-    if (!wb.SheetNames.length) return toast('Nessun dato da esportare','error');
-    const filename = settScelta === 'tutte' ? 'Disponibilita_Tutte_Settimane.xlsx' : 'Disponibilita_' + (settDaEsportare[0].nome.replace(/\s+/g,'_')) + '.xlsx';
-    XLSX.writeFile(wb, filename);
-    toast('✅ Disponibilità scaricata!','success');
-  };
-
-  caricaSettimanePerExport();
-
-  document.querySelectorAll('input[name="export-periodo"]').forEach(r => {
-    r.addEventListener('change', () => {
-      document.querySelectorAll('.periodo-option').forEach(el => el.classList.remove('selected'));
-      r.closest('.periodo-option').classList.add('selected');
-      document.getElementById('export-giorno-wrap').style.display     = r.value==='giorno'     ? '' : 'none';
-      document.getElementById('export-settimana-wrap').style.display  = r.value==='settimana'  ? '' : 'none';
-      document.getElementById('export-intervallo-wrap').style.display = r.value==='intervallo' ? '' : 'none';
-      aggiornaPreview();
-    });
-  });
-  ['export-tipo','export-giorno','export-week','export-dal','export-al'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.addEventListener('change', aggiornaPreview);
-  });
-  const _now = new Date();
-  const oggi = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
-  document.getElementById('export-giorno').value = oggi;
-  document.getElementById('export-dal').value    = oggi;
-  document.getElementById('export-al').value     = oggi;
-  aggiornaPreview();
-
-  // ── FILTRI ─────────────────────────────────────────────────────────────────
-  document.getElementById('filter-name2').addEventListener('input', renderAnimators2);
-  document.getElementById('filter-status2').addEventListener('change', renderAnimators2);
-  document.getElementById('filter-sort2').addEventListener('change', renderAnimators2);
-  document.getElementById('log-search').addEventListener('input', renderLog);
-  document.getElementById('log-date').addEventListener('change', renderLog);
-  document.getElementById('log-tipo').addEventListener('change', renderLog);
-  document.getElementById('refreshAnimBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); await loadUsers(); renderAnimators2(); updateStats(); });
-  document.getElementById('refreshLogBtn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadTimbrature(); renderLog(); });
-  document.getElementById('refresh-disp-btn').addEventListener('click', async () => { toast('Aggiornamento...'); await loadDispRiepilogo(); });
 
   // ── CLOCK ──────────────────────────────────────────────────────────────────
   function startClock() {
@@ -1375,520 +700,9 @@
     }, 1000);
   }
 
-  // ── QR CODE ───────────────────────────────────────────────────────────────────
-  let qrIngresso = null, qrUscita = null;
+  console.log('👑 Super Admin caricato!');
+  console.log('📋 Parrocchie: ' + PARROCCHIA_KEYS.join(', '));
 
-  document.getElementById('qr-genera-btn').onclick = () => {
-    const base = document.getElementById('qr-base-url').value.trim();
-    if (!base) return toast('Inserisci URL del sito animatori', 'error');
-    const urlIn  = base + (base.includes('?') ? '&' : '?') + 'qa=in';
-    const urlOut = base + (base.includes('?') ? '&' : '?') + 'qa=out';
-    document.getElementById('qr-url-ingresso').textContent = urlIn;
-    document.getElementById('qr-url-uscita').textContent   = urlOut;
-    const elIn  = document.getElementById('qr-ingresso');
-    const elOut = document.getElementById('qr-uscita');
-    elIn.innerHTML  = '';
-    elOut.innerHTML = '';
-    qrIngresso = new QRCode(elIn,  { text: urlIn,  width: 400, height: 400, colorDark: '#1a1714', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-    qrUscita   = new QRCode(elOut, { text: urlOut, width: 400, height: 400, colorDark: '#8b2e2e', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-    document.getElementById('qr-grid').style.display = '';
-    toast('QR Code generati!', 'success');
-    localStorage.setItem('qr_base_url', base);
-  };
-
-  window.stampaQR = (tipo) => {
-    const label     = tipo === 'ingresso' ? '⬆ INGRESSO' : '⬇ USCITA';
-    const sublabel  = tipo === 'ingresso' ? 'Scansiona per timbrare entrata' : 'Scansiona per timbrare uscita';
-    const color     = tipo === 'ingresso' ? '#2d5a3d' : '#8b2e2e';
-    const elId      = tipo === 'ingresso' ? 'qr-ingresso' : 'qr-uscita';
-    const urlId     = tipo === 'ingresso' ? 'qr-url-ingresso' : 'qr-url-uscita';
-    const qrEl      = document.getElementById(elId);
-    const url       = document.getElementById(urlId).textContent;
-    const img = qrEl.querySelector('img') || qrEl.querySelector('canvas');
-    let imgSrc = '';
-    if (img && img.tagName === 'IMG') imgSrc = img.src;
-    else if (img && img.tagName === 'CANVAS') imgSrc = img.toDataURL();
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>QR ${label}</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;600&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: 'Geist Mono', monospace; background: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    body { margin: 0; padding: 20mm; }
-    .print-card { text-align: center; padding: 0; border: 4px solid ${color}; border-radius: 16px; width: 100%; padding: 40px; }
-    .print-title { font-family: 'Instrument Serif', serif; font-size: 52px; color: ${color}; margin-bottom: 8px; }
-    .print-sub { font-size: 18px; color: #444; margin-bottom: 36px; }
-    .print-qr { width: 420px; height: 420px; margin: 0 auto 32px; image-rendering: pixelated; }
-    .print-url { font-size: 11px; color: #999; word-break: break-all; margin-bottom: 24px; font-family: monospace; }
-    .print-hint { font-size: 16px; color: #555; line-height: 1.7; border-top: 2px solid #eee; padding-top: 20px; }
-    @media print { body { margin: 0; padding: 15mm; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-  </style>
-</head>
-<body>
-  <div class="print-card">
-    <div class="print-title">${label}</div>
-    <div class="print-sub">${sublabel}</div>
-    <img class="print-qr" src="${imgSrc}" />
-    <div class="print-url">${url}</div>
-    <div class="print-hint">📱 Scansiona con la fotocamera del telefono</div>
-  </div>
-  <script>window.onload = () => { window.print(); }<\/script>
-</body>
-</html>`);
-    win.document.close();
-  };
-
-  const savedUrl = localStorage.getItem('qr_base_url');
-  const qrInput = document.getElementById('qr-base-url');
-  if (savedUrl) qrInput.value = savedUrl;
-  qrInput.style.background = '#ffffff';
-  qrInput.style.color = '#1a1714';
-  qrInput.style.border = '2px solid #2d4a3e';
-  qrInput.style.padding = '11px 13px';
-  qrInput.style.fontSize = '13px';
-  qrInput.style.borderRadius = '3px';
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ── STATISTICHE ────────────────────────────────────────────────────────────
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  let statCharts = {};
-  let statInited = false;
-
-  function initStatDateRange() {
-    if (allLog.length === 0) return;
-    const dates = allLog.map(l => dataLogToISO(l.data)).filter(Boolean).sort();
-    const dal = document.getElementById('stat-dal');
-    const al  = document.getElementById('stat-al');
-    if (!dal.value) dal.value = dates[0];
-    if (!al.value)  al.value = dates[dates.length - 1];
-  }
-
-  function populateStatAnimatore() {
-    const sel = document.getElementById('stat-animatore');
-    const current = sel.value;
-    sel.innerHTML = '<option value="">Tutti gli animatori</option>';
-    [...allAnimators].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.nome;
-      opt.textContent = a.nome + (a.anno ? ' ('+a.anno+')' : '');
-      if (a.nome === current) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  }
-
-  function getStatFilters() {
-    return {
-      dal:       document.getElementById('stat-dal').value,
-      al:        document.getElementById('stat-al').value,
-      animatore: document.getElementById('stat-animatore').value
-    };
-  }
-
-  function filtraLogStat(filters) {
-    return allLog.filter(l => {
-      const iso = dataLogToISO(l.data);
-      if (filters.dal && iso < filters.dal) return false;
-      if (filters.al  && iso > filters.al)  return false;
-      if (filters.animatore && l.nome !== filters.animatore) return false;
-      return true;
-    });
-  }
-
-  function calcolaOreAnimatore(logAnimatore) {
-    const perData = {};
-    logAnimatore.forEach(l => {
-      if (!perData[l.data]) perData[l.data] = { ingressi: [], uscite: [] };
-      if (l.tipo === 'Ingresso') perData[l.data].ingressi.push(l.ora);
-      if (l.tipo === 'Uscita')   perData[l.data].uscite.push(l.ora);
-    });
-    let totMin = 0;
-    Object.values(perData).forEach(g => {
-      g.ingressi.sort(); g.uscite.sort();
-      if (g.ingressi.length && g.uscite.length) {
-        const [ih,im] = g.ingressi[0].split(':').map(Number);
-        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
-        const diff = (oh*60+om)-(ih*60+im);
-        if (diff > 0) totMin += diff;
-      }
-    });
-    return totMin;
-  }
-
-  function minutiToLabel(m) {
-    if (!m) return '—';
-    const h = Math.floor(m/60), min = m%60;
-    return h + 'h ' + String(min).padStart(2,'0') + 'min';
-  }
-
-  function buildChartData_orario(log, tipo) {
-    const counts = {};
-    for (let h = 7; h <= 21; h++) counts[String(h).padStart(2,'0')] = 0;
-    log.filter(l => l.tipo === tipo).forEach(l => {
-      const h = l.ora ? l.ora.split(':')[0] : null;
-      if (h && counts[h] !== undefined) counts[h]++;
-    });
-    return {
-      labels: Object.keys(counts).map(h => h + ':00'),
-      data:   Object.values(counts)
-    };
-  }
-
-  function buildChartData_giorni(log) {
-    const perData = {};
-    log.filter(l => l.tipo === 'Ingresso').forEach(l => {
-      if (!perData[l.data]) perData[l.data] = new Set();
-      perData[l.data].add(l.nome);
-    });
-    const sorted = Object.keys(perData).sort((a,b) => {
-      const pa = a.split('/'), pb = b.split('/');
-      return new Date(+pa[2],+pa[1]-1,+pa[0]) - new Date(+pb[2],+pb[1]-1,+pb[0]);
-    });
-    return {
-      labels: sorted.map(d => { const p=d.split('/'); return p[0]+'/'+p[1]; }),
-      data:   sorted.map(d => perData[d].size)
-    };
-  }
-
-  function destroyChart(id) {
-    if (statCharts[id]) { statCharts[id].destroy(); delete statCharts[id]; }
-  }
-
-  function renderChart(id, chartData, type, color, bgColor) {
-    destroyChart(id);
-    const ctx = document.getElementById(id);
-    if (!ctx) return;
-    const isEmpty = chartData.data.every(v => v === 0);
-    statCharts[id] = new Chart(ctx, {
-      type: type,
-      data: {
-        labels: chartData.labels,
-        datasets: [{
-          data: chartData.data,
-          backgroundColor: type === 'bar' ? (bgColor || color + '33') : 'transparent',
-          borderColor: color,
-          borderWidth: type === 'line' ? 2 : 1,
-          fill: type === 'line' ? { target: 'origin', above: bgColor || color + '18' } : false,
-          tension: 0.4,
-          pointRadius: type === 'line' ? 4 : 0,
-          pointHoverRadius: type === 'line' ? 6 : 4,
-          pointBackgroundColor: color,
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          borderRadius: type === 'bar' ? 3 : 0,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1a1714',
-            titleColor: '#f5f2eb',
-            bodyColor: '#ede9df',
-            padding: 10,
-            cornerRadius: 4,
-            titleFont: { family: "'Geist Mono', monospace", size: 11 },
-            bodyFont:  { family: "'Geist Mono', monospace", size: 12, weight: '500' },
-          }
-        },
-        scales: {
-          x: {
-            grid: { color: '#ede9df', drawBorder: false },
-            ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72', maxRotation: 45 }
-          },
-          y: {
-            grid: { color: '#ede9df', drawBorder: false },
-            ticks: { font: { family: "'Geist Mono', monospace", size: 10 }, color: '#8a7f72', precision: 0 },
-            beginAtZero: true,
-            suggestedMax: isEmpty ? 5 : undefined
-          }
-        }
-      }
-    });
-  }
-
-  const chartModes = { 'chart-in': 'bar', 'chart-out': 'bar', 'chart-giorni': 'bar' };
-
-  function renderAllStatCharts(log) {
-    renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), chartModes['chart-in'],     '#2d5a3d', '#e5f2ea');
-    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   chartModes['chart-out'],    '#8b2e2e', '#f5e8e8');
-    renderChart('chart-giorni', buildChartData_giorni(log),             chartModes['chart-giorni'], '#3a6ea8', '#e8f0f8');
-  }
-
-  function renderKPI(log) {
-    const animatoriAttivi = new Set(log.map(l => l.nome)).size;
-    const giorniAttivi    = new Set(log.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
-    const totTimbrature   = log.length;
-    const nomi = [...new Set(log.map(l => l.nome))];
-    let totMin = 0;
-    nomi.forEach(nome => { totMin += calcolaOreAnimatore(log.filter(l => l.nome === nome)); });
-    document.getElementById('kpi-animatori').textContent  = animatoriAttivi || '—';
-    document.getElementById('kpi-giorni').textContent     = giorniAttivi    || '—';
-    document.getElementById('kpi-timbrature').textContent = totTimbrature   || '—';
-    document.getElementById('kpi-ore').textContent        = totMin ? Math.floor(totMin/60)+'h' : '—';
-  }
-
-  function renderRank(log) {
-    const nomi = [...new Set(log.map(l => l.nome))];
-    const rank = nomi.map(nome => {
-      const nl = log.filter(l => l.nome === nome);
-      const min = calcolaOreAnimatore(nl);
-      const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
-      const anim = allAnimators.find(a => a.nome === nome);
-      return { nome, anno: anim ? anim.anno : '', min, giorni };
-    }).sort((a,b) => b.min - a.min);
-
-    const maxMin = rank[0] ? rank[0].min || 1 : 1;
-    const list = document.getElementById('stat-rank-list');
-
-    if (!rank.length) {
-      list.innerHTML = '<li class="rank-item"><span style="color:var(--ink3);font-size:12px;">Nessun dato nel periodo selezionato</span></li>';
-      return;
-    }
-
-    const medalClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-
-    list.innerHTML = rank.map((r, i) => `
-      <li class="rank-item">
-        <div class="rank-medal ${medalClass(i)}">${i+1}</div>
-        <div class="rank-info">
-          <div class="rank-nome">${esc(r.nome)}</div>
-          <div class="rank-anno">${r.anno ? r.anno+' ·' : ''} ${r.giorni} giorn${r.giorni===1?'o':'i'}</div>
-        </div>
-        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(r.min/maxMin*100)}%"></div></div>
-        <div class="rank-col-right">
-          <div class="rank-ore">${minutiToLabel(r.min)}</div>
-        </div>
-      </li>
-    `).join('');
-  }
-
-  function renderDettaglio(log) {
-    const nomi = [...new Set(log.map(l => l.nome))];
-    const tbody = document.getElementById('stat-det-tbody');
-    const meta  = document.getElementById('stat-det-meta');
-
-    if (!nomi.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">Nessun dato nel periodo selezionato</td></tr>';
-      if (meta) meta.textContent = '';
-      return;
-    }
-
-    const rows = nomi.map(nome => {
-      const nl = log.filter(l => l.nome === nome);
-      const anim = allAnimators.find(a => a.nome === nome);
-      const anno = anim ? anim.anno : (nl[0] ? nl[0].anno : '');
-      const giorni = new Set(nl.filter(l=>l.tipo==='Ingresso').map(l=>l.data)).size;
-      const minuti = calcolaOreAnimatore(nl);
-      const nIn  = nl.filter(l=>l.tipo==='Ingresso').length;
-      const nOut = nl.filter(l=>l.tipo==='Uscita').length;
-      const ultimo = nl[0];
-      return { nome, anno, giorni, minuti, nIn, nOut, ultimo };
-    }).sort((a,b) => b.minuti - a.minuti);
-
-    if (meta) meta.textContent = rows.length + ' animator' + (rows.length===1?'e':'i');
-
-    tbody.innerHTML = rows.map(r => `<tr>
-      <td>
-        <div class="det-anim-name">${esc(r.nome)}</div>
-        ${r.anno ? '<div class="det-anim-anno">'+r.anno+'</div>' : ''}
-      </td>
-      <td class="num"><div class="det-giorni-num">${r.giorni}</div></td>
-      <td class="num"><span class="det-ore-pill">${minutiToLabel(r.minuti)}</span></td>
-      <td class="num"><span class="det-badge in">${r.nIn}</span></td>
-      <td class="num"><span class="det-badge out">${r.nOut}</span></td>
-      <td>
-        ${r.ultimo ? `<div class="det-last">${esc(r.ultimo.data)}</div><div class="det-last-ora">${esc(r.ultimo.ora)}</div>` : '<span style="color:var(--ink3)">—</span>'}
-      </td>
-    </tr>`).join('');
-  }
-
-  function renderStatistiche() {
-    const filters = getStatFilters();
-    const log     = filtraLogStat(filters);
-    renderKPI(log);
-    renderAllStatCharts(log);
-    renderRank(log);
-    renderDettaglio(log);
-  }
-
-  function initStatistiche() {
-    if (!statInited) {
-      statInited = true;
-      initStatDateRange();
-      populateStatAnimatore();
-    }
-    renderStatistiche();
-  }
-
-  document.querySelectorAll('.chart-toggle button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const chartId = btn.dataset.chart;
-      const mode    = btn.dataset.mode;
-      chartModes[chartId] = mode;
-      btn.closest('.chart-toggle').querySelectorAll('button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const filters = getStatFilters();
-      const log     = filtraLogStat(filters);
-      if (chartId === 'chart-in')     renderChart('chart-in',     buildChartData_orario(log, 'Ingresso'), mode, '#2d5a3d', '#e5f2ea');
-      if (chartId === 'chart-out')    renderChart('chart-out',    buildChartData_orario(log, 'Uscita'),   mode, '#8b2e2e', '#f5e8e8');
-      if (chartId === 'chart-giorni') renderChart('chart-giorni', buildChartData_giorni(log),             mode, '#3a6ea8', '#e8f0f8');
-    });
-  });
-
-  document.getElementById('stat-applica-btn').addEventListener('click', renderStatistiche);
-  document.getElementById('stat-refresh-btn').addEventListener('click', async () => {
-    toast('Aggiornamento dati...');
-    await loadTimbrature();
-    await loadUsers();
-    populateStatAnimatore();
-    renderStatistiche();
-  });
-
-  // ── NOTIFICHE ──────────────────────────────────────────────────────────────
-  const NOTIFICATION_TYPES = {
-    'Ritrovo': '📍 Ritrovo',
-    'Avviso generale': '📢 Avviso generale',
-    'Emergenza': '🚨 Emergenza',
-    'Cambio orario': '⏰ Cambio orario',
-    'Richiamo timbratura': '⏱ Richiamo timbratura'
-  };
-
-  function populateNotificationTargets() {
-    const groupSel = document.getElementById('notif-target-group');
-    const userSel = document.getElementById('notif-target-user');
-    if (!groupSel || !userSel) return;
-    const years = [...new Set(allAnimators.map(a => a.anno).filter(Boolean))].sort();
-    groupSel.innerHTML = years.map(y => `<option value="${esc(y)}">Anno ${esc(y)}</option>`).join('') || '<option value="">Nessun gruppo</option>';
-    userSel.innerHTML = [...allAnimators].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a => `<option value="${a.id}">${esc(a.nome)}${a.anno ? ' ('+esc(a.anno)+')' : ''}</option>`).join('') || '<option value="">Nessun animatore</option>';
-  }
-
-  function updateNotificationFormVisibility() {
-    const targetType = document.getElementById('notif-target-type')?.value;
-    const sendMode = document.getElementById('notif-send-mode')?.value;
-    document.getElementById('notif-group-wrap').style.display = targetType === 'group' ? '' : 'none';
-    document.getElementById('notif-user-wrap').style.display = targetType === 'single' ? '' : 'none';
-    document.getElementById('notif-scheduled-wrap').style.display = sendMode === 'scheduled' ? '' : 'none';
-  }
-
-  function buildAdminNotificationPayload() {
-    const type = document.getElementById('notif-type').value;
-    const targetType = document.getElementById('notif-target-type').value;
-    const sendMode = document.getElementById('notif-send-mode').value;
-    const message = document.getElementById('notif-message').value.trim();
-    const scheduledAtRaw = document.getElementById('notif-scheduled-at').value;
-    const targetValue = targetType === 'single'
-      ? document.getElementById('notif-target-user').value
-      : targetType === 'group'
-        ? document.getElementById('notif-target-group').value
-        : 'all';
-    if (!message) throw new Error('Inserisci un messaggio breve');
-    if (!NOTIFICATION_TYPES[type]) throw new Error('Tipo notifica non valido');
-    if (targetType !== 'all' && !targetValue) throw new Error('Seleziona un destinatario');
-    if (sendMode === 'scheduled' && !scheduledAtRaw) throw new Error('Seleziona data e ora di invio');
-    return {
-      id: Date.now().toString(36), type, title: NOTIFICATION_TYPES[type], message,
-      target_type: targetType, target_value: targetValue,
-      scheduled_at: sendMode === 'scheduled' ? new Date(scheduledAtRaw).toISOString() : null,
-      created_at: new Date().toISOString()
-    };
-  }
-
-  async function saveAdminNotification(payload) {
-    const { error } = await sb.from('notifiche_admin').insert(payload);
-    if (!error) return 'history';
-    console.warn('Storico notifiche_admin non disponibile, uso impostazioni:', error.message);
-    const fallback = await sb.from('impostazioni').upsert({ chiave: 'admin_notification_latest', valore: JSON.stringify(payload) }, { onConflict: 'chiave' });
-    if (fallback.error) throw fallback.error;
-    return 'latest';
-  }
-
-  async function sendPushForAdminNotification(payload) {
-    // Le notifiche programmate vengono gestite da un job separato lato server, non da qui.
-    if (payload.scheduled_at) return;
-    // NB: il filtro per destinatario (target_type/target_value) viene passato all'Edge Function,
-    // che deve occuparsene server-side. Qui NON va più escluso l'invio per target diversi da "all",
-    // altrimenti le notifiche a Gruppo/Singolo non partono mai (bug precedente).
-    try {
-      const res = await fetch(SB_URL + '/functions/v1/send-push', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SB_KEY },
-        body: JSON.stringify({ title: payload.title, body: payload.message, url: '/timbratura.html', target_type: payload.target_type, target_value: payload.target_value })
-      });
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        console.log('Risposta send-push:', data);
-        if (data.sent > 0) {
-          toast(`🔔 Push inviata (${data.sent}/${data.total ?? data.sent})`, 'success');
-        } else if (data.failed > 0) {
-          toast('⚠️ Invio fallito — dettagli in console (F12)', 'error');
-          if (data.errors) console.log('ERRORI send-push:', JSON.stringify(data.errors, null, 2));
-        } else {
-          toast('⚠️ 0 push inviate — dettagli in console (F12)', 'error');
-          if (data.debug) console.log('DEBUG send-push:', JSON.stringify(data.debug, null, 2));
-        }
-      } else {
-        const errText = await res.text().catch(() => '');
-        console.warn('Edge Function non configurata o errore:', res.status, errText);
-        toast('⚠️ Push NON inviata (Edge Function: ' + res.status + ' — ' + errText.slice(0, 80) + ')', 'error');
-      }
-    } catch (e) {
-      console.warn('Invio push fallito:', e);
-      toast('⚠️ Push NON inviata: ' + e.message, 'error');
-    }
-  }
-
-  function renderSystemAlerts() {
-    const el = document.getElementById('system-alerts');
-    if (!el) return;
-    const alerts = [];
-    const suspicious = allLog.filter(l => l.fiducia_stato === 'Sospetto').slice(0, 5);
-    suspicious.forEach(l => alerts.push({ level: 'red', text: `Timbratura sospetta: ${esc(l.nome)} · ${esc(l.data)} ${esc(l.ora)} · ${esc(l.fiducia_motivi || '')}` }));
-    const byName = {};
-    allLog.forEach(l => { (byName[l.nome] ||= []).push(l); });
-    Object.entries(byName).forEach(([nome, logs]) => {
-      const recent = logs.slice(0, 10);
-      const noGpsCount = recent.filter(l => !Number.isFinite(Number(l.gps_distanza_m))).length;
-      const suspiciousCount = recent.filter(l => l.fiducia_stato === 'Sospetto').length;
-      if (recent.length >= 3 && noGpsCount === recent.length) alerts.push({ level: '', text: `${esc(nome)}: nessun dato GPS nelle ultime ${recent.length} timbrature` });
-      if (suspiciousCount >= 3) alerts.push({ level: 'red', text: `${esc(nome)}: ${suspiciousCount} timbrature sospette recenti` });
-    });
-    if (!alerts.length) {
-      el.innerHTML = '<div class="system-alert green">✅ Nessun alert di sistema rilevante. Il sistema resta silenzioso.</div>';
-      return;
-    }
-    el.innerHTML = alerts.slice(0, 12).map(a => `<div class="system-alert ${a.level}">${a.text}</div>`).join('');
-  }
-
-  document.getElementById('notif-target-type').addEventListener('change', updateNotificationFormVisibility);
-  document.getElementById('notif-send-mode').addEventListener('change', updateNotificationFormVisibility);
-  document.getElementById('notif-broadcast-btn').onclick = async () => {
-    let payload;
-    try { payload = buildAdminNotificationPayload(); } catch (e) { return toast(e.message, 'error'); }
-    const dest = payload.target_type === 'all' ? 'tutti' : payload.target_type === 'group' ? 'gruppo ' + payload.target_value : 'un animatore';
-    if (!confirm(`${payload.scheduled_at ? 'Programmare' : 'Inviare'} ${payload.type} a ${dest}?`)) return;
-    try {
-      const mode = await saveAdminNotification(payload);
-      await sb.from('impostazioni').upsert({ chiave: 'admin_notification_latest', valore: JSON.stringify(payload) }, { onConflict: 'chiave' });
-      await sendPushForAdminNotification(payload);
-      toast(payload.scheduled_at ? '✅ Notifica programmata' : '✅ Notifica salvata', 'success');
-      if (mode === 'latest') toast('Storico non configurato: salvata come ultima notifica', 'error');
-      document.getElementById('notif-message').value = '';
-    } catch (error) { toast('Errore invio: ' + error.message, 'error'); }
-  };
-  updateNotificationFormVisibility();
-
-
-  if (sessionStorage.getItem('admin_auth') === '1') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadAllData(); startClock();
-  }
 })();
 </script>
 </body>
