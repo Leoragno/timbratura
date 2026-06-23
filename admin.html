@@ -86,6 +86,7 @@
     .parrocchia-card .stats .label { font-size: 10px; color: var(--ink3); text-transform: uppercase; letter-spacing: 1px; }
     .parrocchia-card .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .parrocchia-card .badge { font-size: 10px; padding: 2px 10px; border-radius: 20px; display: inline-block; }
+    .parrocchia-card .user-tag { display: inline-block; background: var(--bg); padding: 2px 8px; border-radius: 12px; font-size: 10px; margin: 2px; }
 
     /* PASSWORD ADMIN */
     .password-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
@@ -99,9 +100,19 @@
 
     /* ANIMATORI SENZA PARROCCHIA */
     .no-parr-list { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
-    .no-parr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg2); }
+    .no-parr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg2); flex-wrap: wrap; gap: 8px; }
     .no-parr-item:last-child { border-bottom: none; }
     .no-parr-item .nome { font-weight: 600; }
+
+    /* ALL USERS */
+    .user-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 12px; }
+    .user-badge select { padding: 2px 6px; font-size: 10px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg); cursor: pointer; font-family: var(--font-mono); margin: 0; width: auto; }
+    .user-badge .del-btn { padding: 2px 6px; font-size: 10px; background: transparent; border: 1px solid var(--red-lt); color: var(--red); border-radius: 3px; cursor: pointer; }
+
+    .parr-group { margin-bottom: 16px; border-left: 3px solid var(--accent); padding-left: 14px; }
+    .parr-group .group-title { font-size: 13px; color: var(--ink2); }
+    .parr-group .group-empty { font-size: 11px; color: var(--ink3); margin-top: 4px; }
+    .parr-group .group-users { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
     /* BROADCAST */
     .broadcast-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; }
@@ -133,6 +144,11 @@
     .parr-jerago { border-top-color: var(--parr-color); }
     .parr-besnate { border-top-color: var(--parr-color); }
     .parr-orago { border-top-color: var(--parr-color); }
+
+    .parr-group.jerago { border-left-color: #8b2e2e; }
+    .parr-group.besnate { border-left-color: #2d5a3d; }
+    .parr-group.orago { border-left-color: #2a6f8f; }
+    .parr-group.senza { border-left-color: var(--red); }
   </style>
 </head>
 <body>
@@ -166,6 +182,7 @@
   <!-- TAB NAV -->
   <div class="tab-nav">
     <button class="tab-btn active" data-tab="tab-overview"><span class="tab-icon">📊</span>Overview</button>
+    <button class="tab-btn" data-tab="tab-all-users"><span class="tab-icon">👥</span>Tutti gli animatori</button>
     <button class="tab-btn" data-tab="tab-password"><span class="tab-icon">🔐</span>Password Admin</button>
     <button class="tab-btn" data-tab="tab-broadcast"><span class="tab-icon">📢</span>Broadcast</button>
     <button class="tab-btn" data-tab="tab-orphan"><span class="tab-icon">👤</span>Senza Parrocchia</button>
@@ -186,6 +203,19 @@
         <button class="btn btn-sm btn-ghost" id="refresh-overview">↻ Aggiorna</button>
       </div>
       <div class="parrocchia-grid" id="parrocchia-grid">
+        <div class="empty">⏳ Caricamento...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TUTTI GLI ANIMATORI -->
+  <div class="tab-panel" id="tab-all-users">
+    <div class="main">
+      <div class="section-header" style="margin-top:0;">
+        <div class="section-title">👥 Tutti gli animatori (per parrocchia)</div>
+        <button class="btn btn-sm btn-ghost" id="refresh-all-users">↻ Aggiorna</button>
+      </div>
+      <div id="all-users-container">
         <div class="empty">⏳ Caricamento...</div>
       </div>
     </div>
@@ -263,7 +293,7 @@
         <div class="empty">⏳ Caricamento...</div>
       </div>
       <div style="margin-top:16px; font-size:11px; color:var(--ink3); background:var(--bg2); padding:12px 16px; border-radius:4px; border:1px solid var(--border);">
-        💡 Gli animatori senza parrocchia possono essere riassegnati modificando il loro profilo. Se sono vecchi dati, puoi eliminarli.
+        💡 Gli animatori senza parrocchia possono essere riassegnati usando il dropdown. Se sono vecchi dati, puoi eliminarli.
       </div>
     </div>
   </div>
@@ -357,6 +387,7 @@
     await loadTimbrature();
     await loadSettings();
     renderOverview();
+    renderAllUsers();
     renderPasswords();
     renderOrphan();
     loadBroadcastHistory();
@@ -415,9 +446,12 @@
       const oggi = new Date();
       const oggiStr = String(oggi.getDate()).padStart(2,'0')+'/'+String(oggi.getMonth()+1).padStart(2,'0')+'/'+oggi.getFullYear();
       const oggiLogs = logs.filter(l => l.data === oggiStr);
-
-      // Ultimo accesso
       const lastStamp = logs.length ? logs[0] : null;
+      
+      // Lista animatori della parrocchia
+      const usersList = users.map(u => 
+        `<span class="user-tag">${esc(u.nome)}</span>`
+      ).join('');
       
       return `<div class="parrocchia-card parr-${key}">
         <div class="nome">${p.emoji} ${p.nome}</div>
@@ -428,12 +462,130 @@
           <div><div class="num">${oggiLogs.length}</div><div class="label">Oggi</div></div>
           <div><div class="num">${lastStamp ? lastStamp.data : '—'}</div><div class="label">Ultima</div></div>
         </div>
+        <div style="margin:8px 0;display:flex;flex-wrap:wrap;gap:2px;max-height:80px;overflow-y:auto;">
+          ${usersList || '<span style="font-size:10px;color:var(--ink3);">Nessun animatore</span>'}
+        </div>
         <div class="actions">
           <a href="/admin-${key}.html" target="_blank" class="btn btn-sm btn-ghost">🔗 Vai admin</a>
         </div>
       </div>`;
     }).join('');
   }
+
+  // ── TUTTI GLI ANIMATORI ──────────────────────────────────────────────────
+  function renderAllUsers() {
+    const container = document.getElementById('all-users-container');
+    if (!container) return;
+    
+    if (!allUsers.length) {
+      container.innerHTML = '<div class="empty">Nessun animatore registrato</div>';
+      return;
+    }
+    
+    // Raggruppa per parrocchia
+    const grouped = {};
+    allUsers.forEach(u => {
+      const key = u.parrocchia || 'senza';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(u);
+    });
+    
+    let html = '';
+    
+    // Prima mostra "Senza parrocchia"
+    if (grouped['senza']) {
+      html += `<div class="parr-group senza">
+        <div class="group-title">⚠️ Senza parrocchia (${grouped['senza'].length})</div>
+        <div class="group-users">
+          ${grouped['senza'].map(u => renderUserBadge(u, 'senza')).join('')}
+        </div>
+      </div>`;
+    }
+    
+    // Poi le parrocchie
+    PARROCCHIA_KEYS.forEach(key => {
+      const users = grouped[key] || [];
+      html += `<div class="parr-group ${key}">
+        <div class="group-title">${PARROCCHIE[key].emoji} ${PARROCCHIE[key].nome} (${users.length})</div>
+        <div class="group-users">
+          ${users.length ? users.map(u => renderUserBadge(u, key)).join('') : '<span class="group-empty">Nessun animatore</span>'}
+        </div>
+      </div>`;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  function renderUserBadge(u, currentParr) {
+    const parrOptions = Object.entries(PARROCCHIE).map(([key, p]) => 
+      `<option value="${key}" ${currentParr === key ? 'selected' : ''}>${p.emoji} ${p.nome}</option>`
+    ).join('');
+    
+    return `<span class="user-badge">
+      <span><strong>${esc(u.nome)}</strong> ${u.anno ? '('+esc(u.anno)+')' : ''}</span>
+      <select onchange="window.cambiaParrocchia(${u.id}, this.value)">
+        <option value="">📌</option>
+        ${parrOptions}
+      </select>
+      <button class="del-btn" onclick="window.deleteUser(${u.id},'${esc(u.nome)}')">✕</button>
+    </span>`;
+  }
+
+  // ── CAMBIO PARROCCHIA (Super-admin) ──────────────────────────────────────
+  window.cambiaParrocchia = async (userId, newParrocchia) => {
+    if (!userId || !newParrocchia) return;
+    
+    const animator = allUsers.find(a => a.id === userId);
+    if (!animator) {
+      toast('❌ Animatore non trovato', 'error');
+      return;
+    }
+    
+    const parrNomi = {
+      jerago: '🔴 Jerago',
+      besnate: '🟢 Besnate', 
+      orago: '🔵 Orago'
+    };
+    
+    if (!confirm(`Spostare ${animator.nome} in ${parrNomi[newParrocchia]}?`)) return;
+    
+    try {
+      const { error } = await sb.from('utenti')
+        .update({ parrocchia: newParrocchia })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      toast(`✅ ${animator.nome} spostato in ${parrNomi[newParrocchia]}`, 'success');
+      
+      await loadUsers();
+      await loadTimbrature();
+      renderOverview();
+      renderAllUsers();
+      renderOrphan();
+      
+    } catch (error) {
+      toast('❌ Errore: ' + error.message, 'error');
+      console.error('Errore cambio parrocchia:', error);
+    }
+  };
+
+  window.deleteUser = async (userId, nome) => {
+    if (!confirm(`Eliminare definitivamente ${nome}?`)) return;
+    const { error } = await sb.from('utenti').delete().eq('id', userId);
+    if (error) {
+      toast('Errore: ' + error.message, 'error');
+      return;
+    }
+    await sb.from('timbrature').delete().eq('user_id', userId);
+    toast('✅ ' + nome + ' eliminato', 'success');
+    await loadUsers();
+    await loadTimbrature();
+    renderOverview();
+    renderAllUsers();
+    renderOrphan();
+    renderPasswords();
+  };
 
   // ── PASSWORD ADMIN ────────────────────────────────────────────────────────
   let passwordModalTarget = null;
@@ -501,57 +653,34 @@
   function renderOrphan() {
     const list = document.getElementById('orphan-list');
     const orphans = getOrphanUsers();
+    
     if (!orphans.length) {
       list.innerHTML = '<div class="empty">✅ Nessun animatore senza parrocchia</div>';
       return;
     }
+
+    const parrOptions = Object.entries(PARROCCHIE).map(([key, p]) => 
+      `<option value="${key}">${p.emoji} ${p.nome}</option>`
+    ).join('');
 
     list.innerHTML = orphans.map(u => `
       <div class="no-parr-item">
         <div>
           <span class="nome">${esc(u.nome)}</span>
           ${u.anno ? '<span style="font-size:11px;color:var(--ink3);">('+esc(u.anno)+')</span>' : ''}
+          <span style="font-size:10px;color:var(--red);margin-left:8px;">⚠️ Senza parrocchia</span>
         </div>
-        <div class="actions" style="display:flex;gap:4px;">
-          <select class="btn btn-sm btn-ghost" style="width:auto;padding:4px 8px;font-size:11px;margin:0;" onchange="window.assignParrocchia(${u.id}, this.value)">
-            <option value="">Assegna a...</option>
-            ${PARROCCHIA_KEYS.map(k => `<option value="${k}">${PARROCCHIE[k].emoji} ${PARROCCHIE[k].nome}</option>`).join('')}
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+          <select style="padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;font-family:var(--font-mono);" 
+                  onchange="window.cambiaParrocchia(${u.id}, this.value)">
+            <option value="">📌 Assegna a...</option>
+            ${parrOptions}
           </select>
-          <button class="btn btn-red btn-sm" onclick="window.deleteUser(${u.id},'${esc(u.nome)}')">🗑️</button>
+          <button class="btn btn-red btn-sm" onclick="window.deleteUser(${u.id},'${esc(u.nome)}')" style="padding:4px 8px;font-size:10px;">🗑️</button>
         </div>
       </div>
     `).join('');
   }
-
-  window.assignParrocchia = async (userId, parrocchia) => {
-    if (!parrocchia) return;
-    const { error } = await sb.from('utenti').update({ parrocchia }).eq('id', userId);
-    if (error) {
-      toast('Errore: ' + error.message, 'error');
-      return;
-    }
-    toast('✅ Animatore assegnato a ' + PARROCCHIE[parrocchia].nome, 'success');
-    await loadUsers();
-    renderOrphan();
-    renderOverview();
-  };
-
-  window.deleteUser = async (userId, nome) => {
-    if (!confirm(`Eliminare definitivamente ${nome}?`)) return;
-    const { error } = await sb.from('utenti').delete().eq('id', userId);
-    if (error) {
-      toast('Errore: ' + error.message, 'error');
-      return;
-    }
-    // Elimina anche le timbrature associate
-    await sb.from('timbrature').delete().eq('user_id', userId);
-    toast('✅ ' + nome + ' eliminato', 'success');
-    await loadUsers();
-    await loadTimbrature();
-    renderOrphan();
-    renderOverview();
-    renderPasswords();
-  };
 
   // ── BROADCAST ──────────────────────────────────────────────────────────────
   async function loadBroadcastHistory() {
@@ -592,7 +721,6 @@
 
     if (!confirm(`Inviare "${message}" a ${target === 'all' ? 'tutte le parrocchie' : PARROCCHIE[target].nome}?`)) return;
 
-    // Costruisci il payload
     const parrocchie = target === 'all' ? PARROCCHIA_KEYS : [target];
     let successCount = 0;
 
@@ -665,6 +793,7 @@
       document.getElementById(btn.dataset.tab).classList.add('active');
       
       if (btn.dataset.tab === 'tab-overview') renderOverview();
+      if (btn.dataset.tab === 'tab-all-users') renderAllUsers();
       if (btn.dataset.tab === 'tab-password') renderPasswords();
       if (btn.dataset.tab === 'tab-orphan') renderOrphan();
       if (btn.dataset.tab === 'tab-broadcast') loadBroadcastHistory();
@@ -676,6 +805,12 @@
     toast('Aggiornamento...');
     await loadAllData();
     renderOverview();
+    toast('✅ Aggiornato', 'success');
+  };
+  document.getElementById('refresh-all-users').onclick = async () => {
+    toast('Aggiornamento...');
+    await loadUsers();
+    renderAllUsers();
     toast('✅ Aggiornato', 'success');
   };
   document.getElementById('refresh-passwords').onclick = async () => {
