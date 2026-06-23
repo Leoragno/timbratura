@@ -89,10 +89,6 @@
     .btn-toggle.open { background: var(--green-lt); color: var(--green); border-color: #b2d4bc; }
     .btn-toggle.locked { background: var(--red-lt); color: var(--red); border-color: #dbb2b2; }
 
-    /* BULK BUTTONS */
-    .bulk-row { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
-    .bulk-row .btn { width: auto; padding: 8px 20px; }
-
     /* GEO */
     .geo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 22px 24px; margin-bottom: 8px; }
     .geo-row { display: grid; grid-template-columns: 1fr 2fr; gap: 28px; }
@@ -344,12 +340,6 @@
       <div class="control-row">
         <button id="toggle-in-btn" class="btn-toggle">Ingressi: Caricamento...</button>
         <button id="toggle-out-btn" class="btn-toggle">Uscite: Caricamento...</button>
-      </div>
-
-      <!-- BULK TIMBRATURA -->
-      <div class="bulk-row">
-        <button class="btn btn-primary" id="bulk-in-btn" style="width:auto; padding:8px 20px;">⬆ Timbra INGRESSO a tutti</button>
-        <button class="btn btn-red" id="bulk-out-btn" style="width:auto; padding:8px 20px;">⬇ Timbra USCITA a tutti</button>
       </div>
 
       <div class="section-header"><div class="section-title">Geolocalizzazione</div></div>
@@ -769,10 +759,15 @@
     orago: { nome: 'Orago', emoji: '🔵', colore: '#2a6f8f', coloreChiaro: '#e8f0f8', coloreBordo: '#a8c8dd' }
   };
 
+  // Estrai parrocchia dall'URL: /admin-jerago.html → jerago
   const path = window.location.pathname;
   const match = path.match(/admin-(\w+)\.html/);
   let parrocchiaSlug = match ? match[1] : 'jerago';
-  if (!PARROCCHIE[parrocchiaSlug]) parrocchiaSlug = 'jerago';
+  
+  if (!PARROCCHIE[parrocchiaSlug]) {
+    parrocchiaSlug = 'jerago';
+  }
+  
   const CONFIG = PARROCCHIE[parrocchiaSlug];
   const PARROCCHIA = parrocchiaSlug;
 
@@ -791,7 +786,7 @@
   // SUPABASE
   // ════════════════════════════════════════════════
   const SB_URL = 'https://bbwozrlingsbjcawtval.supabase.co';
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid296cmxpbmdzYmpjYXd0dmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMTYsImV4cCI6MjA5NTM3MDExNn0.oimZ43OiiVsB-twTbCjBHvNsY4Tq4pM6AhmNxkpcN-Y';
   const sb = window.supabase.createClient(SB_URL, SB_KEY);
   const ADMIN_PASSWORD_KEY = `${PARROCCHIA}_admin_password`;
 
@@ -846,28 +841,33 @@
   // ════════════════════════════════════════════════
   async function doLogin() {
     const pw = document.getElementById('admin-pass').value;
+    
     const { data, error } = await sb.from('impostazioni')
       .select('valore')
       .eq('chiave', ADMIN_PASSWORD_KEY)
       .maybeSingle();
+    
     if (error || !data) {
       document.getElementById('login-err').textContent = 'Errore: password non configurata per questa parrocchia.';
       document.getElementById('login-err').style.display = 'block';
       return;
     }
+    
     const correctPassword = data.valore;
+    
     if (pw !== correctPassword) {
       document.getElementById('login-err').style.display = 'block';
       return;
     }
+    
     document.getElementById('login-err').style.display = 'none';
     sessionStorage.setItem('admin_auth_' + PARROCCHIA, '1');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     await loadAllData();
     startClock();
-    startRealtimeUpdates();
   }
+  
   document.getElementById('loginBtn').addEventListener('click', doLogin);
   document.getElementById('admin-pass').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -880,11 +880,10 @@
     document.getElementById('app').style.display = 'block';
     loadAllData();
     startClock();
-    startRealtimeUpdates();
   }
 
   // ════════════════════════════════════════════════
-  // DATA LOADING (con filtro temporale)
+  // DATA LOADING (con filtro OR per cross-parrocchia)
   // ════════════════════════════════════════════════
   async function loadAllData() {
     await loadSettings();
@@ -903,9 +902,11 @@
     let geoAbilitata = true, geoLat = '', geoLon = '', geoRadius = '';
     dispChiuse = {};
     const toBool = v => v === true || v === 'true';
+    
     if (data) data.forEach(row => {
       const key = row.chiave;
       const bareKey = key.startsWith(PARROCCHIA + '_') ? key.slice(PARROCCHIA.length + 1) : key;
+      
       if (bareKey === 'ingresso_aperto') ingressoAperto = toBool(row.valore);
       if (bareKey === 'uscita_aperta')   uscitaAperta   = toBool(row.valore);
       if (bareKey === 'geo_abilitata')   geoAbilitata   = toBool(row.valore);
@@ -917,6 +918,7 @@
         if (!isNaN(id)) dispChiuse[id] = toBool(row.valore);
       }
     });
+    
     const btnIn  = document.getElementById('toggle-in-btn');
     const btnOut = document.getElementById('toggle-out-btn');
     const btnGeo = document.getElementById('toggle-geo-btn');
@@ -949,56 +951,13 @@
     allAnimators = data || [];
   }
 
-  // ★ Caricamento limitato alle ultime 8 settimane per performance
+  // ★ IMPORTANTE: Carica timbrature dove parrocchia = PARROCCHIA OPPURE parrocchia_timbratura = PARROCCHIA
   async function loadTimbrature() {
-    const now = new Date();
-    const eightWeeksAgo = new Date(now);
-    eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
-    const cutoff = eightWeeksAgo.toISOString().split('T')[0];
     const { data } = await sb.from('timbrature')
       .select('*')
       .or(`parrocchia.eq.${PARROCCHIA},parrocchia_timbratura.eq.${PARROCCHIA}`)
-      .gte('created_at', cutoff)
       .order('id', { ascending: false });
     allLog = data || [];
-  }
-
-  // ════════════════════════════════════════════════
-  // REAL-TIME UPDATES (polling + visibility)
-  // ════════════════════════════════════════════════
-  let refreshInterval = null;
-
-  function startRealtimeUpdates() {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(async () => {
-      if (document.visibilityState === 'visible') {
-        await loadTimbrature();
-        await loadUsers();
-        // Aggiorna solo le viste attive
-        const activeTab = document.querySelector('.tab-panel.active');
-        if (activeTab) {
-          const tabId = activeTab.id;
-          if (tabId === 'tab-dashboard') {
-            renderAnimators2();
-            renderLog();
-            updateStats();
-          } else if (tabId === 'tab-animatori') {
-            renderAnimators2();
-          } else if (tabId === 'tab-timbrature') {
-            renderLog();
-          } else if (tabId === 'tab-statistiche') {
-            populateStatAnimatore();
-            renderStatistiche();
-          }
-        }
-      }
-    }, 30000);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        loadAllData();
-      }
-    });
   }
 
   // ════════════════════════════════════════════════
@@ -1049,13 +1008,16 @@
       besnate: '🟢 Besnate', 
       orago: '🔵 Orago' 
     };
+    
     const currentParrLabel = a.parrocchia && parrNomi[a.parrocchia] 
       ? parrNomi[a.parrocchia] 
       : '❌ Nessuna';
+    
     let trasfertaInfo = '';
     if (a.lastStamp && a.lastStamp.parrocchia_timbratura && a.lastStamp.parrocchia !== a.lastStamp.parrocchia_timbratura) {
       trasfertaInfo = `<span class="anim-trasferta"> · 📌 ${parrNomi[a.lastStamp.parrocchia_timbratura]}</span>`;
     }
+    
     const parrSelect = `
       <select class="btn btn-sm" style="padding:4px 8px;font-size:10px;margin:0;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;" 
               onchange="window.cambiaParrocchia(${a.id}, this.value)">
@@ -1065,6 +1027,7 @@
         <option value="orago">🔵 Orago</option>
       </select>
     `;
+
     return `<div class="animator-card ${a.isInside?'inside':''}">
       <div class="anim-name">${esc(a.nome)} <span>(${a.anno||'—'})</span></div>
       <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">
@@ -1092,25 +1055,36 @@
   // ════════════════════════════════════════════════
   window.cambiaParrocchia = async (userId, newParrocchia) => {
     if (!userId || !newParrocchia) return;
+    
     const parrNomi = {
       jerago: '🔴 Jerago',
       besnate: '🟢 Besnate', 
       orago: '🔵 Orago'
     };
+    
     const animator = allAnimators.find(a => a.id === userId);
-    if (!animator) { toast('❌ Animatore non trovato', 'error'); return; }
+    if (!animator) {
+      toast('❌ Animatore non trovato', 'error');
+      return;
+    }
+    
     if (!confirm(`Spostare ${animator.nome} in ${parrNomi[newParrocchia]}?`)) return;
+    
     try {
       const { error } = await sb.from('utenti')
         .update({ parrocchia: newParrocchia })
         .eq('id', userId);
+        
       if (error) throw error;
+      
       toast(`✅ ${animator.nome} spostato in ${parrNomi[newParrocchia]}`, 'success');
+      
       await loadUsers();
       await loadTimbrature();
       renderAnimators2();
       renderLog();
       updateStats();
+      
     } catch (error) {
       toast('❌ Errore: ' + error.message, 'error');
       console.error('Errore cambio parrocchia:', error);
@@ -1147,13 +1121,16 @@
     });
     const tbody = document.getElementById('log-tbody');
     if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">📋 Nessuna timbratura</td></tr>'; return; }
+    
     const parrNomi = { jerago: '🔴 Jerago', besnate: '🟢 Besnate', orago: '🔵 Orago' };
+    
     tbody.innerHTML = filtered.map(l => {
       const luogo = l.parrocchia_timbratura ? parrNomi[l.parrocchia_timbratura] : '—';
       const isTrasferta = l.parrocchia && l.parrocchia_timbratura && l.parrocchia !== l.parrocchia_timbratura;
       const luogoLabel = isTrasferta 
         ? `<span class="luogo-badge trasferta">${luogo} 📌</span>` 
         : `<span class="luogo-badge">${luogo}</span>`;
+      
       return `<tr>
         <td><strong>${esc(l.nome)}</strong></td>
         <td>${l.anno||'—'}</td>
@@ -1180,6 +1157,7 @@
     document.getElementById('manual-ora').value  = now.toTimeString().substring(0,5);
     document.getElementById('modal-manual').classList.add('open');
   };
+  
   document.getElementById('closeManualBtn').onclick = closeAllModals;
   document.getElementById('saveManualBtn').onclick = async () => {
     const tipo = document.getElementById('manual-tipo').value;
@@ -1215,6 +1193,7 @@
     document.getElementById('profile-new-anno').value = anno;
     document.getElementById('modal-edit-profile').classList.add('open');
   };
+  
   document.getElementById('closeProfileBtn').onclick = closeAllModals;
   document.getElementById('saveProfileBtn').onclick = async () => {
     const oldNome = document.getElementById('profile-old-nome').value;
@@ -1234,6 +1213,7 @@
   document.getElementById('toggle-in-btn').onclick  = async () => { ingressoAperto = !ingressoAperto; await upsertImpostazione('ingresso_aperto', ingressoAperto); toast(ingressoAperto?'Ingressi sbloccati':'Ingressi bloccati', ingressoAperto?'success':'error'); loadSettings(); };
   document.getElementById('toggle-out-btn').onclick = async () => { uscitaAperta   = !uscitaAperta;   await upsertImpostazione('uscita_aperta',   uscitaAperta);   toast(uscitaAperta?'Uscite sbloccate':'Uscite bloccate',   uscitaAperta?'success':'error');   loadSettings(); };
   document.getElementById('toggle-geo-btn').onclick = async function() { const on = this.classList.contains('open'); await upsertImpostazione('geo_abilitata', !on); toast(!on?'GPS attivato':'GPS disabilitato', !on?'success':'error'); loadSettings(); };
+  
   document.getElementById('geo-save-btn').onclick   = async () => {
     const lat = document.getElementById('geo-lat').value, lon = document.getElementById('geo-lon').value, rad = document.getElementById('geo-radius').value;
     if (!lat||!lon||!rad) return toast('Compila tutti i campi GPS','error');
@@ -1242,6 +1222,7 @@
     await upsertImpostazione('max_distanza', rad);
     toast('Coordinate salvate','success'); loadSettings();
   };
+  
   document.getElementById('geo-use-current').onclick = () => {
     if (!navigator.geolocation) return toast('GPS non supportato','error');
     toast('Acquisizione posizione...');
@@ -1252,62 +1233,6 @@
       toast('Posizione acquisita. Salva!','success');
     }, err => toast('Errore GPS: '+err.message,'error'), { enableHighAccuracy: true });
   };
-
-  // ════════════════════════════════════════════════
-  // BULK TIMBRATURA
-  // ════════════════════════════════════════════════
-  document.getElementById('bulk-in-btn').onclick = async () => {
-    if (!confirm('Segnare INGRESSO a TUTTI gli animatori attualmente fuori?')) return;
-    await bulkTimbra('Ingresso');
-  };
-  document.getElementById('bulk-out-btn').onclick = async () => {
-    if (!confirm('Segnare USCITA a TUTTI gli animatori attualmente dentro?')) return;
-    await bulkTimbra('Uscita');
-  };
-
-  async function bulkTimbra(tipo) {
-    const lastMap = {};
-    allLog.forEach(l => { if (!lastMap[l.nome]) lastMap[l.nome] = l; });
-    let targets = allAnimators.filter(a => {
-      const last = lastMap[a.nome];
-      if (tipo === 'Ingresso') return !last || last.tipo !== 'Ingresso';
-      else return last && last.tipo === 'Ingresso';
-    });
-    if (!targets.length) {
-      toast('Nessun animatore da timbrare con ' + tipo, 'warning');
-      return;
-    }
-    toast('Timbratura ' + tipo + ' per ' + targets.length + ' animatori...', 'info');
-    const now = new Date();
-    const oggiStr = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
-    const ora = now.toTimeString().slice(0,5);
-    const inserts = targets.map(a => ({
-      user_id: a.id,
-      nome: a.nome,
-      anno: a.anno || null,
-      data: oggiStr,
-      ora: ora,
-      tipo: tipo,
-      created_at: now.toISOString(),
-      parrocchia: PARROCCHIA,
-      parrocchia_timbratura: PARROCCHIA,
-      metodo_timbratura: 'bulk',
-      fiducia_score: 50,
-      fiducia_stato: 'Normale ma da monitorare',
-      fiducia_motivi: 'Timbratura manuale in blocco'
-    }));
-    const { error } = await sb.from('timbrature').insert(inserts);
-    if (error) {
-      toast('Errore: ' + error.message, 'error');
-    } else {
-      toast('✅ ' + tipo + ' registrato per ' + targets.length + ' animatori', 'success');
-      await loadTimbrature();
-      await loadUsers();
-      renderAnimators2();
-      renderLog();
-      updateStats();
-    }
-  }
 
   // ════════════════════════════════════════════════
   // SETTIMANE
@@ -1329,10 +1254,12 @@
         if (!isNaN(id)) dispChiuse[id] = (r.valore === true || r.valore === 'true');
       }
     });
+    // ★ IMPORTANTE: filtra per parrocchia
     const { data } = await sb.from('settimane').select('*').eq('parrocchia', PARROCCHIA).order('id');
     const { data: dispo } = await sb.from('disponibilita').select('user_id, settimana_id');
     const { data: utenti } = await sb.from('utenti').select('id').eq('parrocchia', PARROCCHIA);
     const totale = utenti ? utenti.length : 0;
+
     const container = document.getElementById('settimane-list');
     if (!data || !data.length) { container.innerHTML = '<div class="empty">Nessuna settimana.</div>'; return; }
     container.innerHTML = data.map(s => {
@@ -1519,10 +1446,12 @@
       if (note) row['Note'] = note;
       return row;
     }).sort((a,b) => { const da=parseDataLog(a.Data),db=parseDataLog(b.Data); return (da&&db&&da-db)||a.Nome.localeCompare(b.Nome); });
+
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,14)}));
     XLSX.utils.book_append_sheet(wb, ws, 'Presenze');
+
     const nomi = [...new Set(filtered.map(r=>r.nome))].sort();
     const riepilogo = nomi.map(nome => {
       const rl = filtered.filter(r=>r.nome===nome);
@@ -1535,6 +1464,7 @@
     toast('✅ Excel scaricato!','success');
   };
 
+  // EXPORT DISPONIBILITÀ
   async function caricaSettimanePerExport() {
     const { data } = await sb.from('settimane').select('*').eq('parrocchia', PARROCCHIA).order('id');
     const sel = document.getElementById('export-disp-sett');
@@ -1652,6 +1582,7 @@
     if (!base) return toast('Inserisci URL del sito animatori', 'error');
     const separator = base.includes('?') ? '&' : '?';
     const urlWithParrocchia = base + separator + 'parrocchia=' + PARROCCHIA;
+    
     const urlIn  = urlWithParrocchia + '&qa=in';
     const urlOut = urlWithParrocchia + '&qa=out';
     document.getElementById('qr-url-ingresso').textContent = urlIn;
@@ -1726,7 +1657,7 @@
   qrInput.style.borderRadius = '3px';
 
   // ════════════════════════════════════════════════
-  // STATISTICHE (con calcolo ore corretto)
+  // STATISTICHE
   // ════════════════════════════════════════════════
   let statCharts = {};
   let statInited = false;
@@ -1771,7 +1702,6 @@
     });
   }
 
-  // Funzione corretta per calcolare le ore lavorate (somma delle differenze ingresso-uscita consecutive)
   function calcolaOreAnimatore(logAnimatore) {
     const perData = {};
     logAnimatore.forEach(l => {
@@ -1781,20 +1711,12 @@
     });
     let totMin = 0;
     Object.values(perData).forEach(g => {
-      g.ingressi.sort();
-      g.uscite.sort();
-      let i = 0, u = 0;
-      while (i < g.ingressi.length && u < g.uscite.length) {
-        const inOra = g.ingressi[i].split(':').map(Number);
-        const outOra = g.uscite[u].split(':').map(Number);
-        const diffMin = (outOra[0]*60 + outOra[1]) - (inOra[0]*60 + inOra[1]);
-        if (diffMin > 0) {
-          totMin += diffMin;
-          i++;
-          u++;
-        } else {
-          u++;
-        }
+      g.ingressi.sort(); g.uscite.sort();
+      if (g.ingressi.length && g.uscite.length) {
+        const [ih,im] = g.ingressi[0].split(':').map(Number);
+        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
+        const diff = (oh*60+om)-(ih*60+im);
+        if (diff > 0) totMin += diff;
       }
     });
     return totMin;
@@ -1924,13 +1846,17 @@
       const anim = allAnimators.find(a => a.nome === nome);
       return { nome, anno: anim ? anim.anno : '', min, giorni };
     }).sort((a,b) => b.min - a.min);
+
     const maxMin = rank[0] ? rank[0].min || 1 : 1;
     const list = document.getElementById('stat-rank-list');
+
     if (!rank.length) {
       list.innerHTML = '<li class="rank-item"><span style="color:var(--ink3);font-size:12px;">Nessun dato nel periodo selezionato</span></li>';
       return;
     }
+
     const medalClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+
     list.innerHTML = rank.map((r, i) => `
       <li class="rank-item">
         <div class="rank-medal ${medalClass(i)}">${i+1}</div>
@@ -1950,11 +1876,13 @@
     const nomi = [...new Set(log.map(l => l.nome))];
     const tbody = document.getElementById('stat-det-tbody');
     const meta  = document.getElementById('stat-det-meta');
+
     if (!nomi.length) {
       tbody.innerHTML = '<tr><td colspan="6" class="empty">Nessun dato nel periodo selezionato</td></tr>';
       if (meta) meta.textContent = '';
       return;
     }
+
     const rows = nomi.map(nome => {
       const nl = log.filter(l => l.nome === nome);
       const anim = allAnimators.find(a => a.nome === nome);
@@ -1966,7 +1894,9 @@
       const ultimo = nl[0];
       return { nome, anno, giorni, minuti, nIn, nOut, ultimo };
     }).sort((a,b) => b.minuti - a.minuti);
+
     if (meta) meta.textContent = rows.length + ' animator' + (rows.length===1?'e':'i');
+
     tbody.innerHTML = rows.map(r => `<tr>
       <td>
         <div class="det-anim-name">${esc(r.nome)}</div>
@@ -2176,6 +2106,7 @@
       btn.classList.add('active');
       const panel = document.getElementById(btn.dataset.tab);
       if (panel) panel.classList.add('active');
+      
       if (btn.dataset.tab === 'tab-disponibilita') { 
         loadSettimane(); 
         loadDispRiepilogo(); 
@@ -2199,7 +2130,7 @@
     initStatistiche();
   }
 
-  console.log(`✅ Admin ${CONFIG.nome} (${PARROCCHIA}) caricato con migliorie!`);
+  console.log(`✅ Admin ${CONFIG.nome} (${PARROCCHIA}) caricato!`);
   console.log(`🎨 Colore: ${CONFIG.colore}`);
 
 })();
