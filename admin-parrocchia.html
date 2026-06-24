@@ -913,8 +913,8 @@
       if (bareKey === 'geo_lat')         geoLat   = row.valore;
       if (bareKey === 'geo_lon')         geoLon   = row.valore;
       if (bareKey === 'max_distanza')    geoRadius = row.valore;
-      if (key && key.startsWith('disp_chiusa_')) {
-        const id = parseInt(key.replace('disp_chiusa_', ''));
+      if (bareKey && bareKey.startsWith('disp_chiusa_')) {
+        const id = parseInt(bareKey.replace('disp_chiusa_', ''));
         if (!isNaN(id)) dispChiuse[id] = toBool(row.valore);
       }
     });
@@ -1249,8 +1249,9 @@
     const { data: impo } = await sb.from('impostazioni').select('*');
     dispChiuse = {};
     if (impo) impo.forEach(r => {
-      if (r.chiave && r.chiave.startsWith('disp_chiusa_')) {
-        const id = parseInt(r.chiave.replace('disp_chiusa_',''));
+      const bk = r.chiave.startsWith(PARROCCHIA + '_') ? r.chiave.slice(PARROCCHIA.length + 1) : r.chiave;
+      if (bk && bk.startsWith('disp_chiusa_')) {
+        const id = parseInt(bk.replace('disp_chiusa_',''));
         if (!isNaN(id)) dispChiuse[id] = (r.valore === true || r.valore === 'true');
       }
     });
@@ -1374,7 +1375,7 @@
     const { error } = await sb.from('settimane').delete().eq('id', id).eq('parrocchia', PARROCCHIA);
     if (error) return toast('Errore: '+error.message,'error');
     await sb.from('disponibilita').delete().eq('settimana_id', id);
-    await sb.from('impostazioni').delete().eq('chiave', 'disp_chiusa_'+id);
+    await sb.from('impostazioni').delete().eq('chiave', PARROCCHIA + '_disp_chiusa_'+id);
     toast('Settimana eliminata','success');
     await loadSettimane(); await loadDispRiepilogo();
   };
@@ -1432,13 +1433,18 @@
     });
     const rows = Object.values(gruppi).map(g => {
       g.ingressi.sort(); g.uscite.sort();
-      let ore = '';
-      if (g.ingressi.length && g.uscite.length) {
-        const [ih,im] = g.ingressi[0].split(':').map(Number);
-        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
-        const diff = (oh*60+om)-(ih*60+im);
-        if (diff > 0) ore = Math.floor(diff/60)+'h '+(diff%60)+'min';
+      let oreMin = 0;
+      let uscitiIdx2 = 0;
+      for (const ing of g.ingressi) {
+        while (uscitiIdx2 < g.uscite.length && g.uscite[uscitiIdx2] <= ing) uscitiIdx2++;
+        if (uscitiIdx2 < g.uscite.length) {
+          const [ih,im] = ing.split(':').map(Number);
+          const [oh,om] = g.uscite[uscitiIdx2].split(':').map(Number);
+          const d2 = (oh*60+om)-(ih*60+im);
+          if (d2 > 0) { oreMin += d2; uscitiIdx2++; }
+        }
       }
+      const ore = oreMin > 0 ? Math.floor(oreMin/60)+'h '+(oreMin%60)+'min' : '';
       const row = { Nome:g.nome, Anno:g.anno, Data:g.data };
       if (tipo==='entrambi'||tipo==='Ingresso') row['Ora Entrata'] = g.ingressi.join(', ')||'—';
       if (tipo==='entrambi'||tipo==='Uscita')   row['Ora Uscita']  = g.uscite.join(', ')  ||'—';
@@ -1712,11 +1718,17 @@
     let totMin = 0;
     Object.values(perData).forEach(g => {
       g.ingressi.sort(); g.uscite.sort();
-      if (g.ingressi.length && g.uscite.length) {
-        const [ih,im] = g.ingressi[0].split(':').map(Number);
-        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
-        const diff = (oh*60+om)-(ih*60+im);
-        if (diff > 0) totMin += diff;
+      // Accoppia ogni ingresso con la prima uscita successiva (supporto sessioni multiple)
+      let uscitiIdx = 0;
+      for (const ingresso of g.ingressi) {
+        while (uscitiIdx < g.uscite.length && g.uscite[uscitiIdx] <= ingresso) uscitiIdx++;
+        if (uscitiIdx < g.uscite.length) {
+          const [ih, im] = ingresso.split(':').map(Number);
+          const [oh, om] = g.uscite[uscitiIdx].split(':').map(Number);
+          const diff = (oh * 60 + om) - (ih * 60 + im);
+          if (diff > 0) totMin += diff;
+          uscitiIdx++;
+        }
       }
     });
     return totMin;
@@ -1834,7 +1846,7 @@
     document.getElementById('kpi-animatori').textContent  = animatoriAttivi || '—';
     document.getElementById('kpi-giorni').textContent     = giorniAttivi    || '—';
     document.getElementById('kpi-timbrature').textContent = totTimbrature   || '—';
-    document.getElementById('kpi-ore').textContent        = totMin ? Math.floor(totMin/60)+'h' : '—';
+    document.getElementById('kpi-ore').textContent        = totMin ? minutiToLabel(totMin) : '—';
   }
 
   function renderRank(log) {
