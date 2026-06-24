@@ -767,8 +767,8 @@
       if (bareKey === 'geo_lat') oratorioLat = parseFloat(row.valore) || oratorioLat;
       if (bareKey === 'geo_lon') oratorioLon = parseFloat(row.valore) || oratorioLon;
       if (bareKey === 'max_distanza') maxDistanza = parseInt(row.valore) || maxDistanza;
-      if (key && key.startsWith('disp_chiusa_')) {
-        const id = parseInt(key.replace('disp_chiusa_', ''));
+      if (bareKey && bareKey.startsWith('disp_chiusa_')) {
+        const id = parseInt(bareKey.replace('disp_chiusa_', ''));
         if (!isNaN(id)) dispChiuse[id] = (row.valore === true || row.valore === 'true');
       }
     });
