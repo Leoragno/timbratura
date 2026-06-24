@@ -650,8 +650,6 @@
     renderPasswords();
     renderOrphan();
     loadBroadcastHistory();
-    populateStatAnimatore();
-    renderStatistiche();
   }
 
   async function loadUsers() {
@@ -660,7 +658,7 @@
   }
 
   async function loadTimbrature() {
-    const { data } = await sb.from('timbrature').select('*');
+    const { data } = await sb.from('timbrature').select('*').order('id', { ascending: false });
     allLogs = data || [];
   }
 
@@ -1135,11 +1133,17 @@
     let totMin = 0;
     Object.values(perData).forEach(g => {
       g.ingressi.sort(); g.uscite.sort();
-      if (g.ingressi.length && g.uscite.length) {
-        const [ih,im] = g.ingressi[0].split(':').map(Number);
-        const [oh,om] = g.uscite[g.uscite.length-1].split(':').map(Number);
-        const diff = (oh*60+om)-(ih*60+im);
-        if (diff > 0) totMin += diff;
+      // Accoppia ogni ingresso con la prima uscita successiva (supporto sessioni multiple)
+      let uscitiIdx = 0;
+      for (const ingresso of g.ingressi) {
+        while (uscitiIdx < g.uscite.length && g.uscite[uscitiIdx] <= ingresso) uscitiIdx++;
+        if (uscitiIdx < g.uscite.length) {
+          const [ih, im] = ingresso.split(':').map(Number);
+          const [oh, om] = g.uscite[uscitiIdx].split(':').map(Number);
+          const diff = (oh * 60 + om) - (ih * 60 + im);
+          if (diff > 0) totMin += diff;
+          uscitiIdx++;
+        }
       }
     });
     return totMin;
@@ -1251,7 +1255,7 @@
     document.getElementById('kpi-animatori').textContent = animatoriAttivi || '—';
     document.getElementById('kpi-giorni').textContent = giorniAttivi || '—';
     document.getElementById('kpi-timbrature').textContent = totTimbrature || '—';
-    document.getElementById('kpi-ore').textContent = totMin ? Math.floor(totMin/60)+'h' : '—';
+    document.getElementById('kpi-ore').textContent = totMin ? minutiToLabel(totMin) : '—';
   }
 
   function renderRank(log) {
@@ -1459,7 +1463,11 @@
     await originalLoadAllData();
     initStatDateRange();
     populateStatAnimatore();
-    renderStatistiche();
+    // Renderizza grafici solo se il pannello statistiche è visibile
+    // (Chart.js ha problemi con canvas in panel nascosti)
+    if (document.getElementById('tab-statistiche').classList.contains('active')) {
+      renderStatistiche();
+    }
   };
 
   console.log('👑 Super Admin caricato!');
